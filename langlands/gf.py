@@ -7,6 +7,7 @@ elements stay plain hashable tuples.
 """
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 from functools import cached_property
 from itertools import product
@@ -120,11 +121,12 @@ def _prime_factors(n: int) -> tuple[int, ...]:
 
 
 def irreducible_polynomial(p: int, k: int) -> Poly:
-    """Lexicographically first monic irreducible of degree k over F_p (deterministic)."""
+    """First monic irreducible of degree k over F_p in a fixed order (deterministic): the
+    constant term varies fastest, so candidates with zero constant term are skipped cheaply."""
     if k == 1:
         return (0, 1)
-    for low in product(range(p), repeat=k):
-        f = tuple(low) + (1,)
+    for high_to_low in product(range(p), repeat=k):
+        f = tuple(reversed(high_to_low)) + (1,)
         if f[0] and is_irreducible(f, p):
             return f
     raise ValueError(f"no irreducible polynomial of degree {k} over F_{p}")  # unreachable
@@ -203,23 +205,41 @@ class GF:
         """Zech-style log/exp tables for fields of order <= TABLE_LIMIT: mul, inv, pow in O(1)."""
         if self.order > self.TABLE_LIMIT:
             return None
-        for g in self.elements():
-            if g == self.zero:
-                continue
-            exp, x = [self.one], self.one
-            for _ in range(self.order - 2):
-                x = self.elt(poly_mul(x, g, self.p))
-                if x == self.one:
-                    break
-                exp.append(x)
-            if len(exp) == self.order - 1:
-                return {a: i for i, a in enumerate(exp)}, tuple(exp)
-        raise AssertionError("no primitive element found")  # unreachable
+        n = self.order - 1
+        cofactors = tuple(n // r for r in _prime_factors(n))
+        generic_pow = lambda a, e: self.elt(poly_powmod(a, e, self.modulus, self.p))  # noqa: E731
+        g = next(g for g in self.elements() if g != self.zero and all(generic_pow(g, c) != self.one for c in cofactors))
+        exp, x = [self.one], self.one
+        for _ in range(n - 1):
+            x = self._mul_generic(x, g)
+            exp.append(x)
+        return {a: i for i, a in enumerate(exp)}, tuple(exp)
+
+    @cached_property
+    def _reduction(self) -> tuple[Poly, ...]:
+        """t^d for d in [k, 2k-2], reduced modulo the modulus (rows of length k)."""
+        return tuple(self.elt((0,) * d + (1,)) for d in range(self.k, 2 * self.k - 1))
+
+    def _mul_generic(self, a: Poly, b: Poly) -> Poly:
+        k, p = self.k, self.p
+        prod = [0] * (2 * k - 1)
+        for i, x in enumerate(a):
+            if x:
+                for j, y in enumerate(b):
+                    prod[i + j] += x * y
+        out = prod[:k]
+        for d in range(k, 2 * k - 1):
+            c = prod[d]
+            if c:
+                row = self._reduction[d - k]
+                for i in range(k):
+                    out[i] += c * row[i]
+        return tuple(x % p for x in out)
 
     def mul(self, a: Poly, b: Poly) -> Poly:
         t = self._tables
         if t is None:
-            return self.elt(poly_mul(a, b, self.p))
+            return self._mul_generic(a, b)
         if a == self.zero or b == self.zero:
             return self.zero
         log, exp = t
@@ -341,7 +361,7 @@ class GF:
     def pdivmod(self, f, g):
         g = self.ptrim(g)
         f = list(self.ptrim(f))
-        inv = self.inv(g[-1])
+        inv = self.one if g[-1] == self.one else self.inv(g[-1])
         q = [self.zero] * max(0, len(f) - len(g) + 1)
         for i in range(len(f) - len(g), -1, -1):
             c = self.mul(f[i + len(g) - 1], inv)
@@ -363,7 +383,13 @@ class GF:
         inv = self.inv(f[-1])
         return tuple(self.mul(inv, x) for x in f)
 
+    def pmonic(self, f):
+        f = self.ptrim(f)
+        inv = self.inv(f[-1])
+        return tuple(self.mul(inv, x) for x in f)
+
     def ppowmod(self, f, e, m):
+        m = self.pmonic(m)
         result, base = (self.one,), self.pmod(f, m)
         while e:
             if e & 1:
@@ -384,6 +410,22 @@ class GF:
         g = self.pgcd(g, self.psub(self.ppowmod(x, self.order, g), x))  # the part that splits here
         return self._split(g)
 
+    def equal_degree_factors(self, f, d: int) -> list[tuple[Poly, ...]]:
+        """Monic irreducible factors of a squarefree f all of whose irreducible factors have degree d
+        (Cantor–Zassenhaus with exponent (q^d - 1)/2; p odd)."""
+        f = self.pmonic(f)
+        if len(f) - 1 == d:
+            return [f]
+        rng = random.Random(len(f) * 104729 + d)
+        e = (self.order**d - 1) // 2
+        for _ in range(64 * len(f)):
+            r = tuple(tuple(rng.randrange(self.p) for _ in range(self.k)) for _ in range(len(f) - 1))
+            h = self.psub(self.ppowmod(self.ptrim(r), e, f), (self.one,))
+            g = self.pgcd(f, h)
+            if 1 < len(g) < len(f):
+                return self.equal_degree_factors(g, d) + self.equal_degree_factors(self.pdivmod(f, g)[0], d)
+        raise AssertionError("no splitting element found")
+
     def _split(self, g) -> list[Poly]:
         g = self.ptrim(g)
         if len(g) <= 1:
@@ -392,12 +434,15 @@ class GF:
             return [self.neg(self.mul(g[0], self.inv(g[1])))]
         if self.p == 2:
             raise NotImplementedError("Cantor–Zassenhaus splitting implemented for odd p only")
-        for r in self.elements():
+        rng = random.Random(len(g) * 7919 + sum(sum(c) for c in g))  # deterministic per input
+        g = self.pmonic(g)
+        for _ in range(64 * len(g)):
+            r = tuple(rng.randrange(self.p) for _ in range(self.k))
             h = self.psub(self.ppowmod((r, self.one), (self.order - 1) // 2, g), (self.one,))
             d = self.pgcd(g, h)
             if 1 < len(d) < len(g):
                 return self._split(d) + self._split(self.pdivmod(g, d)[0])
-        raise AssertionError("no splitting element found")  # unreachable for a split squarefree g
+        raise AssertionError("no splitting element found")  # probability ~ 2^-64 for a split squarefree g
 
     def eval_poly(self, coeffs: tuple[Poly, ...], x: Poly) -> Poly:
         acc = self.zero

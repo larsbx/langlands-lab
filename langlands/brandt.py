@@ -12,13 +12,14 @@ tests *check* against independent data, not something assumed.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from functools import cached_property
+from functools import cache, cached_property
 
 import sympy as sp
 
 from .gf import GF, Poly
-from .modular_polynomial import phi_univariate
+from .modular_polynomial import MODULAR_POLYNOMIALS, phi_univariate
 from .supersingular import automorphism_count, field_p2, supersingular_j_invariants
+from .velu import VeluBrandt
 
 
 @dataclass(frozen=True)
@@ -40,9 +41,13 @@ class SupersingularLocus:
     def aut_orders(self) -> tuple[int, ...]:
         return tuple(automorphism_count(self.F, j) for j in self.j)
 
+    @cache
     def brandt_matrix(self, ell: int) -> sp.Matrix:
+        """B(ell): via Phi_ell for ell in {2, 3}, via Vélu (velu.py) for any other odd prime ell != p."""
         if ell == self.p:
             raise ValueError("ell must differ from p")
+        if ell not in MODULAR_POLYNOMIALS:
+            return self.brandt_matrix_velu(ell)
         n = len(self.j)
         B = sp.zeros(n, n)
         for i, ji in enumerate(self.j):
@@ -54,6 +59,12 @@ class SupersingularLocus:
                     raise AssertionError("ell-isogenous curve is not supersingular")
                 B[i, self.index[r]] += mult
         return B
+
+    def brandt_matrix_velu(self, ell: int) -> sp.Matrix:
+        """B(ell) for odd ell != p from ell-isogenies computed by Vélu's formulas (no modular polynomial)."""
+        if ell == self.p or ell % 2 == 0 or not sp.isprime(ell):
+            raise ValueError("ell must be an odd prime different from p")
+        return sp.Matrix(VeluBrandt(self.p, self.F, self.j, ell).rows)
 
     def hecke_operator(self, n: int) -> sp.Matrix:
         """B(n) for n = prod ell^e via the Hecke relations
@@ -90,11 +101,11 @@ def ramanujan_violations(hecke_poly: sp.Poly, ell: int) -> tuple[int, int]:
     """(number of non-real roots, number of roots with lambda^2 > 4 ell), exactly, by Sturm counts.
     Ramanujan–Petersson (Deligne) predicts (0, 0): the isogeny graph is Ramanujan."""
     x, y = sp.symbols("x y")
-    d = hecke_poly.degree()
-    if d == 0:
+    if hecke_poly.degree() == 0:
         return 0, 0
-    non_real = d - hecke_poly.count_roots()
-    G = sp.Poly(sp.resultant(hecke_poly.as_expr(), y - x**2, x), y)  # roots are the lambda^2
+    H = sp.Poly(sp.quo(hecke_poly, sp.gcd(hecke_poly, hecke_poly.diff(x))), x)  # squarefree part: Sturm counts distinct roots
+    non_real = H.degree() - H.count_roots()
+    G = sp.Poly(sp.resultant(H.as_expr(), y - x**2, x), y)  # roots are the lambda^2
     while G.eval(4 * ell) == 0:  # equality is allowed by the bound
         G = sp.Poly(sp.quo(G.as_expr(), y - 4 * ell, y), y)
     return non_real, G.count_roots(4 * ell, None)

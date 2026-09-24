@@ -20,9 +20,18 @@ Example, p = 11 (j = 0, 1728, |Aut| = 6, 4):
 B(2) = [[0, 3], [2, 1]]      B(3) = [[1, 3], [2, 2]]
 ```
 
+### 2.2b Brandt matrices by Vélu (COMPUTED; `velu.py`)
+For odd ℓ ≠ p: twist each supersingular j to the model over 𝔽_{p²} with
+#E = (p ∓ 1)², so Frobenius is the scalar ±p and every ℓ-subgroup is rational;
+factor the division polynomial f_ℓ over 𝔽_{p²} into its degree-k Frobenius-orbit
+factors (k = ord of ±p mod ℓ up to sign), lift each to 𝔽_{p^{2k}}, group the
+x-coordinates into the ℓ+1 subgroups by x-only multiplication, and apply Vélu.
+B(3) by Vélu equals B(3) by Φ₃ for all p ≤ 31; B(5), B(7) commute with B(2), B(3).
+
 ### 2.3 Eichler's trace formula (COMPUTED, both sides)
-Spectral side: tr B(n) for n ∈ {1,2,3,4,6,8,9,12} from adjacency and the Hecke
-relations B(ℓ²) = B(ℓ)² − ℓ, B(mn) = B(m)B(n).
+Spectral side: tr B(n) for n ∈ {1,2,3,4,6,8,9,12} and, with Vélu, n ∈
+{5,7,10,14,15,21,25,35,49}, from adjacency and the Hecke relations
+B(ℓ²) = B(ℓ)² − ℓ, B(mn) = B(m)B(n).
 Geometric side, class numbers only:
 
     tr B(n) = [n = □]·(p−1)/12 + Σ_{s² < 4n} Σ_{f: p∤f} h(d)/w(d) · (1 − (d/p)),  d = (s²−4n)/f².
@@ -49,7 +58,9 @@ k ≤ 36, and a₂ = 216, −528, 456 for k = 16, 18, 20, tr T₂ = 1080 for k =
 For each rational newform of prime level p ≤ 101 (Cremona model, discriminant
 checked to be ±p^k), a₂, a₃ are point counts over 𝔽₂, 𝔽₃.  A common eigenvector
 of B(2), B(3) with exactly these eigenvalues exists and the joint eigenspace has
-dimension = number of such forms (multiplicity one).  Hecke polynomials:
+dimension = number of such forms (multiplicity one).  For levels ≤ 37 the joint
+eigenvector of B(2), B(3), B(5), B(7) with eigenvalues a₂, a₃, a₅, a₇ exists too.
+Hecke polynomials:
 
 | p | H₂(x) |
 |---|---|
@@ -65,7 +76,7 @@ tr B(ℓ) − (ℓ+1) = Σ_E a_ℓ(E) for ℓ ≤ 31 — Eichler's formula again
 primes where no Φ_ℓ is available.
 
 ### 2.6 Ramanujan–Petersson (COMPUTED; Deligne IMPORTED as the reason)
-For p ≤ 71 and ℓ ∈ {2,3}: the Hecke polynomial is real-rooted and no root has
+For p ≤ 71 and ℓ ∈ {2,3}, and p ≤ 37 and ℓ ∈ {5,7}: the Hecke polynomial is real-rooted and no root has
 λ² > 4ℓ (Sturm counts on H and on the resultant G(y) = ∏(y − λᵢ²)).  So each
 graph is Ramanujan.  The Apollonian λ₂ measurements are *not* this theorem:
 there the spectral gap for congruence quotients comes from Selberg's 3/16 and
@@ -111,6 +122,24 @@ degree 4 (p = 5: 8, 12, 32, 152 closed points of degree 1..4) and 3 (p = 7).
   H¹, and it is the same 37a1 eigenvalue Brandt sees at level 37.
 The degree twist χ·α^{deg} gives L(χ, αT); nothing new.
 
+## Lean 4 in the oracle loop (`lean/`, core Lean 4.34, no Mathlib)
+
+Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by
+`decide` or `decide +kernel`; the Lean kernel evaluated both sides.  No
+`native_decide`, no `sorry`, no axioms beyond Lean's core.
+
+| certificate | statement | side recomputed in Lean |
+|---|---|---|
+| `class_numbers` | Gauss's table for 23 discriminants | reduced-form enumeration |
+| `eichler_selberg_tau` | tr T_n | S₁₂ = τ(n), n ≤ 20, division by 24 exact | Hurwitz numbers, Zagier's formula, Δ's product |
+| `eichler_selberg_dims` | dim S_k for k ≤ 26 | same |
+| `fermat_carlitz_small` | C_P ≡ x^{|P|} (mod P), 8 cases | Carlitz p-polynomials over 𝔽_p[t] |
+| `brandt_certificates` | for p ≤ 37 and ℓ ∈ {2,3,5,7}: row sums ℓ+1, commutation, B·diag(w) symmetric, 12·tr B(n) = Eichler's formula for n ∈ {1, ℓ, ℓ², ℓℓ'} | class numbers, Legendre symbols, Eichler's formula, Hecke relations (data: Python) |
+| `lseries_certificates` | 37a1 mod 5, 7: every L(χ,T) coefficient vanishes mod Φ_N for χ ≠ 1 (not termwise); χ = 1 gives Z(E,T) | Φ_N by divisor recursion, polynomial remainder over ℤ, zeta recursion (data: Python) |
+
+The bridge is `tools/export_lean_data.py`; the gate `tests/test_lean_gate.py`
+regenerates the data (must be byte-identical) and runs `lake build`.
+
 ## Branch 3 — Carlitz module, seed of the function-field act
 
 C_t(x) = tx + x^p over A = 𝔽_p[t].  COMPUTED for p ∈ {2,3,5}, deg P ≤ 3:
@@ -123,4 +152,5 @@ C_t(x) = tx + x^p over A = 𝔽_p[t].  COMPUTED for p ∈ {2,3,5}, deg P ≤ 3:
 
 Next act (not code): harmonic cochains on Γ₀(𝔫)\𝒯 for the (q+1)-regular
 Bruhat–Tits tree of PGL₂(𝔽_q((1/t))), T_𝔭 as adjacency, Drinfeld's rank-2
-matching; then V. Lafforgue's excursion relations as a Lean 4 target.
+matching; then V. Lafforgue's excursion relations as a Lean 4 target, for which
+the `lean/` project (finite combinatorics, kernel-checked) is the substrate.

@@ -1,0 +1,34 @@
+"""Lean 4 in the oracle loop: Lean recomputes the arithmetic side and certifies exported data.
+
+The gate fails, never skips, when `lake` is missing (install: https://github.com/leanprover/elan).
+"""
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+LEAN = ROOT / "lean"
+
+
+def lake() -> str:
+    found = shutil.which("lake") or shutil.which("lake", path=str(Path.home() / ".elan" / "bin"))
+    if not found:
+        pytest.fail("lake not found: install elan (https://github.com/leanprover/elan); the Lean gate never skips")
+    return found
+
+
+@pytest.mark.slow
+def test_exported_data_is_deterministic_and_current():
+    r = subprocess.run(["python3", str(ROOT / "tools" / "export_lean_data.py"), "--check"], cwd=ROOT)
+    assert r.returncode == 0, "lean/LanglandsOracles/Data.lean is stale: run tools/export_lean_data.py"
+
+
+@pytest.mark.slow
+def test_lean_certificates_build():
+    env = {**os.environ, "PATH": f"{Path.home() / '.elan' / 'bin'}:{os.environ.get('PATH', '')}"}
+    r = subprocess.run([lake(), "build"], cwd=LEAN, capture_output=True, text=True, env=env)
+    assert r.returncode == 0, r.stdout[-4000:] + r.stderr[-4000:]
+    assert "sorry" not in r.stdout

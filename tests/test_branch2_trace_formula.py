@@ -134,3 +134,37 @@ def test_hecke_polynomials_with_irrational_eigenvalues(p):
 def test_isogeny_graph_is_ramanujan(p, ell):
     H = SupersingularLocus.of(p).hecke_polynomial(ell)
     assert ramanujan_violations(H, ell) == (0, 0)
+
+
+# ------------------------------------------------ Vélu (no modular polynomial) --
+@pytest.mark.parametrize("p", (11, 13, 17, 19, 23, 29, 31))
+def test_velu_reproduces_phi3_brandt_matrix(p):
+    L = SupersingularLocus.of(p)
+    assert L.brandt_matrix_velu(3) == L.brandt_matrix(3)
+
+
+@pytest.mark.parametrize("p", (11, 13, 17, 19, 23, 29, 31, 37))
+def test_brandt_5_7_traces_and_commutation(p):
+    """B(5), B(7) by Vélu: Eichler's formula at n = 5, 7, 25, 35, 49, 10, 14, 15, 21; commute with B(2), B(3)."""
+    L = SupersingularLocus.of(p)
+    for n in (5, 7, 10, 14, 15, 21, 25, 35, 49):
+        if n % p:
+            assert L.hecke_operator(n).trace() == eichler_brandt_trace(p, n), (p, n)
+    B = {ell: L.brandt_matrix(ell) for ell in (2, 3, 5, 7) if ell != p}
+    for x in B.values():
+        for y in B.values():
+            assert (x * y - y * x).is_zero_matrix
+
+
+@pytest.mark.parametrize("f", [f for f in CREMONA_PRIME_LEVEL if f.conductor <= 37], ids=lambda f: f.label)
+def test_jacquet_langlands_at_2_3_5_7(f):
+    L = SupersingularLocus.of(f.conductor)
+    eig = {ell: f.a(ell) for ell in (2, 3, 5, 7) if ell != f.conductor}
+    assert L.common_eigenvector(eig) is not None, (f.label, eig)
+
+
+@pytest.mark.parametrize("p", (11, 13, 17, 19, 23, 29, 31, 37))
+@pytest.mark.parametrize("ell", [5, 7])
+def test_isogeny_graph_is_ramanujan_at_5_and_7(p, ell):
+    if ell != p:
+        assert ramanujan_violations(SupersingularLocus.of(p).hecke_polynomial(ell), ell) == (0, 0)
