@@ -300,10 +300,11 @@ class GF:
         return exp[e // 2] if e % 2 == 0 else None
 
     def sqrts(self, a: Poly) -> tuple[Poly, ...]:
+        """All square roots of a: none, one (a = 0, or characteristic 2 where -r = r), or two."""
         r = self.sqrt(a)
         if r is None:
             return ()
-        return (r,) if r == self.zero else (r, self.neg(r))
+        return (r,) if r == self.zero or self.p == 2 else (r, self.neg(r))
 
     def multiplicative_order(self, a: Poly) -> int:
         if a == self.zero:
@@ -402,12 +403,11 @@ class GF:
         return self.ptrim(tuple(self.scale(i, c) for i, c in enumerate(f))[1:])
 
     def _distinct_roots_cz(self, f: tuple[Poly, ...]) -> list[Poly]:
-        """Distinct roots in this field: squarefree part, keep the part splitting here
-        (gcd with x^q - x), then split with (x + r)^{(q-1)/2} - 1 over successive r (p odd)."""
+        """Distinct roots in this field: g = gcd(f, x^q - x) = prod (x - r) over the roots r in K
+        (squarefree by construction, so inseparable f is handled), then split g with
+        (x + r)^{(q-1)/2} - 1 over random r (p odd)."""
         x = (self.zero, self.one)
-        sqf = self.pgcd(f, self.pderiv(f))
-        g = f if len(sqf) <= 1 else self.pdivmod(f, sqf)[0]
-        g = self.pgcd(g, self.psub(self.ppowmod(x, self.order, g), x))  # the part that splits here
+        g = self.pgcd(f, self.psub(self.ppowmod(x, self.order, f), x))
         return self._split(g)
 
     def equal_degree_factors(self, f, d: int) -> list[tuple[Poly, ...]]:
