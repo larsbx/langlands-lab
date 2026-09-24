@@ -1,0 +1,14 @@
+[project]
+name = "langlands-lab"
+version = "0.1.0"
+description = "Exact finite-field instrumentation of three Langlands entry points"
+requires-python = ">=3.11"
+dependencies = ["sympy>=1.12"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "hypothesis>=6"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: exhaustive checks over larger fields (deselect with -m 'not slow')"]
+addopts = "-q"
