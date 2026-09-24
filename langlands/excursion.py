@@ -105,7 +105,7 @@ class ExcursionData:
         )
 
     def relations_hold(self, f: Callable, arity: int) -> bool:
-        """(E1) for every map ζ: I → I, (E2) for f·f, (E3) composition, over all γ, γ' ∈ Γ^I."""
+        """(E1) for every map ζ: I → I, (E2) for f·f and for constants, (E3) composition, over all γ, γ' ∈ Γ^I."""
         Gm, G = self.Gamma, self.Ghat
         tuples = list(product(Gm.elements, repeat=arity))
         # E1
@@ -114,9 +114,11 @@ class ExcursionData:
             for gamma in tuples:
                 if self.theta(pulled, gamma) != self.theta(f, tuple(gamma[zeta[i]] for i in range(arity))):
                     return False
-        # E2
+        # E2, including unitality: constants map to constants
         ff = lambda x: f(x) * f(x)  # noqa: E731
         if any(self.theta(ff, gamma) != self.theta(f, gamma) ** 2 for gamma in tuples):
+            return False
+        if any(self.theta(lambda _x, c=c: c, gamma) != c for c in (0, 1, 7) for gamma in tuples):
             return False
         # E3: f̃(x ⊔ x' ⊔ x'') = f(x_i x''_i^{-1} x'_i) at (γ, γ', 1)
         tilde = lambda x: f(tuple(G.mul(G.mul(x[i], G.inv(x[2 * arity + i])), x[arity + i]) for i in range(arity)))  # noqa: E731

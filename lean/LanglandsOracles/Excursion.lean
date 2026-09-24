@@ -8,7 +8,7 @@ They generate a commutative algebra B acting on cuspidal automorphic forms; a ch
 les groupes réductifs, §10; Introduction to chtoucas, Prop. 3.x) are:
 
   (E1)  S_{J, f^ζ, (γ_j)} = S_{I, f, (γ_{ζ(i)})}                       for ζ : I → J, f^ζ(x) = f(x ∘ ζ);
-  (E2)  f ↦ S_{I, f, (γ_i)} is an algebra homomorphism;
+  (E2)  f ↦ S_{I, f, (γ_i)} is a unital algebra homomorphism (constants map to constants);
   (E3)  S_{I, f, (γ_i γ'_i)} = S_{I ⊔ I ⊔ I, f̃, (γ_i) ⊔ (γ'_i) ⊔ (1)}   with f̃(x ⊔ x' ⊔ x'') = f(x_i x''_i^{-1} x'_i).
 
 Galois side ⇒ excursion data: a homomorphism ρ : Γ → Ĝ gives Θ_I(f)(γ) = f(ρ ∘ γ), and (E1)–(E3)
@@ -111,6 +111,9 @@ theorem lrInvariant_tilde {Ĝ k I : Type} (g : Grp Ĝ) (f : (I → Ĝ) → k)
 /-- Excursion data with values in a ring k: a character of the excursion algebra. -/
 structure ExcursionData {Γ Ĝ : Type} (gΓ : Grp Γ) (gĜ : Grp Ĝ) (k : Type) [Mul k] [Add k] where
   Θ : ∀ {I : Type}, ((I → Ĝ) → k) → (I → Γ) → k
+  /-- k-linearity and unitality of the character: the constant function c ∈ O(Ĝ\Ĝ^I/Ĝ) has value c
+  (with `map_mul` this gives Θ(c·f) = c·Θ(f) and Θ(1) = 1; without it Θ ≡ 0 would qualify). -/
+  map_const : ∀ {I : Type} (c : k) (γ : I → Γ), Θ (fun _ => c) γ = c
   functorial : ∀ {I J : Type} (ζ : I → J) (f : (I → Ĝ) → k), LRInvariant gĜ f →
     ∀ γ : J → Γ, Θ (pullback ζ f) γ = Θ f (fun i => γ (ζ i))
   map_mul : ∀ {I : Type} (f f' : (I → Ĝ) → k), LRInvariant gĜ f → LRInvariant gĜ f' →
@@ -124,6 +127,7 @@ structure ExcursionData {Γ Ĝ : Type} (gΓ : Grp Γ) (gĜ : Grp Ĝ) (k : Type) 
 def ExcursionData.ofHom {Γ Ĝ : Type} {gΓ : Grp Γ} {gĜ : Grp Ĝ} (k : Type) [Mul k] [Add k]
     (ρ : Hom gΓ gĜ) : ExcursionData gΓ gĜ k where
   Θ := fun f γ => f (fun i => ρ.toFun (γ i))
+  map_const := by intros; rfl
   functorial := by intros; rfl
   map_mul := by intros; rfl
   map_add := by intros; rfl
@@ -167,6 +171,11 @@ theorem hecke_eq_character {Γ Ĝ : Type} {gΓ : Grp Γ} {gĜ : Grp Ĝ} (k : Typ
     (ExcursionData.ofHom k ρ).Θ (heckeFun gĜ χ) (fun b => if b then frob else gΓ.one) = χ (ρ.toFun frob) := by
   show χ (gĜ.mul (ρ.toFun frob) (gĜ.inv (ρ.toFun gΓ.one))) = χ (ρ.toFun frob)
   rw [ρ.map_one, gĜ.inv_one, gĜ.mul_one]
+
+/-- Unitality: Θ_I(1)(γ) = 1 for every excursion datum (a consequence of `map_const`). -/
+theorem ExcursionData.map_one {Γ Ĝ : Type} {gΓ : Grp Γ} {gĜ : Grp Ĝ} {k : Type} [Mul k] [Add k] [OfNat k 1]
+    (D : ExcursionData gΓ gĜ k) {I : Type} (γ : I → Γ) : D.Θ (fun _ => (1 : k)) γ = 1 :=
+  D.map_const 1 γ
 
 /-- Excursion values commute when k does: the excursion algebra is commutative on a character. -/
 theorem excursion_comm {Γ Ĝ : Type} {gΓ : Grp Γ} {gĜ : Grp Ĝ} {k : Type} [Mul k] [Add k]
