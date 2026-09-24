@@ -7,3 +7,6 @@ import LanglandsOracles.Data
 import LanglandsOracles.BrandtCertificates
 import LanglandsOracles.LSeriesCertificates
 import LanglandsOracles.FunctionFieldCertificates
+import LanglandsOracles.Excursion
+import LanglandsOracles.Pseudocharacter
+import LanglandsOracles.ExcursionInstance

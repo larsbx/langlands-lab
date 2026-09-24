@@ -138,7 +138,9 @@ Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by
 | `lseries_certificates` | 37a1 mod 5, 7: every L(χ,T) coefficient vanishes mod Φ_N for χ ≠ 1 (not termwise); χ = 1 gives Z(E,T) | Φ_N by divisor recursion, polynomial remainder over ℤ, zeta recursion (data: Python) |
 
 The bridge is `tools/export_lean_data.py`; the gate `tests/test_lean_gate.py`
-regenerates the data (must be byte-identical) and runs `lake build`.
+regenerates the data (must be byte-identical), runs `lake build`, and runs
+`lean/Audit.lean` (`#print axioms`): every certificate depends on at most `propext`
+and `Quot.sound` — no `sorryAx`, no `Lean.ofReduceBool`.
 
 ## Branch 3 — Carlitz module, seed of the function-field act
 
@@ -223,5 +225,45 @@ deg a₂ = 2, forced by c₄ = a₂² in characteristic 3) finds them:
 Each is a joint eigenvector of the five T_𝔭 on the cusp forms; the two are swapped
 by t ↦ 2t, as are t+1 and t+2.
 
-Next act (not code): V. Lafforgue's excursion relations as a Lean 4 target, for which
-the `lean/` project (finite combinatorics, kernel-checked) is the substrate.
+## Branch 3, third act — the excursion algebra in Lean (`lean/LanglandsOracles/Excursion*.lean`, `Pseudocharacter.lean`, `excursion.py`)
+
+Status vocabulary: **PROVED** = a Lean theorem with a term-level proof (no `decide`);
+**KERNEL** as before.
+
+### 3.5 The excursion relations, abstractly (PROVED, core Lean, no Mathlib)
+`Grp`, `Hom`, and `LRInvariant g f` (functions on Ĝ^I invariant under left and right
+diagonal multiplication: 𝒪(Ĝ\Ĝ^I/Ĝ)).  `ExcursionData gΓ gĜ k` packages V. Lafforgue's
+relations for a character of the excursion algebra with values in k:
+- (E1) `functorial`: Θ_J(f^ζ)(γ) = Θ_I(f)(γ∘ζ) for ζ: I → J;
+- (E2) `map_mul`, `map_add`: f ↦ Θ_I(f)(γ) is a ring homomorphism;
+- (E3) `compose`: Θ_I(f)(γ_iγ'_i) = Θ_{I⊔I⊔I}(f̃)(γ ⊔ γ' ⊔ 1), f̃(x⊔x'⊔x'') = f(x_i x''_i⁻¹ x'_i).
+
+Theorems: `lrInvariant_pullback`, `lrInvariant_tilde` (the constructions stay in
+𝒪(Ĝ\Ĝ^I/Ĝ)); `ExcursionData.ofHom ρ` — every homomorphism ρ: Γ → Ĝ gives excursion data
+Θ_I(f)(γ) = f(ρ∘γ) satisfying (E1)–(E3) (the Galois-to-excursion direction);
+`ofHom_const` — on constant tuples the value is f(1,…,1); `heckeFun`, `lrInvariant_heckeFun`,
+and `hecke_eq_character`: the unramified Hecke operator is the excursion operator of
+f_V(g₀,g₁) = χ_V(g₀g₁⁻¹) at (Frob_v, 1), with value χ_V(ρ(Frob_v)) on ρ-data;
+`excursion_comm`.  IMPORTED (not formalised): Lafforgue's converse, excursion data ⇒
+Ĝ-pseudocharacter ⇒ semisimple parameter.
+
+### 3.6 GL₂-pseudocharacters (KERNEL)
+`procesi_GL2_F2`, `procesi_GL2_F3`: Σ_{σ∈S₃} sgn(σ) T_σ(g₁,g₂,g₃) = 0 for T = trace on every
+triple of GL₂(𝔽₂) (6³) and GL₂(𝔽₃) (48³ = 110 592 triples; ≈ 3 min in the kernel), the
+defining relation of a 2-dimensional pseudocharacter.  Python checks the same (`procesi_identity_holds`).
+
+### 3.7 An arithmetic excursion instance: the mod-3 parameter of 37a1 (KERNEL + COMPUTED)
+- `brandt_eigenvector_37a1`: the exported v = (−1, 1, 0) on the supersingular locus at p = 37
+  satisfies B(ℓ)v = a_ℓ v for ℓ ∈ {2,3,5,7} with (a₂,a₃,a₅,a₇) = (−2,−3,−2,−1) (automorphic
+  side: the JL form of 37a1); `brandt_eigenvalues_match_point_counts`: a₅, a₇ agree with
+  Lean's own point counts on y² = x³ − 1296x + 11664; `ap_37a1_table` for all good p ≤ 61.
+- `mod3_excursion_37a1`: for every good p ≤ 61, [ψ₃ has an 𝔽_p-root] ⇔ [x² − a_p x + p has a
+  root ±1 mod 3].  Galois side: ρ̄₃(Frob_p) has an eigenvector in E[3] with eigenvalue ±1 iff
+  some 3-torsion point has rational x-coordinate; automorphic side: the Hecke eigenvalue a_p.
+  The class function "has eigenvalue ±1" is the excursion evaluation used.
+- Python (`test_branch3_excursion.py`): the same equivalence for all 15 Cremona curves and
+  all good p < 400, and the mod-2 version: the class of Frob_p in Gal(ℚ(E[2])/ℚ) ⊆ GL₂(𝔽₂) = S₃
+  read from the factorisation of the 2-division cubic has trace a_p mod 2 — the mod-2
+  Langlands correspondence for these curves, fully explicit.
+- `ExcursionData.of_hom` on GL₂(𝔽₂) with (E1)–(E3) checked exhaustively for |I| = 2 on the
+  Hecke functions: the finite shadow of the Lean structure.

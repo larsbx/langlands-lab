@@ -12,6 +12,7 @@ computed and which theorem the match instantiates.
 | 2 | S_k(SL₂(ℤ)) | Zagier's form of Eichler–Selberg from Hurwitz class numbers; τ(n) from Δ's q-expansion | the simplest fully explicit Arthur–Selberg instance |
 | 1 | E = 37a1 mod p, p ∈ {5, 7} | Lang-isogeny fibers; χ∘N on Pic⁰(𝔽_{pᵏ}); Abel sums of lines; tame symbols from Laurent expansions; L(χ, T) as an Euler product in ℤ[ζ][[T]] | unramified geometric CFT for GL₁: L_χ ↔ character sheaf A_χ, L(E, L_χ) = 1 ≠ Z(E, T), Weil reciprocity with the Deligne sign |
 | 3 | Carlitz module over 𝔽_p[t] | C_P ≡ x^{|P|} (mod P); Frob_P = C_P on C[M]; splitting degrees = ord of P in (A/ann λ)^× | function-field CFT for GL₁ (Carlitz–Hayes) |
+| 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity on GL₂(𝔽₃) by kernel; mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p | the shape "Galois side = commutative algebra of operators on automorphic functions", with the converse (Lafforgue) imported |
 | 3 | Bruhat–Tits tree of PGL₂(𝔽_q((1/t))) | GL₂(𝔽_q[t]) reduction (Serre's half-line computed), Γ₀(𝔫)\𝒯 via ℙ¹(A/𝔫), cuspidal harmonic cochains, Hecke operators T_𝔭; elliptic curves over 𝔽₂(t) with a_𝔭 by point counts and L(E,T) by Euler product | Gekeler's genus, Drinfeld's Ramanujan bound, Drinfeld's dictionary for GL₂: the level-t³ and level-t⁴ eigenforms over 𝔽₂(t) are y² + txy = x³ + x and y² + txy + t²y = x³ + x + t³ + t² + t |
 
 **Lean 4 in the oracle loop** (`lean/`): core Lean, no Mathlib, no `native_decide`,
@@ -46,6 +47,7 @@ langlands/
   local_field.py        F_q((1/t)) as exact Laurent polynomials with truncated division
   bruhat_tits.py        branch 3: tree, reduction, Gamma_0(n)\T, harmonic cochains, Hecke operators
   ec_function_field.py  elliptic curves over F_q(t): reduction types, a_p by point count, L(E,T)
+  excursion.py          third act: GL_2 pseudocharacter identity, mod-ell excursion checks, finite excursion data
 tests/                  one file per branch + the Lean gate; all exact, no floating point
 tools/export_lean_data.py  Python → Lean data bridge (deterministic; checked by the gate)
 lean/                   lake project LanglandsOracles: oracles + kernel-checked certificates
@@ -57,7 +59,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 209 tests (~40 s with a warm lake cache; first Lean build ~2 min)
+pytest                      # all branches + Lean gate, 216 tests (~40 s with a warm lake cache; first Lean build ~2 min)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py
@@ -85,4 +87,7 @@ pytest tests/test_branch3_carlitz.py
   (Aut(𝒪 ⊕ 𝒪(n))) and checks everything else; conductor exponents at wild places
   (t in characteristic 2) are not computed, so "level t³" for E_{t³} is read off
   from the eigenvalue match and deg L = deg N − 4, not from Tate's algorithm.
-- The excursion-algebra target (branch 3, third act) is a plan, not code.
+- The excursion formalisation proves the Galois-to-excursion direction and the Hecke
+  identification; Lafforgue's converse (excursion data ⇒ parameter) is imported, and the
+  finite instances certify class-function evaluations of mod-ℓ parameters at Frobenius
+  elements, not the ℓ-adic parameter itself.

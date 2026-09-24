@@ -1,0 +1,12 @@
+import LanglandsOracles
+open Oracles
+#print axioms ExcursionData.ofHom
+#print axioms hecke_eq_character
+#print axioms lrInvariant_tilde
+#print axioms procesi_GL2_F3
+#print axioms mod3_excursion_37a1
+#print axioms brandt_eigenvector_37a1
+#print axioms brandt_certificates
+#print axioms lseries_certificates
+#print axioms function_field_l_functions
+#print axioms eichler_selberg_tau
