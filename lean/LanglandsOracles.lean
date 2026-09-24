@@ -6,3 +6,4 @@ import LanglandsOracles.Certificates
 import LanglandsOracles.Data
 import LanglandsOracles.BrandtCertificates
 import LanglandsOracles.LSeriesCertificates
+import LanglandsOracles.FunctionFieldCertificates

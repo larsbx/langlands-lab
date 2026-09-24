@@ -150,7 +150,78 @@ C_t(x) = tx + x^p over A = 𝔽_p[t].  COMPUTED for p ∈ {2,3,5}, deg P ≤ 3:
   in K(C[M]) exactly as p splits in ℚ(ζ_m).
 - C[M] ≅ A/M (|M| distinct roots, a generator exists).
 
-Next act (not code): harmonic cochains on Γ₀(𝔫)\𝒯 for the (q+1)-regular
-Bruhat–Tits tree of PGL₂(𝔽_q((1/t))), T_𝔭 as adjacency, Drinfeld's rank-2
-matching; then V. Lafforgue's excursion relations as a Lean 4 target, for which
+## Branch 3, second act — Bruhat–Tits tree and Drinfeld's dictionary (`bruhat_tits.py`, `ec_function_field.py`)
+
+### 3.1 The tree and Serre's half-line (COMPUTED)
+𝒯 = tree of PGL₂(𝔽_q((1/t))) in the chart (k, u), u ∈ K_∞/π^k𝒪_∞: (q+1)-regular,
+symmetric adjacency (random vertices, q ∈ {2,3,5}).  GL₂(𝔽_q[t]) acts through the
+Iwasawa normal form.  The continued-fraction reduction returns γ ∈ GL₂(A) (polynomial
+entries, unit determinant) with γ·v = v_n = [𝒪 ⊕ π^n𝒪]: Serre's quotient
+GL₂(A)\𝒯 = v₀ — v₁ — v₂ — ⋯ is exhibited on every vertex tried, not quoted.
+Stab(v_n) = {[[a,b],[0,d]] : deg b ≤ n} fixes v_n and identifies all q down-neighbours
+of v_n with v_{n−1} (n ≥ 1); GL₂(𝔽_q) is transitive on the neighbours of v₀.
+IMPORTED: that these are the *full* stabilisers (Aut(𝒪 ⊕ 𝒪(n)), Weil's dictionary).
+
+### 3.2 Γ₀(𝔫)\𝒯 and cusp forms (COMPUTED; genus formula IMPORTED as the reference)
+Γ₀(𝔫)\Γ = ℙ¹(A/𝔫) by the bottom row; quotient vertices over v_n are the
+Stab(v_n)-orbits, quotient oriented edges are labelled by reducing the origin.  A
+cochain is a function on positive-oriented quotient edges below a truncation depth;
+harmonicity is imposed at every quotient vertex through the q+1 tree edges at a
+representative.  The nullspace dimension equals Gekeler's genus and the first
+Betti number of the quotient core, independently of the depth:
+
+| q | 𝔫 | genus | cusps |
+|---|---|---|---|
+| 2 | t, t²+t+1 | 0 | 2 |
+| 2 | t³+t+1, t³+t²+1 | 2 | 2 |
+| 2 | t⁴+t+1 | 4 | 2 |
+| 3 | t²+1 | 0 | 2 |
+| 3 | t³+2t+1 | 3 | 2 |
+| 5 | t³+t+1 | 5 | 2 |
+| 2 | t³ | 1 | 4 |
+| 2 | t⁴ | 3 | – |
+| 3 | t³ | 2 | – |
+
+### 3.3 Hecke operators (COMPUTED; Drinfeld's Ramanujan bound IMPORTED as the reason)
+T_𝔭 from the q^{deg 𝔭}+1 representatives [[1,b],[0,𝔭]], [[𝔭,0],[0,1]]; T_𝔭 preserves the
+cusp forms (asserted), the T_𝔭 commute, and every characteristic polynomial is
+real-rooted with |λ| ≤ 2q^{deg 𝔭/2} (exact Sturm counts).
+- 𝔫 = t³+t+1 over 𝔽₂: T_t: x²+2x−1, T_{t+1}: x²−2, T_{t²+t+1}: x²−2x−1 — irreducible,
+  so no rational eigenform; the exhaustive search over a_i of degree ≤ i (2²¹ models)
+  finds no elliptic curve of conductor 𝔫∞, consistently.
+- 𝔫 = t³+2t+1 over 𝔽₃: T_t = T_{t+1} = T_{t+2} up to conjugacy (𝔫 is invariant under
+  t ↦ t+c): x³+x²−4x+1, irreducible.
+- 𝔫 = t³ over 𝔽₂: genus 1, eigenvalues a_{t+1} = −1, a_{t²+t+1} = 1, a_{t³+t+1} = 1,
+  a_{t³+t²+1} = −3.
+- 𝔫 = t⁴ over 𝔽₂: genus 3 = the t³ form twice + one newform with a_{t+1} = 1,
+  a_{t²+t+1} = −1, a_{t³+t+1} = 1, a_{t³+t²+1} = 3.
+
+### 3.4 Drinfeld's dictionary executed (COMPUTED; the theorem IMPORTED as the interpretation)
+Galois side: elliptic curves over 𝔽₂(t) found by exhaustive search among models with
+bad reduction only at t and ∞ and split multiplicative reduction at ∞ (tangent cone
+of the node split over the residue field, computed):
+
+| curve | a-invariants | a_𝔭 at t+1, t²+t+1, t³+t+1, t³+t²+1 | L(E,T) | level |
+|---|---|---|---|---|
+| E_{t³}: y² + txy = x³ + x | (t, 0, 0, 1, 0) | −1, 1, 1, −3 | 1 | t³ |
+| E_{t⁴}: y² + txy + t²y = x³ + x + t³+t²+t | (t, 0, t², 1, t³+t²+t) | 1, −1, 1, 3 | 1 + 2T | t⁴ |
+
+The traces are point counts over 𝔽_𝔭 = GF(2, 𝔭); they coincide with the Hecke
+eigenvalues above at every 𝔭 ∤ t of degree ≤ 3, and the L-functions (Euler products
+over all places of degree ≤ 5, ∞ included) are polynomials of degree deg N − 4
+(Grothendieck), with the functional-equation coefficient ±q in the degree-1 case.
+KERNEL: `function_field_l_functions` recomputes both Euler products in Lean from the
+exported local data.
+Over 𝔽₃(t), level t³ has genus 2 with two rational eigensystems; the search (with
+deg a₂ = 2, forced by c₄ = a₂² in characteristic 3) finds them:
+
+| curve | a_𝔭 at t+1, t+2, t²+1, t²+t+2, t²+2t+2 | L(E,T) |
+|---|---|---|
+| y² = x³ + t²x² + tx + 1 | 1, −2, 1, 4, −2 | 1 |
+| y² = x³ + t²x² + 2tx + 1 | −2, 1, 1, −2, 4 | 1 |
+
+Each is a joint eigenvector of the five T_𝔭 on the cusp forms; the two are swapped
+by t ↦ 2t, as are t+1 and t+2.
+
+Next act (not code): V. Lafforgue's excursion relations as a Lean 4 target, for which
 the `lean/` project (finite combinatorics, kernel-checked) is the substrate.
