@@ -49,3 +49,23 @@ def is_zero_in_cyclotomic_field(c: Vec) -> bool:
 
 def equal_in_cyclotomic_field(a: Vec, b: Vec) -> bool:
     return is_zero_in_cyclotomic_field(tuple(x - y for x, y in zip(a, b)))
+
+
+def conjugates_polynomial(c: Vec) -> sp.Poly:
+    """prod over the embeddings sigma of Q(zeta_N) of (y - sigma(c)): Res_z(Phi_N(z), y - c(z)), exact over Z."""
+    N = len(c)
+    y, z = sp.symbols("y z")
+    return sp.Poly(sp.resultant(sp.cyclotomic_poly(N, z), y - sum(v * z**r for r, v in enumerate(c)), z), y)
+
+
+def all_conjugates_at_most(c: Vec, bound: int) -> bool:
+    """For a totally real c in Z[zeta_N] (e.g. c = a * conj(a)): every real conjugate is <= bound
+    (exact: Sturm count of the conjugates polynomial above the bound, after removing roots at the bound)."""
+    P = conjugates_polynomial(c)
+    y = P.gens[0]
+    P = sp.Poly(sp.quo(P, sp.gcd(P, P.diff(y))), y)  # squarefree part: Sturm counts distinct roots
+    if P.degree() - P.count_roots() != 0:
+        return False  # not totally real
+    while P.eval(bound) == 0:
+        P = sp.Poly(sp.quo(P.as_expr(), y - bound, y), y)
+    return P.count_roots(bound, None) == 0
