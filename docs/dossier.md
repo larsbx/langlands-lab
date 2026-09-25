@@ -276,3 +276,18 @@ defining relation of a 2-dimensional pseudocharacter.  Python checks the same (`
   Langlands correspondence for these curves, fully explicit.
 - `ExcursionData.of_hom` on GL₂(𝔽₂) with (E1)–(E3) checked exhaustively for |I| = 2 on the
   Hecke functions: the finite shadow of the Lean structure.
+
+### 3.8 The mod-ℓ parameter as a computed matrix; the Weil pairing as biextension commutator (COMPUTED + KERNEL)
+`galois_rep.py`: E[ℓ] is found over its splitting field 𝔽_{p^k} (division-polynomial roots
+and square roots by the generic root finder, no enumeration), a basis is chosen, and
+Frob_p is written in it: ρ̄_ℓ(Frob_p) ∈ GL₂(𝔽_ℓ).  For all 15 Cremona curves, all good
+p ≤ 31 and ℓ ∈ {2, 3}: tr ≡ a_p and det ≡ p (mod ℓ) — Eichler–Shimura mod ℓ as a matrix
+identity — and the splitting degree k equals the order of the matrix.
+KERNEL (`frobenius_matrices_mod3_37a1`): the exported matrices for 37a1 at all good p ≤ 61
+have trace a_p (Lean's point counts) and determinant p mod 3.
+
+The Weil pairing e_ℓ(P, Q) = f_P(D_Q)/f_Q(D_P) by Miller's algorithm is the commutator
+pairing of the Poincaré biextension (the same tame-symbol bookkeeping as §1.4); checked
+bilinear, alternating, antisymmetric, of exact order ℓ, and Galois-equivariant
+e(Frob P, Frob Q) = e(P, Q)^p, which is det ρ̄_ℓ = cyclotomic character read off the
+biextension rather than the matrix.

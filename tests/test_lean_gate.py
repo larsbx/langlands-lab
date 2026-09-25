@@ -41,4 +41,4 @@ def test_lean_axiom_audit():
     r = subprocess.run([lake(), "env", "lean", "Audit.lean"], cwd=LEAN, capture_output=True, text=True, env=env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "sorryAx" not in r.stdout and "ofReduceBool" not in r.stdout, r.stdout
-    assert r.stdout.count("depends on axioms") + r.stdout.count("does not depend on any axioms") == 11
+    assert r.stdout.count("depends on axioms") + r.stdout.count("does not depend on any axioms") == 12

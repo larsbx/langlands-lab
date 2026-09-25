@@ -49,6 +49,7 @@ langlands/
   ec_function_field.py  elliptic curves over F_q(t): reduction types, a_p by point count, L(E,T)
   excursion.py          third act: GL_2 pseudocharacter identity, mod-ell excursion checks, finite excursion data
   tate.py               Tate's algorithm over an exact DVR (Z_(p), F_p[t]_(pi), oo): Kodaira type, conductor exponent, Tamagawa
+  galois_rep.py         rho_ell(Frob_p) on E[ell] as a matrix over the splitting field; Weil pairing by Miller (biextension commutator)
 tests/                  one file per branch + the Lean gate; all exact, no floating point
 tools/export_lean_data.py  Python → Lean data bridge (deterministic; checked by the gate)
 lean/                   lake project LanglandsOracles: oracles + kernel-checked certificates
@@ -60,7 +61,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 236 tests (~40 s with a warm lake cache; first Lean build ~2 min)
+pytest                      # all branches + Lean gate, 275 tests (~40 s with a warm lake cache; first Lean build ~2 min)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py
@@ -90,5 +91,5 @@ pytest tests/test_branch3_carlitz.py
   on Cremona curves) and equal the levels found on the tree.
 - The excursion formalisation proves the Galois-to-excursion direction and the Hecke
   identification; Lafforgue's converse (excursion data ⇒ parameter) is imported, and the
-  finite instances certify class-function evaluations of mod-ℓ parameters at Frobenius
-  elements, not the ℓ-adic parameter itself.
+  finite instances certify the mod-ℓ parameters at Frobenius elements (as matrices up to
+  conjugacy, with trace a_p and determinant p), not the ℓ-adic parameter itself.
