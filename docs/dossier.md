@@ -73,6 +73,10 @@ symbols; at level 1 the weight-12 operator traces are τ(n), and S₂₄ gives t
 an operator.  A tempting shortcut — cuspidal = complement of the eigenvalue σ_{k−1}(ℓ) —
 is wrong at non-squarefree N (level 9 has Eisenstein series with T₂-eigenvalue −2049 from
 the character pair (χ, χ̄) mod 3); the boundary map is the right object.
+KERNEL (`eichler_selberg_level_N`): Lean recomputes the level-N geometric side and certifies
+it against exported spectral traces on a smaller grid than the Python tests: weight 2 for
+N ≤ 20 with n ≤ 7, weights 4 and 6 for N ≤ 6 with n ≤ 5, and level 1 at weight 12 with
+n ≤ 6 (always n prime to N).
 
 ### 2.5 Jacquet–Langlands as an integer oracle (COMPUTED; modularity IMPORTED)
 For each rational newform of prime level p ≤ 101 (Cremona model, discriminant
@@ -168,6 +172,7 @@ Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by
 | `fermat_carlitz_small` | C_P ≡ x^{|P|} (mod P), 8 cases | Carlitz p-polynomials over 𝔽_p[t] |
 | `brandt_certificates` | for p ≤ 37 and ℓ ∈ {2,3,5,7}: row sums ℓ+1, commutation, B·diag(w) symmetric, 12·tr B(n) = Eichler's formula for n ∈ {1, ℓ, ℓ², ℓℓ'} | class numbers, Legendre symbols, Eichler's formula, Hecke relations (data: Python) |
 | `lseries_certificates` | 37a1 mod 5, 7: every L(χ,T) coefficient vanishes mod Φ_N for χ ≠ 1 (not termwise); χ = 1 gives Z(E,T) | Φ_N by divisor recursion, polynomial remainder over ℤ, zeta recursion (data: Python) |
+| `eichler_selberg_level_N` | 24·tr T_n \| S_k(Γ₀(N)) = 12·(trace on cuspidal Manin symbols) for weight 2, N ≤ 20, n ≤ 7; weights 4 and 6, N ≤ 6, n ≤ 5; level 1, weight 12, n ≤ 6 (n prime to N) | ψ(N), class numbers, local factors μ, φ(gcd(c, N/c)), Chebyshev P_k (data: modular-symbol traces from Python) |
 
 The bridge is `tools/export_lean_data.py`; the gate `tests/test_lean_gate.py`
 regenerates the data (must be byte-identical), runs `lake build`, and runs
@@ -265,6 +270,10 @@ deg a₂ = 2, forced by c₄ = a₂² in characteristic 3) finds them:
 
 Each is a joint eigenvector of the five T_𝔭 on the cusp forms; the two are swapped
 by t ↦ 2t, as are t+1 and t+2.
+Over 𝔽₅(t): X₀(t³) has genus 4 and Hecke polynomials (x² − 2x − 4)(x² + 3x + 1) at every
+degree-1 prime, no rational root — as it must be, since in characteristic ≥ 5 Tate's
+algorithm gives conductor exponent exactly 2 at an additive place (tame), so no elliptic
+curve over 𝔽₅(t) has conductor t³∞.
 
 ## Branch 3, third act — the excursion algebra in Lean (`lean/LanglandsOracles/Excursion*.lean`, `Pseudocharacter.lean`, `excursion.py`)
 
