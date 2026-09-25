@@ -64,3 +64,63 @@ def test_hecke_operators_commute_and_are_ramanujan(N):
             assert (a * b - b * a).is_zero_matrix
     for ell, T in mats.items():
         assert ramanujan_violations(sp.Poly(T.charpoly(x).as_expr(), x), ell) == (0, 0)
+
+
+# ------------------------------------------------------------- weight k --
+from fractions import Fraction  # noqa: E402
+from math import gcd  # noqa: E402
+
+from langlands.modular_symbols import ManinSymbolsK, dim_S_k  # noqa: E402
+from langlands.trace_formula import eichler_selberg, ramanujan_tau  # noqa: E402
+
+WEIGHT_GRID = [(N, k) for N in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12) for k in (4, 6, 8, 12)] + [(16, 4), (18, 6), (25, 4), (27, 4)]
+
+
+def test_dim_S_k_known_values():
+    assert [dim_S_k(1, k) for k in (4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26)] == [0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 2, 1]
+    assert dim_S_k(11, 4) == 2 and dim_S_k(2, 8) == 1 and dim_S_k(7, 6) == 3
+
+
+@pytest.mark.parametrize("N, k", WEIGHT_GRID)
+def test_weight_k_dimensions(N, k):
+    M = ManinSymbolsK(N, k)
+    assert M.dimension == 2 * dim_S_k(N, k) + cusp_count(N)
+    assert M.cuspidal_basis.cols == 2 * dim_S_k(N, k)
+
+
+@pytest.mark.parametrize("N, k", WEIGHT_GRID)
+def test_eichler_selberg_higher_weight_against_operator_traces(N, k):
+    """The weight dependence of every term (n^{k/2-1}, P_k, min^{k-1}, A4) checked against 1/2 tr T_n on
+    cuspidal weight-k modular symbols, n <= 7 prime to N."""
+    M = ManinSymbolsK(N, k)
+    for n in range(1, 8):
+        if gcd(n, N) != 1:
+            continue
+        spectral = Fraction(M.cuspidal_hecke_matrix(n).trace(), 2) if M.cuspidal_basis.cols else Fraction(0)
+        assert eichler_selberg(N, k, n) == spectral, (N, k, n)
+
+
+def test_weight_12_level_1_operator_traces_are_tau():
+    M = ManinSymbolsK(1, 12)
+    tau = ramanujan_tau(10)
+    assert [M.cuspidal_hecke_matrix(n).trace() / 2 for n in range(1, 11)] == list(tau)
+
+
+@pytest.mark.parametrize("N", (11, 14, 15, 23, 37))
+def test_weight_2_eisenstein_complement_matches_boundary_map(N):
+    """Two constructions of the cuspidal subspace at weight 2 give the same Hecke traces."""
+    A, B = ManinSymbols(N), ManinSymbolsK(N, 2)
+    assert A.cuspidal_basis.cols == B.cuspidal_basis.cols == 2 * genus_X0(N)
+    for n in (2, 3, 5, 7):
+        if N % n:
+            assert A.cuspidal_hecke_matrix(n).trace() == B.cuspidal_hecke_matrix(n).trace()
+
+
+@pytest.mark.parametrize("N, k", [(1, 24), (7, 6), (11, 4), (5, 8)])
+def test_ramanujan_at_higher_weight(N, k):
+    """|a_ell| <= 2 ell^{(k-1)/2} (Deligne): exact root isolation on the cuspidal Hecke polynomial."""
+    M = ManinSymbolsK(N, k)
+    for ell in (2, 3, 5):
+        if N % ell:
+            H = sp.Poly(M.cuspidal_hecke_matrix(ell).charpoly(x).as_expr(), x)
+            assert ramanujan_violations(H, ell ** (k - 1)) == (0, 0)

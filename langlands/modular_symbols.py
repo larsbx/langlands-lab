@@ -102,6 +102,8 @@ class ManinSymbols:
     @cache
     def canonical(self, c: int, d: int) -> tuple[int, int]:
         N = self.N
+        if N == 1:
+            return (0, 0)
         c, d = c % N, d % N
         best = None
         for u in range(1, N):
@@ -262,3 +264,160 @@ def _xgcd(a: int, b: int) -> tuple[int, int, int]:
         return (a, 1, 0) if a >= 0 else (-a, -1, 0)
     g, x, y = _xgcd(b, a % b)
     return g, y, x - (a // b) * y
+
+
+# ------------------------------------------------------------- weight k --
+def dim_S_k(N: int, k: int) -> int:
+    """dim S_k(Gamma_0(N)) for even k >= 4 (Shimura 2.23): (k-1)(g-1) + [k/4] nu2 + [k/3] nu3 + (k/2 - 1) c."""
+    if k == 2:
+        return genus_X0(N)
+    ps = _prime_factors(N)
+    nu2 = 0 if N % 4 == 0 else _prod(1 + (0 if p == 2 else _kron(-1, p)) for p in ps)
+    nu3 = 0 if N % 9 == 0 else _prod(1 + _kron(-3, p) for p in ps)
+    c = cusp_count(N)
+    return (k - 1) * (genus_X0(N) - 1) + (k // 4) * nu2 + (k // 3) * nu3 + (k // 2 - 1) * c
+
+
+def _poly_act(P: tuple, g: tuple[int, int, int, int]) -> tuple:
+    """(P|g)(X, Y) = P(aX + bY, cX + dY) for P = sum P[i] X^i Y^{m-i} (degree m = len(P) - 1)."""
+    a, b, c, d = g
+    m = len(P) - 1
+    # powers of the two linear forms as coefficient tuples in X^j Y^{deg-j}
+    def lin_pow(u, v, e):
+        out = [1]
+        for _ in range(e):
+            nxt = [0] * (len(out) + 1)
+            for j, x in enumerate(out):
+                nxt[j + 1] += x * u  # times uX
+                nxt[j] += x * v      # times vY
+            out = nxt
+        return out
+    result = [0] * (m + 1)
+    for i, coeff in enumerate(P):
+        if coeff == 0:
+            continue
+        A = lin_pow(a, b, i)
+        B = lin_pow(c, d, m - i)
+        for j, x in enumerate(A):
+            for l, y in enumerate(B):
+                result[j + l] += coeff * x * y
+    return tuple(result)
+
+
+@dataclass(frozen=True)
+class ManinSymbolsK:
+    """Weight-k Manin symbols [X^i Y^{k-2-i}, (c : d)] for Gamma_0(N) (Stein, Modular Forms: A
+    Computational Approach, ch. 8): relations [P, x] + [P|S, xS] = 0 and [P, x] + [P|T, xT] + [P|T^2, xT^2]
+    = 0; T_n [P, x] = sum_{h in H_n} [P|h, x h] over Merel's Heilbronn matrices.  The cuspidal part is
+    the kernel of the weight-k boundary map (below).  Note: taking the complement of the single
+    Eisenstein eigenvalue sigma_{k-1}(ell) is wrong at non-squarefree N, where Eisenstein series with a
+    character pair (chi, chi-bar) have eigenvalue chi(ell) + chi-bar(ell) ell^{k-1}."""
+
+    N: int
+    k: int
+
+    @cached_property
+    def base(self) -> ManinSymbols:
+        return ManinSymbols(self.N)
+
+    @cached_property
+    def generators(self) -> tuple:
+        return tuple((i, x) for x in self.base.points for i in range(self.k - 1))
+
+    @cached_property
+    def index(self) -> dict:
+        return {g: j for j, g in enumerate(self.generators)}
+
+    def _symbol_vector(self, P: tuple, x, v) -> None:
+        """Add [P, x] to the row vector v in place (v indexed by generators)."""
+        for i, coeff in enumerate(P):
+            if coeff:
+                v[self.index[(i, x)]] += coeff
+
+    @cached_property
+    def relations(self) -> sp.Matrix:
+        n = len(self.generators)
+        S, T, T2 = (0, -1, 1, 0), (0, -1, 1, -1), (-1, 1, -1, 0)
+        rows = []
+        for i, x in self.generators:
+            P = tuple(1 if j == i else 0 for j in range(self.k - 1))
+            r = [0] * n
+            self._symbol_vector(P, x, r)
+            self._symbol_vector(_poly_act(P, S), self.base.act(x, S), r)
+            rows.append(r)
+            r = [0] * n
+            self._symbol_vector(P, x, r)
+            self._symbol_vector(_poly_act(P, T), self.base.act(x, T), r)
+            self._symbol_vector(_poly_act(P, T2), self.base.act(x, T2), r)
+            rows.append(r)
+        return sp.Matrix(rows)
+
+    @cached_property
+    def _rref(self):
+        R, pivots = self.relations.rref()
+        free = [j for j in range(R.cols) if j not in pivots]
+        return R, pivots, free
+
+    def reduce(self, v: sp.Matrix) -> sp.Matrix:
+        R, pivots, free = self._rref
+        v = v.copy()
+        for i, j in enumerate(pivots):
+            if v[j] != 0:
+                v = v - v[j] * R.row(i)
+        return sp.Matrix([v[j] for j in free])
+
+    @property
+    def dimension(self) -> int:
+        return len(self._rref[2])
+
+    @cache
+    def hecke_matrix(self, n: int) -> sp.Matrix:
+        _, _, free = self._rref
+        H = ManinSymbols.heilbronn(n)
+        cols = []
+        for gi in free:
+            i, x = self.generators[gi]
+            P = tuple(1 if j == i else 0 for j in range(self.k - 1))
+            v = sp.zeros(1, len(self.generators))
+            for h in H:
+                y = self.base.act(x, h)
+                if y is not None:
+                    self._symbol_vector(_poly_act(P, h), y, v)
+            cols.append(self.reduce(v))
+        return sp.Matrix.hstack(*cols)
+
+    @cached_property
+    def boundary_matrix(self) -> sp.Matrix:
+        """Weight-k boundary map (Stein, Modular Forms: A Computational Approach, §8.6).  The Manin symbol
+        [X^i Y^{k-2-i}, (c : d)] is g(X^i Y^{k-2-i}{0, oo}) for a lift g = [[a, b], [c, d]]; transporting
+        the polynomial with g and evaluating at the cusps g(oo) = (1 : 0) and g(0) = (0 : 1) in the
+        transported coordinates leaves [g oo] with coefficient [i = k-2] and [g 0] with [i = 0].
+        (Chosen among the candidate conventions as the one whose kernel has dimension 2 dim S_k and is
+        Hecke-stable at every level tested, squarefree or not.)"""
+        _, _, free = self._rref
+        cusps = self.base.cusps
+        M = sp.zeros(len(cusps), len(free))
+        for j, gi in enumerate(free):
+            i, x = self.generators[gi]
+            a, b, c, d = self.base._lift(*x)
+            if i == self.k - 2:
+                M[self.base._cusp_index(normalize_cusp(a, c)), j] += 1
+            if i == 0:
+                M[self.base._cusp_index(normalize_cusp(b, d)), j] -= 1
+        return M
+
+    @cached_property
+    def cuspidal_basis(self) -> sp.Matrix:
+        """Kernel of the boundary map: finitely supported (cuspidal) weight-k modular symbols."""
+        ns = self.boundary_matrix.nullspace()
+        return sp.Matrix.hstack(*ns) if ns else sp.zeros(self.dimension, 0)
+
+    def cuspidal_hecke_matrix(self, n: int) -> sp.Matrix:
+        B = self.cuspidal_basis
+        if B.cols == 0:
+            return sp.zeros(0, 0)
+        TB = self.hecke_matrix(n) * B
+        C = B.solve_least_squares(TB)
+        if B * C != TB:
+            raise AssertionError("T_n does not preserve the cuspidal subspace")
+        return C

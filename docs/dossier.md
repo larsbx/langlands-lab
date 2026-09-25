@@ -64,6 +64,15 @@ gcd(N,n/t)=1} t at weight 2.  Checked for every N ≤ 40 and n ≤ 12 prime to N
 prime level against Eichler's Brandt formula minus the Eisenstein eigenvalue σ(n): three
 routes to the same numbers.  The reading of μ's x-sum ("x mod N, condition mod N·N_f")
 was fixed by these tests; it is well defined because the congruence forces N_f | 2x − t.
+At higher weight (`ManinSymbolsK`: Manin symbols with polynomial coefficients, Hecke via
+the same Heilbronn matrices, cuspidal part = kernel of the weight-k boundary map, whose
+convention was fixed by requiring dimension 2·dim S_k and Hecke stability at squarefree
+and non-squarefree levels alike): for N ≤ 12 with k ∈ {4,6,8,12}, plus (16,4), (18,6),
+(25,4), (27,4), and n ≤ 7 prime to N, the formula equals ½·tr T_n on cuspidal weight-k
+symbols; at level 1 the weight-12 operator traces are τ(n), and S₂₄ gives tr T₂ = 1080 as
+an operator.  A tempting shortcut — cuspidal = complement of the eigenvalue σ_{k−1}(ℓ) —
+is wrong at non-squarefree N (level 9 has Eisenstein series with T₂-eigenvalue −2049 from
+the character pair (χ, χ̄) mod 3); the boundary map is the right object.
 
 ### 2.5 Jacquet–Langlands as an integer oracle (COMPUTED; modularity IMPORTED)
 For each rational newform of prime level p ≤ 101 (Cremona model, discriminant
