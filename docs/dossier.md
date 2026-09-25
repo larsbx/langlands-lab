@@ -158,6 +158,22 @@ degree 4 (p = 5: 8, 12, 32, 152 closed points of degree 1..4) and 3 (p = 7).
   H¹, and it is the same 37a1 eigenvalue Brandt sees at level 37.
 The degree twist χ·α^{deg} gives L(χ, αT); nothing new.
 
+### 1.6 Ramified: modulus 𝔪 = 2P₀ and the generalized Jacobian (COMPUTED; Rosenlicht–Serre and Weil IMPORTED as predictions)
+`ramified_cft.py`: Cl⁰_𝔪 = J_𝔪(𝔽_p), the extension 0 → 𝔽_p → J_𝔪 → E → 0, realised as pairs
+(S, a): S the sum of the divisor in E(𝔽_p), a the u-coefficient at P₀ of the function
+realising D − R(S) (Miller-style accumulation of line functions for any principal divisor,
+Laurent expansion at P₀, normalised).  The group law comes from its 2-cocycle, checked
+symmetric and associative; the inertia subgroup {(O, a)} is 𝔽_p with the additive law.
+Cl⁰_𝔪 ≅ ℤ/40 for 37a1 mod 5 and has order 63 mod 7.  Characters through a basis; then
+L_𝔪(χ, T) = ∏_{x ≠ P₀}(1 − χ(x)T^{deg x})⁻¹ in ℤ[ℤ/N][[T]] to order 4 (mod 5) and 3 (mod 7):
+- the 32 (resp. 54) ramified characters (nontrivial on inertia, conductor exactly 𝔪, wild):
+  L is a polynomial of degree 2g − 2 + deg 𝔪 = 2, with |c₂|² = q² and every conjugate of
+  |c₁|² at most 4q (the Riemann hypothesis, by an exact Sturm count on the conjugates
+  polynomial);
+- unramified nontrivial χ: L_𝔪 = 1 − χ(P₀)T, the P₀ factor removed from L = 1 (§1.5);
+- trivial χ: Z(E, T)(1 − T).
+This is the Artin–Schreier layer of geometric class field theory for GL₁ on E, executed.
+
 ## Lean 4 in the oracle loop (`lean/`, core Lean 4.34, no Mathlib)
 
 Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by
