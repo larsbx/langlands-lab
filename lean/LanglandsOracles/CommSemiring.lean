@@ -1,0 +1,69 @@
+/-!
+# Commutative semirings, as laws on the ambient `+`, `*`, `0`, `1` (core Lean has no class).
+
+`IsCSR R` is the proposition that the ambient operations on R satisfy the commutative-semiring laws;
+no subtraction is assumed, which is all the polynomial identities of §3 (associativity of 2×2
+matrix multiplication, tr(xy) = tr(yx), the Frobenius–Procesi identity) need.  Instances: ℕ, ℤ,
+and 𝔽_p = Fin p for every p ≥ 1 (via `Fin.val` and the modular arithmetic of ℕ).
+-/
+namespace Oracles
+
+structure IsCSR (R : Type) [Add R] [Mul R] [OfNat R 0] [OfNat R 1] : Prop where
+  add_assoc : ∀ a b c : R, a + b + c = a + (b + c)
+  add_comm : ∀ a b : R, a + b = b + a
+  zero_add : ∀ a : R, 0 + a = a
+  mul_assoc : ∀ a b c : R, a * b * c = a * (b * c)
+  mul_comm : ∀ a b : R, a * b = b * a
+  one_mul : ∀ a : R, 1 * a = a
+  zero_mul : ∀ a : R, 0 * a = 0
+  mul_add : ∀ a b c : R, a * (b + c) = a * b + a * c
+
+namespace IsCSR
+
+variable {R : Type} [Add R] [Mul R] [OfNat R 0] [OfNat R 1] (h : IsCSR R)
+include h
+
+theorem add_zero (a : R) : a + 0 = a := by rw [h.add_comm, h.zero_add]
+theorem mul_one (a : R) : a * 1 = a := by rw [h.mul_comm, h.one_mul]
+theorem mul_zero (a : R) : a * 0 = 0 := by rw [h.mul_comm, h.zero_mul]
+theorem add_mul (a b c : R) : (a + b) * c = a * c + b * c := by
+  rw [h.mul_comm, h.mul_add, h.mul_comm c, h.mul_comm c]
+
+end IsCSR
+
+theorem isCSR_nat : IsCSR Nat where
+  add_assoc := Nat.add_assoc
+  add_comm := Nat.add_comm
+  zero_add := Nat.zero_add
+  mul_assoc := Nat.mul_assoc
+  mul_comm := Nat.mul_comm
+  one_mul := Nat.one_mul
+  zero_mul := Nat.zero_mul
+  mul_add := Nat.mul_add
+
+theorem isCSR_int : IsCSR Int where
+  add_assoc := Int.add_assoc
+  add_comm := Int.add_comm
+  zero_add := Int.zero_add
+  mul_assoc := Int.mul_assoc
+  mul_comm := Int.mul_comm
+  one_mul := Int.one_mul
+  zero_mul := Int.zero_mul
+  mul_add := Int.mul_add
+
+/-- ℤ/n for every n ≥ 1; in particular 𝔽_p. -/
+theorem isCSR_fin (n : Nat) [NeZero n] : IsCSR (Fin n) where
+  add_assoc a b c := Fin.ext (by
+    simp only [Fin.val_add]
+    rw [Nat.mod_add_mod, Nat.add_mod_mod, Nat.add_assoc])
+  add_comm a b := Fin.ext (by simp only [Fin.val_add, Nat.add_comm])
+  zero_add := Fin.zero_add
+  mul_assoc := Fin.mul_assoc
+  mul_comm := Fin.mul_comm
+  one_mul := Fin.one_mul
+  zero_mul := Fin.zero_mul
+  mul_add a b c := Fin.ext (by
+    simp only [Fin.val_add, Fin.val_mul]
+    rw [Nat.mul_mod, Nat.mod_mod, ← Nat.mul_mod, Nat.mul_add, Nat.add_mod])
+
+end Oracles

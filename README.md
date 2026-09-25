@@ -14,7 +14,7 @@ computed and which theorem the match instantiates.
 | 1 | E = 37a1 mod p, p ∈ {5, 7} | Lang-isogeny fibers; χ∘N on Pic⁰(𝔽_{pᵏ}); Abel sums of lines; tame symbols from Laurent expansions; L(χ, T) as an Euler product in ℤ[ζ][[T]] | unramified geometric CFT for GL₁: L_χ ↔ character sheaf A_χ, L(E, L_χ) = 1 ≠ Z(E, T), Weil reciprocity with the Deligne sign |
 | 1 | E = 37a1 mod p, modulus 2P₀ | generalized Jacobian J_𝔪(𝔽_p) as pairs with its 2-cocycle; ray class characters; L_𝔪(χ, T) as Euler products | ramified geometric CFT for GL₁ (Rosenlicht–Serre): conductor-2 Artin–Schreier characters have L of degree 2 satisfying the Riemann hypothesis |
 | 3 | Carlitz module over 𝔽_p[t] | C_P ≡ x^{|P|} (mod P); Frob_P = C_P on C[M]; splitting degrees = ord of P in (A/ann λ)^× | function-field CFT for GL₁ (Carlitz–Hayes) |
-| 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity on GL₂(𝔽₃) by kernel; mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p | the shape "Galois side = commutative algebra of operators on automorphic functions"; the converse proved for GL₁ and, up to "pseudocharacter ⇒ parameter", for GL₂ |
+| 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity proved over every commutative semiring (kernel cross-checks on GL₂(𝔽₂), GL₂(𝔽₃)); mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p | the shape "Galois side = commutative algebra of operators on automorphic functions"; the converse proved for GL₁ and, up to "pseudocharacter ⇒ parameter", for GL₂ |
 | 3 | Bruhat–Tits tree of PGL₂(𝔽_q((1/t))) | GL₂(𝔽_q[t]) reduction (Serre's half-line computed), Γ₀(𝔫)\𝒯 via ℙ¹(A/𝔫), cuspidal harmonic cochains, Hecke operators T_𝔭; elliptic curves over 𝔽₂(t) with a_𝔭 by point counts and L(E,T) by Euler product | Gekeler's genus, Drinfeld's Ramanujan bound, Drinfeld's dictionary for GL₂: the level-t³ and level-t⁴ eigenforms over 𝔽₂(t) are y² + txy = x³ + x and y² + txy + t²y = x³ + x + t³ + t² + t |
 
 **Lean 4 in the oracle loop** (`lean/`): core Lean, no Mathlib, no `native_decide`,
@@ -101,7 +101,8 @@ pytest tests/test_branch3_carlitz.py
   identification, Lafforgue's converse for GL₁ (any excursion datum satisfying
   (E0)–(E3) yields a character, `gl1_character`), and the first step of the converse
   for GL₂ (any excursion datum yields a 2-dimensional pseudocharacter,
-  `gl2_pseudocharacter`, instantiated on GL₂(𝔽₃) via the kernel-checked Procesi
-  identity); the remaining step, pseudocharacter ⇒ parameter, is imported, and the
+  `gl2_pseudocharacter`, instantiated on GL₂(R) for every commutative semiring R
+  via the Procesi identity proved in `M2.procesi`); the remaining step,
+  pseudocharacter ⇒ parameter, is imported, and the
   finite instances certify the mod-ℓ parameters at Frobenius elements (as matrices up to
   conjugacy, with trace a_p and determinant p), not the ℓ-adic parameter itself.

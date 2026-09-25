@@ -339,11 +339,16 @@ a conjugation-invariant Φ lies in 𝒪(Ĝ\Ĝ^Idx/Ĝ) (`lrInvariant_ofRel`); (E1
 (E3)s identify Θ_Idx of T(h_i), T(h_ih_j), T(h_ih_jh_l) at q with χ(γ_i), χ(γ_iγ_j), χ(γ_iγ_jγ_l)
 (`theta_t1`–`theta_t3`); (E2) assembles the two sides of the identity into Θ_Idx(F_L)(q),
 Θ_Idx(F_R)(q), and F_L = F_R pointwise by the identity on Ĝ at (h_a,h_b,h_c).
-Instance (`ExcursionGL2F3.lean`): GL₂(𝔽₃) is a `Grp` on the enumerated list (associativity, unit
-laws and tr(xy) = tr(yx) algebraic; closure and x⁻¹x = 1 by kernel over 48², 48 elements), the
-Procesi identity is transported from the kernel-checked `procesi_GL2_F3`, and
-`gl2_F3_pseudocharacter`: every excursion datum for GL₂(𝔽₃) with values in 𝔽₃ is a 2-dimensional
-pseudocharacter Γ → 𝔽₃, with χ(1) = 2 (`gl2_F3_pseudocharacter_one`).  Axioms: propext, Quot.sound.
+Over a commutative semiring (`ExcursionGL2Ring.lean`, `CommSemiring.lean`): `IsCSR R` packages
+the commutative-semiring laws on the ambient `+`, `*` (instances ℕ, ℤ, and 𝔽_p = Fin p for every
+p, via `Fin.val` and ℕ-modular arithmetic); `M2.procesi` PROVES the Procesi identity for 2×2
+matrices over any such R, both sides distributing to the same multiset of 24 monomials (`ac_rfl`),
+with `M2.mul_assoc`, `M2.trace_mul_comm` alongside.  GL₂(R) is the group of pairs (x, y) with
+xy = yx = 1 (inverse as witness, no determinants), `grpGL2`.  `gl2_ring_pseudocharacter`: for
+every commutative semiring R, every excursion datum for GL₂(R) with values in R is a
+2-dimensional pseudocharacter Γ → R, with χ(1) = 1 + 1 and χ(γγ') = χ(γ'γ);
+`gl2_Fp_pseudocharacter` is the case Ĝ = GL₂(𝔽_p), k = 𝔽_p of the mod-ℓ parameters of Branch 1.
+Axioms: propext, Quot.sound.
 
 IMPORTED (not formalised): the remaining step for non-abelian Ĝ, pseudocharacter ⇒ semisimple
 parameter (Taylor for GL₂, Lafforgue's Ĝ-pseudocharacters and geometric invariant theory in general),
@@ -353,7 +358,8 @@ and the excursion relations for GL_n, n ≥ 3, where the identity is Procesi's f
 `procesi_GL2_F2`, `procesi_GL2_F3`: Σ_{σ∈S₃} sgn(σ) T_σ(g₁,g₂,g₃) = 0 for T = trace on every
 triple of GL₂(𝔽₂) (6³) and GL₂(𝔽₃) (48³ = 110 592 triples; ≈ 3 min in the kernel), the
 defining relation of a 2-dimensional pseudocharacter.  Python checks the same (`procesi_identity_holds`).
-`procesi_GL2_F3` is consumed by the PROVED rank-2 converse of §3.5 (`gl2_F3_pseudocharacter`).
+The identity is PROVED over every commutative semiring in `M2.procesi` (§3.5); the two kernel
+checks are its independent finite cross-checks (they evaluate the signed form on the enumerated groups).
 
 ### 3.7 An arithmetic excursion instance: the mod-3 parameter of 37a1 (KERNEL + COMPUTED)
 - `brandt_eigenvector_37a1`: the exported v = (−1, 1, 0) on the supersingular locus at p = 37

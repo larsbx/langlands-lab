@@ -1,30 +1,87 @@
+import LanglandsOracles.CommSemiring
+
 /-!
-# GL_2-pseudocharacters: the Frobenius–Procesi identity on a finite group, kernel-checked.
+# GL_2-pseudocharacters: the Frobenius–Procesi identity, proved over every commutative semiring
+and kernel-checked on GL_2(𝔽_2), GL_2(𝔽_3).
 
 For a 2-dimensional representation the trace T satisfies, for all g_1, g_2, g_3,
    T(g_1)T(g_2)T(g_3) − T(g_1g_2)T(g_3) − T(g_1g_3)T(g_2) − T(g_2g_3)T(g_1) + T(g_1g_2g_3) + T(g_1g_3g_2) = 0
 (Σ_{σ ∈ S_3} sgn(σ) T_σ = 0).  This is the defining relation of a 2-dimensional pseudocharacter
-(Taylor) and the excursion data of a GL_2-parameter factor through it.  Here it is verified by
-the kernel for every triple in GL_2(F_3) (48³ triples) and GL_2(F_2).
+(Taylor), and the excursion data of a GL_2-parameter factor through it (`ExcursionGL2.lean`).
+
+`M2.procesi` proves it (in the subtraction-free form even terms = odd terms) for 2×2 matrices over
+any commutative semiring R: both sides distribute to the same multiset of 24 monomials in the twelve
+entries.  Independently, `procesi_GL2_F2` and `procesi_GL2_F3` verify the signed form by kernel
+evaluation for every triple in GL_2(𝔽_2) (6³) and GL_2(𝔽_3) (48³ triples).
 -/
 namespace Oracles
 
-/-- 2×2 matrices over Z/n as 4-tuples of `Fin n`. -/
-structure Mat2 (n : Nat) where
-  a : Fin n
-  b : Fin n
-  c : Fin n
-  d : Fin n
+/-- 2×2 matrices over R as 4-tuples. -/
+structure M2 (R : Type) where
+  a : R
+  b : R
+  c : R
+  d : R
 deriving DecidableEq, Repr
+
+namespace M2
+
+variable {R : Type} [Add R] [Mul R] [OfNat R 0] [OfNat R 1]
+
+def mul (x y : M2 R) : M2 R :=
+  ⟨x.a * y.a + x.b * y.c, x.a * y.b + x.b * y.d, x.c * y.a + x.d * y.c, x.c * y.b + x.d * y.d⟩
+
+def trace (x : M2 R) : R := x.a + x.d
+
+def one : M2 R := ⟨1, 0, 0, 1⟩
+
+section laws
+
+variable (h : IsCSR R)
+include h
+
+theorem mul_assoc (x y z : M2 R) : mul (mul x y) z = mul x (mul y z) := by
+  haveI : Std.Associative (α := R) (· + ·) := ⟨h.add_assoc⟩
+  haveI : Std.Commutative (α := R) (· + ·) := ⟨h.add_comm⟩
+  simp only [mul, h.mul_add, h.add_mul, h.mul_assoc, M2.mk.injEq]
+  refine ⟨?_, ?_, ?_, ?_⟩ <;> ac_rfl
+
+theorem one_mul (x : M2 R) : mul one x = x := by
+  simp only [mul, one, h.one_mul, h.zero_mul, h.zero_add, h.add_zero]
+
+theorem mul_one (x : M2 R) : mul x one = x := by
+  simp only [mul, one, h.mul_one, h.mul_zero, h.zero_add, h.add_zero]
+
+theorem trace_mul_comm (x y : M2 R) : trace (mul x y) = trace (mul y x) := by
+  haveI : Std.Associative (α := R) (· + ·) := ⟨h.add_assoc⟩
+  haveI : Std.Commutative (α := R) (· + ·) := ⟨h.add_comm⟩
+  haveI : Std.Associative (α := R) (· * ·) := ⟨h.mul_assoc⟩
+  haveI : Std.Commutative (α := R) (· * ·) := ⟨h.mul_comm⟩
+  simp only [trace, mul]
+  ac_rfl
+
+/-- **The Frobenius–Procesi identity** for 2×2 matrices over a commutative semiring:
+T(x)T(y)T(z) + T(xyz) + T(xzy) = T(xy)T(z) + T(xz)T(y) + T(yz)T(x). -/
+theorem procesi (x y z : M2 R) :
+    trace x * trace y * trace z + trace (mul (mul x y) z) + trace (mul (mul x z) y)
+      = trace (mul x y) * trace z + trace (mul x z) * trace y + trace (mul y z) * trace x := by
+  haveI : Std.Associative (α := R) (· + ·) := ⟨h.add_assoc⟩
+  haveI : Std.Commutative (α := R) (· + ·) := ⟨h.add_comm⟩
+  haveI : Std.Associative (α := R) (· * ·) := ⟨h.mul_assoc⟩
+  haveI : Std.Commutative (α := R) (· * ·) := ⟨h.mul_comm⟩
+  simp only [trace, mul, h.mul_add, h.add_mul, h.mul_assoc]
+  ac_rfl
+
+end laws
+
+end M2
+
+/-- 2×2 matrices over ℤ/n. -/
+abbrev Mat2 (n : Nat) := M2 (Fin n)
 
 namespace Mat2
 
 variable {n : Nat}
-
-def mul (x y : Mat2 n) : Mat2 n :=
-  ⟨x.a * y.a + x.b * y.c, x.a * y.b + x.b * y.d, x.c * y.a + x.d * y.c, x.c * y.b + x.d * y.d⟩
-
-def trace (x : Mat2 n) : Fin n := x.a + x.d
 
 def det (x : Mat2 n) : Fin n := x.a * x.d - x.b * x.c
 
@@ -40,9 +97,9 @@ def gl (n : Nat) : List (Mat2 n) := (all n).filter fun x => x.det.val != 0
 
 /-- Σ_{σ ∈ S_3} sgn(σ) T_σ(g_1, g_2, g_3) for T = trace. -/
 def procesi (g1 g2 g3 : Mat2 n) : Fin n :=
-  let T := trace
-  T g1 * T g2 * T g3 - T (mul g1 g2) * T g3 - T (mul g1 g3) * T g2 - T (mul g2 g3) * T g1
-    + T (mul (mul g1 g2) g3) + T (mul (mul g1 g3) g2)
+  let T := M2.trace
+  T g1 * T g2 * T g3 - T (M2.mul g1 g2) * T g3 - T (M2.mul g1 g3) * T g2 - T (M2.mul g2 g3) * T g1
+    + T (M2.mul (M2.mul g1 g2) g3) + T (M2.mul (M2.mul g1 g3) g2)
 
 def procesiHolds (n : Nat) : Bool :=
   (gl n).all fun g1 => (gl n).all fun g2 => (gl n).all fun g3 => (procesi g1 g2 g3).val == 0
