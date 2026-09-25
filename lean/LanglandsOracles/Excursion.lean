@@ -68,6 +68,17 @@ theorem mul_inv_cancel_left (a b : G) : g.mul a (g.mul (g.inv a) b) = b := by
 theorem inv_mul_cancel_left (a b : G) : g.mul (g.inv a) (g.mul a b) = b := by
   rw [← g.mul_assoc, g.inv_mul, g.one_mul]
 
+/-- (h a h') (h b h')⁻¹ = h (a b⁻¹) h⁻¹: left-right translates differ by conjugation. -/
+theorem conj_of_lr (h h' a b : G) :
+    g.mul (g.mul (g.mul h a) h') (g.inv (g.mul (g.mul h b) h'))
+      = g.mul (g.mul h (g.mul a (g.inv b))) (g.inv h) := by
+  simp only [g.inv_mul_rev, g.mul_assoc, g.mul_inv_cancel_left]
+
+/-- (h a h⁻¹) (h b h⁻¹) = h (a b) h⁻¹. -/
+theorem conj_mul (h a b : G) :
+    g.mul (g.mul (g.mul h a) (g.inv h)) (g.mul (g.mul h b) (g.inv h)) = g.mul (g.mul h (g.mul a b)) (g.inv h) := by
+  simp only [g.mul_assoc, g.inv_mul_cancel_left]
+
 end Grp
 
 /-- A group homomorphism. -/
@@ -98,6 +109,18 @@ theorem lrInvariant_pullback {Ĝ k I J : Type} (g : Grp Ĝ) (ζ : I → J) (f : 
     (hf : LRInvariant g f) : LRInvariant g (pullback ζ f) := by
   intro h h' x
   exact hf h h' (fun i => x (ζ i))
+
+theorem lrInvariant_mul {Ĝ k I : Type} [Mul k] (g : Grp Ĝ) {f f' : (I → Ĝ) → k}
+    (hf : LRInvariant g f) (hf' : LRInvariant g f') : LRInvariant g (fun x => f x * f' x) := by
+  intro h h' x
+  show f _ * f' _ = f x * f' x
+  rw [hf h h' x, hf' h h' x]
+
+theorem lrInvariant_add {Ĝ k I : Type} [Add k] (g : Grp Ĝ) {f f' : (I → Ĝ) → k}
+    (hf : LRInvariant g f) (hf' : LRInvariant g f') : LRInvariant g (fun x => f x + f' x) := by
+  intro h h' x
+  show f _ + f' _ = f x + f' x
+  rw [hf h h' x, hf' h h' x]
 
 theorem lrInvariant_tilde {Ĝ k I : Type} (g : Grp Ĝ) (f : (I → Ĝ) → k)
     (hf : LRInvariant g f) : LRInvariant g (tilde g f) := by
@@ -168,17 +191,25 @@ theorem lrInvariant_heckeFun {Ĝ k : Type} (g : Grp Ĝ) (χ : Ĝ → k)
     (hχ : ∀ h x, χ (g.mul (g.mul h x) (g.inv h)) = χ x) : LRInvariant g (heckeFun g χ) := by
   intro h h' x
   unfold heckeFun
-  -- (h a h') (h b h')^{-1} = h (a b^{-1}) h^{-1}
-  have key : g.mul (g.mul (g.mul h (x true)) h') (g.inv (g.mul (g.mul h (x false)) h'))
-      = g.mul (g.mul h (g.mul (x true) (g.inv (x false)))) (g.inv h) := by
-    simp only [g.inv_mul_rev, g.mul_assoc, g.mul_inv_cancel_left]
-  rw [key]
+  rw [g.conj_of_lr]
   exact hχ h _
+
+/-- The pair (γ, 1) indexed by Bool (true ↦ γ). -/
+def pair {Γ : Type} (gΓ : Grp Γ) (γ : Γ) : Bool → Γ := fun b => if b then γ else gΓ.one
+
+theorem pair_mul {Γ : Type} (gΓ : Grp Γ) (γ γ' : Γ) :
+    pair gΓ (gΓ.mul γ γ') = fun b => gΓ.mul (pair gΓ γ b) (pair gΓ γ' b) := by
+  funext b
+  cases b <;> simp [pair, gΓ.mul_one]
+
+theorem pair_one {Γ : Type} (gΓ : Grp Γ) : pair gΓ gΓ.one = fun _ => gΓ.one := by
+  funext b
+  cases b <;> rfl
 
 /-- The unramified Hecke eigenvalue is the excursion value of f_V at (Frob_v, 1): χ_V(ρ(Frob_v)). -/
 theorem hecke_eq_character {Γ Ĝ : Type} {gΓ : Grp Γ} {gĜ : Grp Ĝ} (k : Type) [Mul k] [Add k]
     (ρ : Hom gΓ gĜ) (χ : Ĝ → k) (frob : Γ) :
-    (ExcursionData.ofHom k ρ).Θ (heckeFun gĜ χ) (fun b => if b then frob else gΓ.one) = χ (ρ.toFun frob) := by
+    (ExcursionData.ofHom k ρ).Θ (heckeFun gĜ χ) (pair gΓ frob) = χ (ρ.toFun frob) := by
   show χ (gĜ.mul (ρ.toFun frob) (gĜ.inv (ρ.toFun gΓ.one))) = χ (ρ.toFun frob)
   rw [ρ.map_one, gĜ.inv_one, gĜ.mul_one]
 

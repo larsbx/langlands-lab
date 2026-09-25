@@ -16,3 +16,7 @@ open Oracles
 #print axioms isogeny_graphs_recomputed
 #print axioms gl1_character
 #print axioms gl1_character_one
+#print axioms gl2_pseudocharacter
+#print axioms exChar_comm
+#print axioms gl2_F3_pseudocharacter
+#print axioms gl2_F3_pseudocharacter_one

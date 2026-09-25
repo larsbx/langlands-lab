@@ -23,9 +23,6 @@ variable (hassoc : ∀ a b c : k, a * b * c = a * (b * c)) (hcomm : ∀ a b : k,
 variable (hone : ∀ a : k, 1 * a = a)
 variable (φ : Ĝ → k) (hφ : ∀ a b, φ (gĜ.mul a b) = φ a * φ b) (hφ1 : φ gĜ.one = 1)
 
-/-- The pair (γ, 1) indexed by Bool (true ↦ γ). -/
-def pair (gΓ : Grp Γ) (γ : Γ) : Bool → Γ := fun b => if b then γ else gΓ.one
-
 /-- f_φ^swap(x₀, x₁) = φ(x₁ x₀⁻¹). -/
 def heckeSwap (g : Grp Ĝ) (φ : Ĝ → k) : (Bool → Ĝ) → k :=
   fun x => φ (g.mul (x false) (g.inv (x true)))
@@ -44,10 +41,7 @@ theorem heckeFun_lr : LRInvariant gĜ (heckeFun gĜ φ) :=
 theorem heckeSwap_lr : LRInvariant gĜ (heckeSwap gĜ φ) := by
   intro h h' x
   unfold heckeSwap
-  have key : gĜ.mul (gĜ.mul (gĜ.mul h (x false)) h') (gĜ.inv (gĜ.mul (gĜ.mul h (x true)) h'))
-      = gĜ.mul (gĜ.mul h (gĜ.mul (x false) (gĜ.inv (x true)))) (gĜ.inv h) := by
-    simp only [gĜ.inv_mul_rev, gĜ.mul_assoc, gĜ.mul_inv_cancel_left]
-  rw [key, phi_class_function hassoc hcomm hone φ hφ hφ1]
+  rw [gĜ.conj_of_lr, phi_class_function hassoc hcomm hone φ hφ hφ1]
 
 /-- The pointwise factorisation of f̃ for f = f_φ. -/
 theorem tilde_hecke_factors (x : Bool ⊕ Bool ⊕ Bool → Ĝ) :
@@ -75,10 +69,7 @@ theorem gl1_character (D : ExcursionData gΓ gĜ k) (γ γ' : Γ) :
       = D.Θ (heckeFun gĜ φ) (pair gΓ γ) * D.Θ (heckeFun gĜ φ) (pair gΓ γ') := by
   have hf := heckeFun_lr hassoc hcomm hone φ hφ hφ1
   have hs := heckeSwap_lr hassoc hcomm hone φ hφ hφ1
-  have hpair : pair gΓ (gΓ.mul γ γ') = fun b => gΓ.mul (pair gΓ γ b) (pair gΓ γ' b) := by
-    funext b
-    cases b <;> simp [pair, gΓ.mul_one]
-  rw [hpair, D.compose _ hf]
+  rw [pair_mul, D.compose _ hf]
   have hfac : tilde gĜ (heckeFun gĜ φ)
       = fun x => pullback Sum.inl (heckeFun gĜ φ) x
         * (pullback (fun b => Sum.inr (Sum.inl b)) (heckeFun gĜ φ) x
@@ -112,10 +103,7 @@ theorem gl1_character (D : ExcursionData gΓ gĜ k) (γ γ' : Γ) :
 theorem gl1_character_one (D : ExcursionData gΓ gĜ k) :
     D.Θ (heckeFun gĜ φ) (pair gΓ gΓ.one) = 1 := by
   have hf := heckeFun_lr hassoc hcomm hone φ hφ hφ1
-  have hp : pair gΓ gΓ.one = fun _ : Bool => gΓ.one := by
-    funext b
-    cases b <;> rfl
-  rw [hp, D.map_unit _ hf]
+  rw [pair_one, D.map_unit _ hf]
   unfold heckeFun
   rw [gĜ.inv_one, gĜ.mul_one, hφ1]
 
