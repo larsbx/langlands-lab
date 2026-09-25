@@ -9,7 +9,8 @@ les groupes réductifs, §10; Introduction to chtoucas, Prop. 3.x) are:
 
   (E1)  S_{J, f^ζ, (γ_j)} = S_{I, f, (γ_{ζ(i)})}                       for ζ : I → J, f^ζ(x) = f(x ∘ ζ);
   (E2)  f ↦ S_{I, f, (γ_i)} is a unital algebra homomorphism (constants map to constants);
-  (E3)  S_{I, f, (γ_i γ'_i)} = S_{I ⊔ I ⊔ I, f̃, (γ_i) ⊔ (γ'_i) ⊔ (1)}   with f̃(x ⊔ x' ⊔ x'') = f(x_i x''_i^{-1} x'_i).
+  (E3)  S_{I, f, (γ_i γ'_i)} = S_{I ⊔ I ⊔ I, f̃, (γ_i) ⊔ (γ'_i) ⊔ (1)}   with f̃(x ⊔ x' ⊔ x'') = f(x_i x''_i^{-1} x'_i);
+  (E0)  S_{I, f, (1)} = f(1, …, 1)                                      (trivial Galois elements).
 
 Galois side ⇒ excursion data: a homomorphism ρ : Γ → Ĝ gives Θ_I(f)(γ) = f(ρ ∘ γ), and (E1)–(E3)
 hold (`ExcursionData.ofHom`).  The unramified Hecke operator for a representation V of Ĝ is the
@@ -57,6 +58,9 @@ theorem inv_mul_rev (u v : G) : g.inv (g.mul u v) = g.mul (g.inv v) (g.inv u) :=
   symm
   apply g.inv_unique
   rw [g.mul_assoc, ← g.mul_assoc (g.inv u), g.inv_mul, g.one_mul, g.inv_mul]
+
+theorem inv_inv (a : G) : g.inv (g.inv a) = a :=
+  (g.inv_unique a (g.inv a) (g.mul_inv a)).symm
 
 theorem mul_inv_cancel_left (a b : G) : g.mul a (g.mul (g.inv a) b) = b := by
   rw [← g.mul_assoc, g.mul_inv, g.one_mul]
@@ -114,6 +118,8 @@ structure ExcursionData {Γ Ĝ : Type} (gΓ : Grp Γ) (gĜ : Grp Ĝ) (k : Type) 
   /-- k-linearity and unitality of the character: the constant function c ∈ O(Ĝ\Ĝ^I/Ĝ) has value c
   (with `map_mul` this gives Θ(c·f) = c·Θ(f) and Θ(1) = 1; without it Θ ≡ 0 would qualify). -/
   map_const : ∀ {I : Type} (c : k) (γ : I → Γ), Θ (fun _ => c) γ = c
+  /-- (E0): on the trivial tuple the excursion value is f(1, …, 1). -/
+  map_unit : ∀ {I : Type} (f : (I → Ĝ) → k), LRInvariant gĜ f → Θ f (fun _ => gΓ.one) = f (fun _ => gĜ.one)
   functorial : ∀ {I J : Type} (ζ : I → J) (f : (I → Ĝ) → k), LRInvariant gĜ f →
     ∀ γ : J → Γ, Θ (pullback ζ f) γ = Θ f (fun i => γ (ζ i))
   map_mul : ∀ {I : Type} (f f' : (I → Ĝ) → k), LRInvariant gĜ f → LRInvariant gĜ f' →
@@ -128,6 +134,10 @@ def ExcursionData.ofHom {Γ Ĝ : Type} {gΓ : Grp Γ} {gĜ : Grp Ĝ} (k : Type) 
     (ρ : Hom gΓ gĜ) : ExcursionData gΓ gĜ k where
   Θ := fun f γ => f (fun i => ρ.toFun (γ i))
   map_const := by intros; rfl
+  map_unit := by
+    intro I f _
+    show f (fun _ => ρ.toFun gΓ.one) = f (fun _ => gĜ.one)
+    rw [ρ.map_one]
   functorial := by intros; rfl
   map_mul := by intros; rfl
   map_add := by intros; rfl
