@@ -17,3 +17,6 @@ import LanglandsOracles.ExcursionGL1
 import LanglandsOracles.ExcursionGL2
 import LanglandsOracles.ExcursionGL2Ring
 import LanglandsOracles.ImageMod3
+import LanglandsOracles.Generation
+import LanglandsOracles.ImageMod2
+import LanglandsOracles.PseudocharSearch

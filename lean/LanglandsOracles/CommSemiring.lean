@@ -4,7 +4,8 @@
 `IsCSR R` is the proposition that the ambient operations on R satisfy the commutative-semiring laws;
 no subtraction is assumed, which is all the polynomial identities of §3 (associativity of 2×2
 matrix multiplication, tr(xy) = tr(yx), the Frobenius–Procesi identity) need.  Instances: ℕ, ℤ,
-and 𝔽_p = Fin p for every p ≥ 1 (via `Fin.val` and the modular arithmetic of ℕ).
+and ℤ/n = Fin n for every n ≥ 1 (via `Fin.val` and the modular arithmetic of ℕ); ℤ/n is the field
+𝔽_p exactly when n = p is prime, which `IsPrime` records as a decidable class.
 -/
 namespace Oracles
 
@@ -51,7 +52,24 @@ theorem isCSR_int : IsCSR Int where
   zero_mul := Int.zero_mul
   mul_add := Int.mul_add
 
-/-- ℤ/n for every n ≥ 1; in particular 𝔽_p. -/
+/-- Primality, in a form `decide` settles for literals: 2 ≤ p and no d with 2 ≤ d < p divides p.
+`Fin p` with its ambient operations is the field 𝔽_p exactly for such p; for composite n it is the
+ring ℤ/n (ℤ/4 ≠ 𝔽₄). -/
+class IsPrime (p : Nat) : Prop where
+  prime : 2 ≤ p ∧ ∀ d, d < p → 2 ≤ d → p % d ≠ 0
+
+instance IsPrime.toNeZero (p : Nat) [hp : IsPrime p] : NeZero p :=
+  ⟨fun h => absurd hp.prime.1 (by rw [h]; decide)⟩
+
+instance : IsPrime 2 := ⟨by decide⟩
+instance : IsPrime 3 := ⟨by decide⟩
+instance : IsPrime 5 := ⟨by decide⟩
+instance : IsPrime 7 := ⟨by decide⟩
+
+theorem not_isPrime_four : ¬ IsPrime 4 := fun h => (h.prime.2 2 (by decide) (by decide)) rfl
+theorem not_isPrime_one : ¬ IsPrime 1 := fun h => absurd h.prime.1 (by decide)
+
+/-- ℤ/n for every n ≥ 1 (the field 𝔽_p when n = p is prime). -/
 theorem isCSR_fin (n : Nat) [NeZero n] : IsCSR (Fin n) where
   add_assoc a b c := Fin.ext (by
     simp only [Fin.val_add]

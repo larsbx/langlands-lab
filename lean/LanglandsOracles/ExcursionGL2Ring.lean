@@ -9,7 +9,8 @@ GL₂(R) is taken as the group of pairs (x, y) of 2×2 matrices with xy = yx = 1
 as a witness, so no determinants or subtraction are needed): multiplication (x,y)(x',y') = (xx', y'y),
 inverse (x,y)⁻¹ = (y,x).  The trace of the first component is a class function by `M2.trace_mul_comm`
 and satisfies the Procesi identity by `M2.procesi`, so `gl2_pseudocharacter` applies to every
-excursion datum.  Instances: R = 𝔽_p for every p, ℤ, ℕ.  This is the setting of Lafforgue's theorem
+excursion datum.  Instances: R = ℤ/n for every n ≥ 1 (`gl2_Zmod_pseudocharacter`), hence the field
+𝔽_p for prime p (`gl2_Fp_pseudocharacter`, gated by `IsPrime p`), and ℤ, ℕ.  This is the setting of Lafforgue's theorem
 for GL₂ with k = R (there k = ℚ̄_ℓ; here R may be any commutative semiring, e.g. 𝔽₃ as in the mod-3
 instance of 37a1, `ExcursionInstance.lean`).
 -/
@@ -76,14 +77,25 @@ theorem gl2_ring_pseudocharacter_comm (D : ExcursionData gΓ (grpGL2 h) R) (γ �
 
 end Ring
 
-/-- The finite-field case Ĝ = GL₂(𝔽_p), k = 𝔽_p, for every p (the mod-ℓ parameters of Branch 1). -/
-theorem gl2_Fp_pseudocharacter (p : Nat) [NeZero p] {Γ : Type} {gΓ : Grp Γ}
+/-- The case Ĝ = GL₂(ℤ/n), k = ℤ/n, for every n ≥ 1 (a ring, not a field, when n is composite). -/
+theorem gl2_Zmod_pseudocharacter (n : Nat) [NeZero n] {Γ : Type} {gΓ : Grp Γ}
+    (D : ExcursionData gΓ (grpGL2 (isCSR_fin n)) (Fin n)) (γ₁ γ₂ γ₃ : Γ) :
+    exChar D traceGL2 γ₁ * exChar D traceGL2 γ₂ * exChar D traceGL2 γ₃
+        + exChar D traceGL2 (gΓ.mul (gΓ.mul γ₁ γ₂) γ₃) + exChar D traceGL2 (gΓ.mul (gΓ.mul γ₁ γ₃) γ₂)
+      = exChar D traceGL2 (gΓ.mul γ₁ γ₂) * exChar D traceGL2 γ₃
+        + exChar D traceGL2 (gΓ.mul γ₁ γ₃) * exChar D traceGL2 γ₂
+        + exChar D traceGL2 (gΓ.mul γ₂ γ₃) * exChar D traceGL2 γ₁ :=
+  gl2_ring_pseudocharacter (isCSR_fin n) D γ₁ γ₂ γ₃
+
+/-- The finite-field case Ĝ = GL₂(𝔽_p), k = 𝔽_p, for prime p (the mod-ℓ parameters of Branch 1):
+the primality hypothesis is what makes `Fin p` the field 𝔽_p rather than the ring ℤ/p. -/
+theorem gl2_Fp_pseudocharacter (p : Nat) [IsPrime p] {Γ : Type} {gΓ : Grp Γ}
     (D : ExcursionData gΓ (grpGL2 (isCSR_fin p)) (Fin p)) (γ₁ γ₂ γ₃ : Γ) :
     exChar D traceGL2 γ₁ * exChar D traceGL2 γ₂ * exChar D traceGL2 γ₃
         + exChar D traceGL2 (gΓ.mul (gΓ.mul γ₁ γ₂) γ₃) + exChar D traceGL2 (gΓ.mul (gΓ.mul γ₁ γ₃) γ₂)
       = exChar D traceGL2 (gΓ.mul γ₁ γ₂) * exChar D traceGL2 γ₃
         + exChar D traceGL2 (gΓ.mul γ₁ γ₃) * exChar D traceGL2 γ₂
         + exChar D traceGL2 (gΓ.mul γ₂ γ₃) * exChar D traceGL2 γ₁ :=
-  gl2_ring_pseudocharacter (isCSR_fin p) D γ₁ γ₂ γ₃
+  gl2_Zmod_pseudocharacter p D γ₁ γ₂ γ₃
 
 end Oracles
