@@ -23,7 +23,8 @@ Brandt trace formula, Φ_N, Z(E, T), the Carlitz module) and the kernel certifie
 `decide` the identities on data exported from Python (`tools/export_lean_data.py`
 → `lean/LanglandsOracles/Data.lean`): Brandt row sums, commutation, Aut-weighted
 symmetry, 12·tr B(n) = Eichler's formula for n ∈ {1, ℓ, ℓ², ℓℓ'}, and the
-branch-1 L-series vanishing in ℤ[ζ_N] versus Z(E, T).  `pytest` runs `lake build`
+branch-1 L-series vanishing in ℤ[ζ_N] versus Z(E, T), and the level-N Eichler–Selberg
+formula against modular-symbol traces.  `pytest` runs `lake build`
 as a gate that fails, never skips, when Lean is missing.
 
 See `docs/dossier.md` for the numbers and the PROVED / IMPORTED ledger.
@@ -63,7 +64,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 535 tests (~40 s with a warm lake cache; first Lean build ~2 min)
+pytest                      # all branches + Lean gate, 536 tests (~40 s with a warm lake cache; first Lean build ~2 min)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py

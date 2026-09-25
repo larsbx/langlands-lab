@@ -179,3 +179,24 @@ def test_drinfeld_dictionary_level_t3_over_F3():
         assert common_eigenvector(mats, {pr: E.trace_at(pr) for pr in primes}) is not None
         assert E.l_series(4) == (1, 0, 0, 0, 0)
     assert E3_A.trace_at((1, 1)) == E3_B.trace_at((2, 1)) == 1  # t -> 2t swaps t+1 and t+2
+
+
+@pytest.mark.slow
+def test_level_t3_over_F5_has_no_rational_eigenform_as_tame_conductors_force():
+    """In characteristic >= 5 the conductor exponent at an additive place is 2 (tame), so no elliptic curve
+    over F_5(t) has conductor t^3 oo; accordingly X_0(t^3)/F_5 (genus 4) carries no rational eigenform."""
+    from langlands.ec_function_field import FunctionFieldCurve
+    from langlands.tate import PolyLocal, tate
+    G = Gamma0Quotient(5, (0, 0, 0, 1), 5)
+    assert G.genus == 4
+    x = sp.Symbol("x")
+    for pr in ((1, 1), (2, 1), (3, 1), (4, 1)):
+        cp = sp.Poly(G.hecke_matrix(pr).charpoly(x).as_expr(), x)
+        assert cp.ground_roots() == {}
+    # Tate at t for additive curves over F_5(t): exponent 2 always
+    for a in (((), (0, 0, 1), (), (0, 1), (1,)), ((), (), (), (0, 1), (0, 0, 1)), ((), (0, 1), (), (), (0, 0, 0, 1))):
+        E = FunctionFieldCurve(5, a)
+        res = tate(PolyLocal(5, (0, 1)), E.a)
+        assert res.kodaira not in ("I0",) and not res.kodaira.startswith("I") or res.conductor_exponent <= 2
+        if res.kodaira not in ("I0",) and not res.kodaira.startswith("I"):
+            assert res.conductor_exponent == 2, res

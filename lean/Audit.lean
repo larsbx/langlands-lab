@@ -12,3 +12,4 @@ open Oracles
 #print axioms eichler_selberg_tau
 #print axioms ExcursionData.map_one
 #print axioms frobenius_matrices_mod3_37a1
+#print axioms eichler_selberg_level_N

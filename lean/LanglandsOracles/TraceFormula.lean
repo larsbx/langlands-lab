@@ -54,3 +54,54 @@ def eichlerBrandt12 (p n : Nat) : Int :=
       else acc + (12 * classNumber fd.2 / unitCount fd.2 : Nat) * (1 - kronecker fd.2 p)) acc) base
 
 end Oracles
+
+namespace Oracles
+
+/-- ψ(N) = N ∏_{p | N} (1 + 1/p), the index of Γ₀(N) in SL₂(ℤ), by trial division. -/
+def psi (N : Nat) : Nat :=
+  let rec go (m acc p fuel : Nat) : Nat :=
+    match fuel with
+    | 0 => if m > 1 then acc * (m + 1) / m else acc
+    | fuel + 1 =>
+      if p * p > m then (if m > 1 then acc * (m + 1) / m else acc)
+      else if m % p == 0 then
+        let rec strip (m fuel : Nat) : Nat :=
+          match fuel with
+          | 0 => m
+          | fuel + 1 => if m % p == 0 then strip (m / p) fuel else m
+        go (strip m m) (acc * (p + 1) / p) (p + 1) fuel
+      else go m acc (p + 1) fuel
+  go N N 2 N
+
+def phiNat (n : Nat) : Nat := ((List.range' 1 n).filter (fun k => Nat.gcd k n == 1)).length
+
+def divisors (n : Nat) : List Nat := (List.range' 1 n).filter (fun d => n % d == 0)
+
+/-- μ(t, f, n) = ψ(N)/ψ(N/N_f) · #{x mod N : x² − t x + n ≡ 0 (mod N N_f)}, N_f = gcd(N, f). -/
+def muLocal (N : Nat) (t : Int) (f n : Nat) : Int :=
+  let Nf := Nat.gcd N f
+  let modulus : Int := (N * Nf : Nat)
+  let count := ((List.range N).filter (fun (x : Nat) => ((x : Int) * (x : Int) - t * (x : Int) + (n : Int)) % modulus == 0)).length
+  ((psi N / psi (N / Nf) : Nat) : Int) * count
+
+/-- 24 · tr T_n | S_k(Γ₀(N)) for gcd(n, N) = 1, trivial character:
+  24 A₁ = 2 [n = □] n^{k/2−1} (k−1) ψ(N),
+  24 A₂ = −Σ_{t² < 4n} P_k(t, n) Σ_f (24 h(d)/w(d)) μ(t, f, n),   d = (t² − 4n)/f²,
+  24 A₃ = −12 Σ_{d | n} min(d, n/d)^{k−1} Σ_{c | N, gcd(c, N/c) | (n/d − d)} φ(gcd(c, N/c)),
+  24 A₄ = 24 [k = 2] Σ_{t | n, gcd(N, n/t) = 1} t. -/
+def eichlerSelbergN24 (N k n : Nat) : Int :=
+  let a1 : Int := if isSquare n then 2 * ((Nat.pow (isqrt n) (k - 2) * (k - 1) * psi N : Nat) : Int) else 0
+  let tmax := isqrt (4 * n - 1)
+  let ts := (List.range (2 * tmax + 1)).map (fun (i : Nat) => (i : Int) - (tmax : Int))
+  let a2 : Int := ts.foldl (fun acc t =>
+    acc - chebP k t n * ((squareDivisors (t * t - 4 * n)).foldl (fun s fd =>
+      s + ((24 * classNumber fd.2 / unitCount fd.2 : Nat) : Int) * muLocal N t fd.1 n) 0)) 0
+  let a3 : Int := (divisors n).foldl (fun acc d =>
+    let inner := ((divisors N).filter (fun c =>
+      let g := Nat.gcd c (N / c)
+      (((n / d : Nat) : Int) - (d : Int)) % (g : Int) == 0)).foldl (fun s c => s + phiNat (Nat.gcd c (N / c))) 0
+    acc - 12 * ((Nat.pow (min d (n / d)) (k - 1) * inner : Nat) : Int)) 0
+  let a4 : Int := if k == 2 then 24 * (((divisors n).filter (fun t => Nat.gcd N (n / t) == 1)).foldl (· + ·) 0 : Nat) else 0
+  a1 + a2 + a3 + a4
+
+end Oracles
