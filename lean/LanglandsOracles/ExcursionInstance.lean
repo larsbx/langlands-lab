@@ -51,6 +51,15 @@ theorem brandt_eigenvector_37a1 :
 
 theorem brandt_eigenvalues_match_point_counts : ap 5 = -2 ∧ ap 7 = -1 := by decide +kernel
 
+/-- The matrix of Frob_p on 37a1[3] (exported): trace = a_p and det = p mod 3 for every good p ≤ 61,
+    i.e. Eichler–Shimura mod 3 as a matrix identity, with a_p from Lean's own point counts. -/
+theorem frobenius_matrices_mod3_37a1 :
+    galoisMod3Data.all (fun pm =>
+      let (p, m) := pm
+      ((m[0]! + m[3]! : Nat) : Int) % 3 == (ap p % 3 + 3) % 3 &&
+      (((m[0]! * m[3]! : Nat) : Int) - ((m[1]! * m[2]! : Nat) : Int)) % 3 == ((p : Int) % 3)) = true := by
+  decide +kernel
+
 /-- Galois side (ψ_3 mod p) ⇔ automorphic side (a_p mod 3) at every good p ≤ 61. -/
 theorem mod3_excursion_37a1 :
     goodPrimes.all (fun p => psi3HasRoot p == charpolyHasRootPm1Mod3 p) = true := by decide +kernel

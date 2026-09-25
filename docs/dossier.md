@@ -54,6 +54,17 @@ Zagier's form, tr T_n | S_k = −½ Σ_{t²≤4n} P_k(t,n) H(4n−t²) − ½ Σ
 reproduces τ(n) for n ≤ 30 (τ from Δ = q∏(1−qⁿ)²⁴, independently), dim S_k for
 k ≤ 36, and a₂ = 216, −528, 456 for k = 16, 18, 20, tr T₂ = 1080 for k = 24.
 
+### 2.4b Eichler–Selberg at level N (COMPUTED, both sides)
+`eichler_selberg(N, k, n)` for Γ₀(N), trivial character, gcd(n, N) = 1 (Cohen–Zagier /
+Schoof–van der Vlugt form): A₁ = [n = □] n^{k/2−1}(k−1)ψ(N)/12, the elliptic term with
+weighted class numbers and the local factor μ(t,f,n) = ψ(N)/ψ(N/N_f)·#{x mod N :
+x² − tx + n ≡ 0 (mod N N_f)}, the hyperbolic term with φ(gcd(c, N/c)), and A₄ = Σ_{t|n,
+gcd(N,n/t)=1} t at weight 2.  Checked for every N ≤ 40 and n ≤ 12 prime to N against
+½·tr T_n on cuspidal modular symbols (weight 2), against Zagier's level-1 form, and at
+prime level against Eichler's Brandt formula minus the Eisenstein eigenvalue σ(n): three
+routes to the same numbers.  The reading of μ's x-sum ("x mod N, condition mod N·N_f")
+was fixed by these tests; it is well defined because the congruence forces N_f | 2x − t.
+
 ### 2.5 Jacquet–Langlands as an integer oracle (COMPUTED; modularity IMPORTED)
 For each rational newform of prime level p ≤ 101 (Cremona model, discriminant
 checked to be ±p^k), a₂, a₃ are point counts over 𝔽₂, 𝔽₃.  A common eigenvector
@@ -74,6 +85,18 @@ Hecke polynomials:
 For p ∈ {11, 17, 19, 37} (all forms rational) the class-number side gives
 tr B(ℓ) − (ℓ+1) = Σ_E a_ℓ(E) for ℓ ≤ 31 — Eichler's formula against point counts at
 primes where no Φ_ℓ is available.
+
+### 2.5b Modular symbols: an independent automorphic oracle (COMPUTED)
+`modular_symbols.py`: Manin symbols (c : d) ∈ ℙ¹(ℤ/N) with the S- and T-relations,
+H₁(X₀(N), cusps; ℚ) as an exact quotient, the boundary map through Cremona's cusp
+equivalence criterion, and Hecke operators through Merel's Heilbronn matrices.  For every
+N ≤ 60: dim = 2g + c − 1 and the cuspidal part has dimension 2g (genus and cusp formulas
+IMPORTED as the reference).  For prime p ≤ 53 and ℓ ∈ {2,3,5,7}: the characteristic
+polynomial of T_ℓ on cuspidal modular symbols equals the square of the Brandt Hecke
+polynomial — Jacquet–Langlands checked between two independent automorphic
+computations, with no elliptic curve involved.  At the composite genus-one levels
+14, 15, 20, 27, 32, 36 the point counts of the curves used in the Tate tests are the
+T_p-eigenvalues for p ≤ 13 (modularity at composite level).
 
 ### 2.6 Ramanujan–Petersson (COMPUTED; Deligne IMPORTED as the reason)
 For p ≤ 71 and ℓ ∈ {2,3}, and p ≤ 37 and ℓ ∈ {5,7}: the Hecke polynomial is real-rooted and no root has
@@ -212,6 +235,15 @@ The traces are point counts over 𝔽_𝔭 = GF(2, 𝔭); they coincide with the
 eigenvalues above at every 𝔭 ∤ t of degree ≤ 3, and the L-functions (Euler products
 over all places of degree ≤ 5, ∞ included) are polynomials of degree deg N − 4
 (Grothendieck), with the functional-equation coefficient ±q in the degree-1 case.
+
+**Conductors by Tate's algorithm** (`tate.py`, COMPUTED; Ogg–Saito IMPORTED for f):
+Tate's algorithm over an exact DVR in every residue characteristic, validated over
+ℤ_(p) on ten Cremona curves (Kodaira types, conductor exponents, Tamagawa numbers,
+split/nonsplit consistent with the root numbers of 11a1, 37a1, 37b1, 43a1).  At the
+wild place t it gives type III, f = 3 for E_{t³} and type II, f = 4 for E_{t⁴} over 𝔽₂,
+and type II, f = 3 for both 𝔽₃ curves; at ∞ split I₈, I₈, I₉, I₉.  So the conductors
+are t³∞, t⁴∞, t³∞, t³∞: the Galois-side conductor equals the level found on the tree,
+deg Δ_min = 12 in each case, and deg N − 4 = deg L.
 KERNEL: `function_field_l_functions` recomputes both Euler products in Lean from the
 exported local data.
 Over 𝔽₃(t), level t³ has genus 2 with two rational eigensystems; the search (with
@@ -267,3 +299,18 @@ defining relation of a 2-dimensional pseudocharacter.  Python checks the same (`
   Langlands correspondence for these curves, fully explicit.
 - `ExcursionData.of_hom` on GL₂(𝔽₂) with (E1)–(E3) checked exhaustively for |I| = 2 on the
   Hecke functions: the finite shadow of the Lean structure.
+
+### 3.8 The mod-ℓ parameter as a computed matrix; the Weil pairing as biextension commutator (COMPUTED + KERNEL)
+`galois_rep.py`: E[ℓ] is found over its splitting field 𝔽_{p^k} (division-polynomial roots
+and square roots by the generic root finder, no enumeration), a basis is chosen, and
+Frob_p is written in it: ρ̄_ℓ(Frob_p) ∈ GL₂(𝔽_ℓ).  For all 15 Cremona curves, all good
+p ≤ 31 and ℓ ∈ {2, 3}: tr ≡ a_p and det ≡ p (mod ℓ) — Eichler–Shimura mod ℓ as a matrix
+identity — and the splitting degree k equals the order of the matrix.
+KERNEL (`frobenius_matrices_mod3_37a1`): the exported matrices for 37a1 at all good p ≤ 61
+have trace a_p (Lean's point counts) and determinant p mod 3.
+
+The Weil pairing e_ℓ(P, Q) = f_P(D_Q)/f_Q(D_P) by Miller's algorithm is the commutator
+pairing of the Poincaré biextension (the same tame-symbol bookkeeping as §1.4); checked
+bilinear, alternating, antisymmetric, of exact order ℓ, and Galois-equivariant
+e(Frob P, Frob Q) = e(P, Q)^p, which is det ρ̄_ℓ = cyclotomic character read off the
+biextension rather than the matrix.

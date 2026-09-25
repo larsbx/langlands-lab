@@ -101,6 +101,19 @@ class FunctionFieldCurve:
             return "additive"
         return "split" if E.reduce_at(pr).node_is_split() else "nonsplit"
 
+    def local_data(self, max_degree: int) -> dict:
+        """Tate's algorithm at every bad place of degree <= max_degree and at oo (key None):
+        Kodaira type, conductor exponent, Tamagawa number, minimal model."""
+        from .tate import PolyLocal, tate
+
+        out = {f: tate(PolyLocal(self.p, f), self.a) for f in self.bad_primes(max_degree)}
+        out[None] = tate(PolyLocal(self.p, (0, 1)), self.model_at_infinity().a)
+        return {f: r for f, r in out.items() if r.kodaira != "I0"}
+
+    def conductor_degree(self, max_degree: int) -> int:
+        """deg N = sum over bad places (degree <= max_degree, oo included) of f_v * deg v."""
+        return sum(r.conductor_exponent * (1 if f is None else len(f) - 1) for f, r in self.local_data(max_degree).items())
+
     def conductor_support(self, max_degree: int) -> dict:
         types = {f: self.reduction_type(f) for f in self.bad_primes(max_degree)}
         types[None] = self.reduction_type(None)

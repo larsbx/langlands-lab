@@ -9,7 +9,8 @@ computed and which theorem the match instantiates.
 | branch | object | what is computed | what the match instantiates |
 |---|---|---|---|
 | 2 | supersingular ℓ-isogeny graphs mod p | Brandt matrices B(2), B(3) from Φ₂, Φ₃ over 𝔽_{p²}, and B(ℓ) for any odd ℓ by Vélu on a scalar-Frobenius model (no modular polynomial); traces of B(n), n ≤ 49; Hecke polynomials; exact Sturm root counts | Eichler's trace formula (spectral = class numbers), Jacquet–Langlands + Eichler–Shimura (eigenvalues = point counts at ℓ = 2, 3, 5, 7), Ramanujan–Petersson |
-| 2 | S_k(SL₂(ℤ)) | Zagier's form of Eichler–Selberg from Hurwitz class numbers; τ(n) from Δ's q-expansion | the simplest fully explicit Arthur–Selberg instance |
+| 2 | modular symbols for Γ₀(N) | Manin symbols, boundary map, Hecke via Heilbronn matrices; cuspidal Hecke polynomials for N ≤ 60 | Jacquet–Langlands between two automorphic computations (= Brandt² at prime level), modularity at composite level |
+| 2 | S_k(SL₂(ℤ)) and S₂(Γ₀(N)) | Zagier's form of Eichler–Selberg from Hurwitz class numbers; τ(n) from Δ's q-expansion; the level-N formula (class numbers, local factors) against modular-symbol traces for N ≤ 40 | the simplest fully explicit Arthur–Selberg instances, geometric side = class numbers |
 | 1 | E = 37a1 mod p, p ∈ {5, 7} | Lang-isogeny fibers; χ∘N on Pic⁰(𝔽_{pᵏ}); Abel sums of lines; tame symbols from Laurent expansions; L(χ, T) as an Euler product in ℤ[ζ][[T]] | unramified geometric CFT for GL₁: L_χ ↔ character sheaf A_χ, L(E, L_χ) = 1 ≠ Z(E, T), Weil reciprocity with the Deligne sign |
 | 3 | Carlitz module over 𝔽_p[t] | C_P ≡ x^{|P|} (mod P); Frob_P = C_P on C[M]; splitting degrees = ord of P in (A/ann λ)^× | function-field CFT for GL₁ (Carlitz–Hayes) |
 | 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity on GL₂(𝔽₃) by kernel; mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p | the shape "Galois side = commutative algebra of operators on automorphic functions", with the converse (Lafforgue) imported |
@@ -40,6 +41,7 @@ langlands/
   velu.py               B(ℓ) for odd ℓ by Vélu: scalar-Frobenius twist, division polynomials, x-only kernels
   ec.py                 y² = x³ + ax + b: group law, enumeration, structure with basis, Frobenius
   newforms.py           Cremona models of prime conductor ≤ 101; a_ℓ by point count
+  modular_symbols.py    Manin symbols for Gamma_0(N): relations, cusps, boundary, Hecke operators
   cyclotomic.py         ℤ[ℤ/N] → ℤ[ζ_N] zero test via Φ_N
   laurent.py            Laurent series; local expansions at every point incl. O; tame symbols
   gl1.py                branch 1: Lang fibers, characters, closed points, L(χ,T), Abel, Weil reciprocity
@@ -48,6 +50,8 @@ langlands/
   bruhat_tits.py        branch 3: tree, reduction, Gamma_0(n)\T, harmonic cochains, Hecke operators
   ec_function_field.py  elliptic curves over F_q(t): reduction types, a_p by point count, L(E,T)
   excursion.py          third act: GL_2 pseudocharacter identity, mod-ell excursion checks, finite excursion data
+  tate.py               Tate's algorithm over an exact DVR (Z_(p), F_p[t]_(pi), oo): Kodaira type, conductor exponent, Tamagawa
+  galois_rep.py         rho_ell(Frob_p) on E[ell] as a matrix over the splitting field; Weil pairing by Miller (biextension commutator)
 tests/                  one file per branch + the Lean gate; all exact, no floating point
 tools/export_lean_data.py  Python → Lean data bridge (deterministic; checked by the gate)
 lean/                   lake project LanglandsOracles: oracles + kernel-checked certificates
@@ -59,7 +63,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 218 tests (~40 s with a warm lake cache; first Lean build ~2 min)
+pytest                      # all branches + Lean gate, 420 tests (~40 s with a warm lake cache; first Lean build ~2 min)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py
@@ -84,10 +88,10 @@ pytest tests/test_branch3_carlitz.py
   Apollonian λ₂ universality lives in a different regime (Selberg / Kim–Sarnak θ₇
   for congruence quotients of hyperbolic space), see the dossier.
 - The tree side imports two elementary facts as the *full* stabilisers of v_n
-  (Aut(𝒪 ⊕ 𝒪(n))) and checks everything else; conductor exponents at wild places
-  (t in characteristic 2) are not computed, so "level t³" for E_{t³} is read off
-  from the eigenvalue match and deg L = deg N − 4, not from Tate's algorithm.
+  (Aut(𝒪 ⊕ 𝒪(n))) and checks everything else.  Conductors of the Drinfeld curves,
+  wild places included, come from Tate's algorithm (`tate.py`, validated over ℤ_(p)
+  on Cremona curves) and equal the levels found on the tree.
 - The excursion formalisation proves the Galois-to-excursion direction and the Hecke
   identification; Lafforgue's converse (excursion data ⇒ parameter) is imported, and the
-  finite instances certify class-function evaluations of mod-ℓ parameters at Frobenius
-  elements, not the ℓ-adic parameter itself.
+  finite instances certify the mod-ℓ parameters at Frobenius elements (as matrices up to
+  conjugacy, with trace a_p and determinant p), not the ℓ-adic parameter itself.
