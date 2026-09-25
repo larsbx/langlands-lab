@@ -80,9 +80,11 @@ pytest tests/test_branch3_carlitz.py
   checked at ℓ ∈ {2, 3, 5, 7} against point counts for levels ≤ 37 and at ℓ = 2, 3
   for levels ≤ 101; the class-number side is checked against point counts at
   ℓ ≤ 31 for the levels 11, 17, 19, 37 where S₂(Γ₀(p)) is spanned by rational newforms.
-- Lean certifies *identities on exported data* and recomputes the class-number
-  side itself; it does not recompute isogeny graphs or point counts (those stay
-  in Python).  Certificates use `decide` / `decide +kernel` only.
+- Lean certifies *identities on exported data*, recomputes the class-number
+  side itself, and (since `Isogeny.lean`) recomputes the supersingular isogeny
+  graphs at ℓ = 2, 3 for p ≤ 37 from 𝔽_{p²} arithmetic and Φ₂, Φ₃; point counts
+  beyond 37a1 and the Vélu graphs at ℓ ≥ 5 stay in Python.  Certificates use
+  `decide` / `decide +kernel` only.
 - The identification "eigenvalue of B(ℓ) = a_ℓ of a newform" is *checked*; the
   identification "newform ↔ Cremona curve" is imported (modularity).
 - L(χ, T) is computed as an Euler product to order 4 (p = 5) or 3 (p = 7); its

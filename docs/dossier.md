@@ -192,6 +192,7 @@ Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by
 | `fermat_carlitz_small` | C_P ≡ x^{|P|} (mod P), 8 cases | Carlitz p-polynomials over 𝔽_p[t] |
 | `brandt_certificates` | for p ≤ 37 and ℓ ∈ {2,3,5,7}: row sums ℓ+1, commutation, B·diag(w) symmetric, 12·tr B(n) = Eichler's formula for n ∈ {1, ℓ, ℓ², ℓℓ'} | class numbers, Legendre symbols, Eichler's formula, Hecke relations (data: Python) |
 | `lseries_certificates` | 37a1 mod 5, 7: every L(χ,T) coefficient vanishes mod Φ_N for χ ≠ 1 (not termwise); χ = 1 gives Z(E,T) | Φ_N by divisor recursion, polynomial remainder over ℤ, zeta recursion (data: Python) |
+| `isogeny_graphs_recomputed` | for every exported locus p ∈ {11,…,37}: Lean's own supersingular j's (Hasse polynomial roots in 𝔽_{p²} = 𝔽_p[s]/(s²−c)) and Φ₂-, Φ₃-root multiplicities give the exported B(2), B(3) up to a simultaneous relabelling; the number of curves is tr B(1) | 𝔽_{p²} arithmetic, Deuring's criterion, Φ₂, Φ₃, synthetic division, permutations (nothing imported from Python but the matrices being certified) |
 | `eichler_selberg_level_N` | 24·tr T_n \| S_k(Γ₀(N)) = 12·(trace on cuspidal Manin symbols) for weight 2, N ≤ 20, n ≤ 7; weights 4 and 6, N ≤ 6, n ≤ 5; level 1, weight 12, n ≤ 6 (n prime to N) | ψ(N), class numbers, local factors μ, φ(gcd(c, N/c)), Chebyshev P_k (data: modular-symbol traces from Python) |
 
 The bridge is `tools/export_lean_data.py`; the gate `tests/test_lean_gate.py`
