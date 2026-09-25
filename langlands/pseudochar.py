@@ -84,5 +84,27 @@ def find_representation(T: Callable, G: Sequence, mul: Callable, one, gens: Sequ
     return None
 
 
+def find_all_representations(T: Callable, G: Sequence, mul: Callable, one, gens: Sequence, p: int) -> list[dict]:
+    """Every generator assignment that extends to a representation with trace T."""
+    D = determinant_of_pseudocharacter(T, mul, p)
+    cands = [[m for m in gl2(p) if trace(m, p) == T(g) % p and det(m, p) == D(g)] for g in gens]
+    found = []
+    for images in product(*cands):
+        rho = _extend(list(zip(gens, images)), mul, one, p, G)
+        if rho is not None and all(trace(rho[x], p) == T(x) % p for x in G):
+            found.append(rho)
+    return found
+
+
+def mat_inv(c: Mat, p: int) -> Mat:
+    u = pow(det(c, p), -1, p)
+    return tuple((u * e) % p for e in (c[3], -c[1], -c[2], c[0]))
+
+
+def are_conjugate(rho1: dict, rho2: dict, G: Sequence, p: int) -> bool:
+    """Some c in GL_2(F_p) with c rho1(g) c^-1 = rho2(g) for all g."""
+    return any(all(mat_mul(mat_mul(c, rho1[g], p), mat_inv(c, p), p) == rho2[g] for g in G) for c in gl2(p))
+
+
 def is_homomorphism(rho: dict, G: Sequence, mul: Callable, p: int) -> bool:
     return all(rho[mul(x, y)] == mat_mul(rho[x], rho[y], p) for x in G for y in G)
