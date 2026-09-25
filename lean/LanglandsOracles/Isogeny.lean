@@ -141,12 +141,15 @@ def permutations : List Nat → List (List Nat)
 def relabel (σ : List Nat) (m : IMat) : IMat :=
   σ.map fun i => σ.map fun j => (m[i]!)[j]!
 
-/-- Some relabelling of Lean's supersingular curves carries all of Lean's matrices to the exported ones. -/
+/-- Some relabelling of Lean's supersingular curves carries Lean's B(2) and B(3) to the exported ones.
+    Both degrees must be present in the exported entry: a locus missing either is rejected, so the
+    check cannot pass vacuously. -/
 def isogenyGraphCertified (entry : Nat × List Nat × List (Nat × IMat)) : Bool :=
   let (p, w, ms) := entry
   let n := w.length
   let js := supersingularJ p
   js.length == n && ((12 : Int) * n == eichlerBrandt12 p 1) &&
+  ms.any (fun m => m.1 == 2) && ms.any (fun m => m.1 == 3) &&
   (permutations (List.range n)).any fun σ =>
     ms.all fun m =>
       if m.1 == 2 || m.1 == 3 then
@@ -154,6 +157,10 @@ def isogenyGraphCertified (entry : Nat × List Nat × List (Nat × IMat)) : Bool
         | some B => relabel σ B == m.2
         | none => false
       else true
+
+/-- Negative control: the p = 11 locus with its ℓ = 3 entry removed is not certified. -/
+theorem missing_degree_is_rejected :
+    isogenyGraphCertified (11, [6, 4], [(2, [[0, 3], [2, 1]])]) = false := by decide +kernel
 
 /-- Non-vacuity: at p = 13 there is one supersingular curve and B(2) = [3], B(3) = [4]; at p = 11 two curves
     (j = 0, 1728) with row sums 3 and 4. -/
