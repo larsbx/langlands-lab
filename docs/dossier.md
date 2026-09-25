@@ -386,6 +386,22 @@ identity — and the splitting degree k equals the order of the matrix.
 KERNEL (`frobenius_matrices_mod3_37a1`): the exported matrices for 37a1 at all good p ≤ 61
 have trace a_p (Lean's point counts) and determinant p mod 3.
 
+**The image of ρ̄_{37a1,3} is all of GL₂(𝔽₃) (PROVED + KERNEL, `ImageMod3.lean`).**  The
+exported matrices are ρ̄(Frob_p) up to a choice of basis of E[3], i.e. up to conjugacy; the
+invariants (tr, det, scalar?) are conjugation-invariant.  ρ̄(Frob_5) has (tr, det) = (1, 2):
+order 8; ρ̄(Frob_7) has (tr, det) = (2, 1), non-scalar: unipotent of order 3 (`frob5_ord8`,
+`frob7_unip`, kernel).  `pairs_generate` (kernel): for every order-8 g and every non-scalar
+unipotent h in GL₂(𝔽₃), the multiplicative closure of {g, h} contains all 48 elements (12 × 8
+breadth-first closures on base-3 indices with a bitmask of seen elements).  Soundness of the
+closure is PROVED (`generatedIdx_sub`: every index whose bit is set decodes to a product of the
+generators), hence `generated_by_ord8_unip`: a multiplicatively closed subset of GL₂(𝔽₃) meeting
+both classes is GL₂(𝔽₃), and `mod3_image_37a1_full`: the image of ρ̄_{37a1,3}, which is such a
+subset, is full.  Consequently Gal(ℚ(37a1[3])/ℚ) ≅ GL₂(𝔽₃), the mod-3 excursion data of 37a1 are
+`ExcursionData.ofHom` of an isomorphism, and `gl2_Fp_pseudocharacter` (p = 3) applies with
+χ(Frob_p) = a_p mod 3.  Python (`test_mod3_image_of_37a1_is_full`) mirrors the check, with the
+negative control that two unipotents (⊆ SL₂) or an order-8 element with a scalar never generate.
+Axioms: propext, Quot.sound.
+
 The Weil pairing e_ℓ(P, Q) = f_P(D_Q)/f_Q(D_P) by Miller's algorithm is the commutator
 pairing of the Poincaré biextension (the same tame-symbol bookkeeping as §1.4); checked
 bilinear, alternating, antisymmetric, of exact order ℓ, and Galois-equivariant
