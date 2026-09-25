@@ -13,3 +13,4 @@ open Oracles
 #print axioms ExcursionData.map_one
 #print axioms frobenius_matrices_mod3_37a1
 #print axioms eichler_selberg_level_N
+#print axioms isogeny_graphs_recomputed
