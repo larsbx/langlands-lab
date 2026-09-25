@@ -347,7 +347,9 @@ with `M2.mul_assoc`, `M2.trace_mul_comm` alongside.  GL₂(R) is the group of pa
 xy = yx = 1 (inverse as witness, no determinants), `grpGL2`.  `gl2_ring_pseudocharacter`: for
 every commutative semiring R, every excursion datum for GL₂(R) with values in R is a
 2-dimensional pseudocharacter Γ → R, with χ(1) = 1 + 1 and χ(γγ') = χ(γ'γ);
-`gl2_Fp_pseudocharacter` is the case Ĝ = GL₂(𝔽_p), k = 𝔽_p of the mod-ℓ parameters of Branch 1.
+`gl2_Zmod_pseudocharacter` is the case Ĝ = GL₂(ℤ/n), k = ℤ/n for every n ≥ 1, and
+`gl2_Fp_pseudocharacter`, gated by the decidable class `IsPrime p` (ℤ/4 is not 𝔽₄), the field case
+Ĝ = GL₂(𝔽_p), k = 𝔽_p of the mod-ℓ parameters of Branch 1.
 Axioms: propext, Quot.sound.
 
 IMPORTED (not formalised): the remaining step for non-abelian Ĝ, pseudocharacter ⇒ semisimple
@@ -402,8 +404,46 @@ subset, is full.  Consequently Gal(ℚ(37a1[3])/ℚ) ≅ GL₂(𝔽₃), the mod
 negative control that two unipotents (⊆ SL₂) or an order-8 element with a scalar never generate.
 Axioms: propext, Quot.sound.
 
+**The image of ρ̄₂ for all fifteen curves (PROVED + KERNEL, `ImageMod2.lean`, `mod2_image.py`).**
+GL₂(𝔽₂) = S₃ permutes the roots of ψ₂ = 4x³ + b₂x² + 2b₄x + b₆.  Python (`mod2_image`) finds the
+exact type from the rational roots (rational root theorem) and the discriminant: S₃ for twelve
+curves, C₂ for 17a1, 73a1, 89b1 (rational 2-torsion x = 11/4, 3/4, −5/4), never C₃ or trivial;
+and checks Dedekind's consistency at every good p ≤ 31: ρ̄₂(Frob_p) (computed matrix) has order
+3, 2, 1 exactly when ψ₂ mod p has 0, 1, 3 roots.  Exported (`galoisMod2Data`) and kernel-checked
+(`mod2_data_certified`): every witness matrix has (tr, det) = (a_p, p) mod 2 with a_p from Lean's own
+point count of the Weierstrass model; the S₃ curves carry an order-3 and an order-2 witness; the C₂
+curves carry an order-2 witness and their rational root is a root of ψ₂.  Group theory from kernel
+facts: `generated_by_ord3_ord2` (every (order-3, order-2) pair generates S₃) and `image_C2` (a
+multiplicatively closed set fixing v ≠ 0 with an order-2 element is exactly Stab(v), of size 2,
+`stab_length`).  The closure machinery is now generic in n (`Generation.lean`, `generated_of_pairs`),
+shared by the mod-3 and mod-2 certificates.  Imported inputs: "exported matrix = ρ̄(Frob_p) up to
+conjugacy" and "a rational 2-torsion point is fixed by the image".  Axioms: propext, Quot.sound.
+
 The Weil pairing e_ℓ(P, Q) = f_P(D_Q)/f_Q(D_P) by Miller's algorithm is the commutator
 pairing of the Poincaré biextension (the same tame-symbol bookkeeping as §1.4); checked
 bilinear, alternating, antisymmetric, of exact order ℓ, and Galois-equivariant
 e(Frob P, Frob Q) = e(P, Q)^p, which is det ρ̄_ℓ = cyclotomic character read off the
 biextension rather than the matrix.
+
+### 3.9 Pseudocharacter ⇒ representation for finite Γ, by search (KERNEL + PROVED; `PseudocharSearch.lean`, `pseudochar.py`)
+Taylor's theorem (p > 2): a 2-dimensional pseudocharacter T: Γ → 𝔽_p is the trace of a
+semisimple representation.  For Γ = GL₂(𝔽₃) = Gal(ℚ(37a1[3])/ℚ) (§3.8) this is a finite
+search, and Lean runs it in the kernel: det g = (T(g)² − T(g²))/2 is determined by T; the images
+of the generating pair (ρ̄₃(Frob₅), ρ̄₃(Frob₇)) (generating by `pairs_generate`) range over the
+matrices with the prescribed (tr, det); a candidate is extended along breadth-first words (the
+table is one natural number in base 128) and accepted iff the generator relations
+ρ(xg) = ρ(x)ρ(g) hold on all of Γ.  The found table is then certified independently:
+multiplicativity on all 48² pairs and trace on all 48 elements (`certified`).
+- `rep_certified`: for T′(g) = det(g)·tr(g), the pseudocharacter of ρ̄₃ ⊗ χ_cyc — on Frobenius
+  elements p·a_p mod 3 (`Tprime_frobenius`, kernel) — the search finds a representation and
+  the certificate passes; `trace_rep_certified`: the same for T = tr (recovering ρ̄₃).
+- PROVED `Tprime_procesi`: T′ satisfies the Procesi identity, because g ↦ det(g)·g is a
+  homomorphism (kernel, 48² pairs) and `M2.procesi` holds for its values.
+- Negative control `bad_not_realised`: T(g) = tr(g) + det(g) − 1 has T(1) = 2 and is central
+  (`Tbad_one`, `Tbad_central`) but is not a pseudocharacter (tr ρ̄ ⊕ (det − 1) is a virtual, not
+  a genuine, 2-dimensional character), and the exhaustive search finds nothing.
+- Python (`pseudochar.py`): `is_pseudocharacter` (exhaustive Procesi check) and
+  `find_representation` for any finite group given by elements, multiplication and generators;
+  tests realise tr, det·tr and the contragredient on GL₂(𝔽₃), show the found ρ for det·tr is
+  conjugate to g ↦ det(g)g, and reject the control.
+IMPORTED: Taylor's theorem itself (the search is the finite instance, not the proof).

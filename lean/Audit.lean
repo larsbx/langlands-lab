@@ -20,6 +20,14 @@ open Oracles
 #print axioms exChar_comm
 #print axioms M2.procesi
 #print axioms gl2_ring_pseudocharacter
+#print axioms gl2_Zmod_pseudocharacter
 #print axioms gl2_Fp_pseudocharacter
 #print axioms Mat2.generated_by_ord8_unip
 #print axioms mod3_image_37a1_full
+#print axioms Mat2.generated_by_ord3_ord2
+#print axioms Mat2.image_C2
+#print axioms mod2_image_S3
+#print axioms mod2_image_C2
+#print axioms Mat2.Tprime_procesi
+#print axioms Mat2.rep_certified
+#print axioms Mat2.bad_not_realised
