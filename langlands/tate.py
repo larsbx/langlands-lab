@@ -281,9 +281,11 @@ def tate(R: LocalRing, a) -> TateResult:
             roots = _k_roots(k, (k.neg(R.residue(R.div_pi(a6, 2))), R.residue(R.div_pi(a3)), k.one))
             return TateResult("IV", vD - 2, 3 if len(roots) == 2 else 1, a, vD)
         # Step 6: make pi | a1, a2; pi^2 | a3, a4; pi^3 | a6
-        # (i) y -> y + s x with (T + s)^2 = T^2 + a1 T - a2 mod pi
+        # (i) y -> y + s x: the tangent cone y^2 + a1 xy - a2 x^2 becomes y^2 + (a1 + 2s) xy + (s^2 + a1 s - a2) x^2,
+        #     a square iff a1 + 2s = 0 and s^2 + a1 s - a2 = 0 in k (possible since pi | b2 = a1^2 + 4 a2)
+        r1, r2 = R.residue(a1), R.residue(a2)
         s = next(z for z in k.elements()
-                 if k.scale(2, z) == R.residue(a1) and k.mul(z, z) == k.neg(R.residue(a2)))
+                 if k.add(r1, k.scale(2, z)) == k.zero and k.sub(k.add(k.mul(z, z), k.mul(r1, z)), r2) == k.zero)
         a = _transform(R, a, R.zero(), R.lift(s), R.zero())
         a1, a2, a3, a4, a6 = a
         # (ii) y -> y + t with t^2 + a3 t + a6 = 0 mod pi^3; t = pi * t1

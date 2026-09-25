@@ -71,3 +71,29 @@ def test_conductor_of_drinfeld_curves_equals_the_tree_level(name):
     assert data[(0, 1)].discriminant_valuation + data[None].discriminant_valuation == 12
     L = E.l_series(5)
     assert len([c for c in L if c]) - 1 == E.conductor_degree(4) - 4  # L = 1 or 1 + 2T: degree deg N - 4
+
+
+ADMISSIBLE_CHANGES = [(0, 1, 0), (1, 0, 0), (0, 0, 1), (1, 1, 1), (2, 1, 3), (-1, 2, 1)]
+
+
+def _transform_ints(a, r, s, t):
+    a1, a2, a3, a4, a6 = a
+    return (a1 + 2 * s, a2 - s * a1 + 3 * r - s * s, a3 + r * a1 + 2 * t,
+            a4 - s * a3 + 2 * r * a2 - (t + r * s) * a1 + 3 * r * r - 2 * s * t,
+            a6 + r * a4 + r * r * a2 + r**3 - t * a3 - t * t - r * t * a1)
+
+
+@pytest.mark.parametrize("label", list(CREMONA))
+def test_tate_output_is_invariant_under_admissible_changes_of_coordinates(label):
+    """Codex finding on #3: the step-6 shear needs 2s = -a1; models with residual a1 != 0 failed.
+    Any (r, s, t) change of the minimal model must give the same Kodaira type, f and c at every bad prime."""
+    a, expected, _ = CREMONA[label]
+    for p, (kodaira, f, c) in expected.items():
+        for r, s, t in ADMISSIBLE_CHANGES:
+            res = tate(ZLocal(p), tuple(Fraction(x) for x in _transform_ints(a, r, s, t)))
+            assert (res.kodaira, res.conductor_exponent, res.tamagawa) == (kodaira, f, c), (label, p, (r, s, t), res)
+
+
+def test_codex_example_sheared_27a1():
+    res = tate(ZLocal(3), tuple(Fraction(x) for x in (2, -1, 1, -1, -7)))
+    assert (res.kodaira, res.conductor_exponent, res.tamagawa) == ("IV*", 3, 3)
