@@ -18,5 +18,8 @@ open Oracles
 #print axioms gl1_character_one
 #print axioms gl2_pseudocharacter
 #print axioms exChar_comm
-#print axioms gl2_F3_pseudocharacter
-#print axioms gl2_F3_pseudocharacter_one
+#print axioms M2.procesi
+#print axioms gl2_ring_pseudocharacter
+#print axioms gl2_Fp_pseudocharacter
+#print axioms Mat2.generated_by_ord8_unip
+#print axioms mod3_image_37a1_full

@@ -8,10 +8,12 @@ import LanglandsOracles.BrandtCertificates
 import LanglandsOracles.LSeriesCertificates
 import LanglandsOracles.FunctionFieldCertificates
 import LanglandsOracles.Excursion
+import LanglandsOracles.CommSemiring
 import LanglandsOracles.Pseudocharacter
 import LanglandsOracles.ExcursionInstance
 import LanglandsOracles.LevelNCertificates
 import LanglandsOracles.Isogeny
 import LanglandsOracles.ExcursionGL1
 import LanglandsOracles.ExcursionGL2
-import LanglandsOracles.ExcursionGL2F3
+import LanglandsOracles.ExcursionGL2Ring
+import LanglandsOracles.ImageMod3
