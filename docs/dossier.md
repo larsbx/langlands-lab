@@ -212,6 +212,15 @@ The traces are point counts over 𝔽_𝔭 = GF(2, 𝔭); they coincide with the
 eigenvalues above at every 𝔭 ∤ t of degree ≤ 3, and the L-functions (Euler products
 over all places of degree ≤ 5, ∞ included) are polynomials of degree deg N − 4
 (Grothendieck), with the functional-equation coefficient ±q in the degree-1 case.
+
+**Conductors by Tate's algorithm** (`tate.py`, COMPUTED; Ogg–Saito IMPORTED for f):
+Tate's algorithm over an exact DVR in every residue characteristic, validated over
+ℤ_(p) on ten Cremona curves (Kodaira types, conductor exponents, Tamagawa numbers,
+split/nonsplit consistent with the root numbers of 11a1, 37a1, 37b1, 43a1).  At the
+wild place t it gives type III, f = 3 for E_{t³} and type II, f = 4 for E_{t⁴} over 𝔽₂,
+and type II, f = 3 for both 𝔽₃ curves; at ∞ split I₈, I₈, I₉, I₉.  So the conductors
+are t³∞, t⁴∞, t³∞, t³∞: the Galois-side conductor equals the level found on the tree,
+deg Δ_min = 12 in each case, and deg N − 4 = deg L.
 KERNEL: `function_field_l_functions` recomputes both Euler products in Lean from the
 exported local data.
 Over 𝔽₃(t), level t³ has genus 2 with two rational eigensystems; the search (with

@@ -48,6 +48,7 @@ langlands/
   bruhat_tits.py        branch 3: tree, reduction, Gamma_0(n)\T, harmonic cochains, Hecke operators
   ec_function_field.py  elliptic curves over F_q(t): reduction types, a_p by point count, L(E,T)
   excursion.py          third act: GL_2 pseudocharacter identity, mod-ell excursion checks, finite excursion data
+  tate.py               Tate's algorithm over an exact DVR (Z_(p), F_p[t]_(pi), oo): Kodaira type, conductor exponent, Tamagawa
 tests/                  one file per branch + the Lean gate; all exact, no floating point
 tools/export_lean_data.py  Python → Lean data bridge (deterministic; checked by the gate)
 lean/                   lake project LanglandsOracles: oracles + kernel-checked certificates
@@ -59,7 +60,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 218 tests (~40 s with a warm lake cache; first Lean build ~2 min)
+pytest                      # all branches + Lean gate, 236 tests (~40 s with a warm lake cache; first Lean build ~2 min)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py
@@ -84,9 +85,9 @@ pytest tests/test_branch3_carlitz.py
   Apollonian λ₂ universality lives in a different regime (Selberg / Kim–Sarnak θ₇
   for congruence quotients of hyperbolic space), see the dossier.
 - The tree side imports two elementary facts as the *full* stabilisers of v_n
-  (Aut(𝒪 ⊕ 𝒪(n))) and checks everything else; conductor exponents at wild places
-  (t in characteristic 2) are not computed, so "level t³" for E_{t³} is read off
-  from the eigenvalue match and deg L = deg N − 4, not from Tate's algorithm.
+  (Aut(𝒪 ⊕ 𝒪(n))) and checks everything else.  Conductors of the Drinfeld curves,
+  wild places included, come from Tate's algorithm (`tate.py`, validated over ℤ_(p)
+  on Cremona curves) and equal the levels found on the tree.
 - The excursion formalisation proves the Galois-to-excursion direction and the Hecke
   identification; Lafforgue's converse (excursion data ⇒ parameter) is imported, and the
   finite instances certify class-function evaluations of mod-ℓ parameters at Frobenius
