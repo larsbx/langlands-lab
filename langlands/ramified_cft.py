@@ -18,6 +18,7 @@ from functools import cached_property
 from itertools import product
 
 from . import cyclotomic as cyc
+from .abelian import abelian_structure
 from .ec import Curve, Point
 from .gf import GF, Poly
 from .gl1 import ClosedPoint, closed_points, descend_point, extension_curve, is_rational, lift_point
@@ -151,33 +152,8 @@ class RayClassGroup:
 
     @cached_property
     def structure(self) -> tuple[list, list[int]]:
-        """Basis and orders (n_1 | n_2 | ...) by peeling off maximal-order elements (finite abelian group)."""
-        remaining = set(self.elements)
-        basis, orders = [], []
-        span = {self.zero}
-        while len(span) < len(self.elements):
-            g = max((x for x in self.elements if x not in span), key=self.order_of)
-            # ensure <g> ∩ span is trivial by adjusting: find smallest j with j g in span, then j must be ord(g)
-            j, h = 1, g
-            while h not in span:
-                h, j = self.add(h, g), j + 1
-            if h != self.zero:
-                # h = j g in span; express h = sum c_i b_i and replace g by g - (c/j) ... general case: try candidates
-                for cand in self.elements:
-                    if cand in span:
-                        continue
-                    jj, hh = 1, cand
-                    while hh not in span:
-                        hh, jj = self.add(hh, cand), jj + 1
-                    if hh == self.zero and jj == j:
-                        g = cand
-                        break
-                else:
-                    raise AssertionError("no complement found")
-            basis.append(g)
-            orders.append(j)
-            span = {self.add(s, self.mul(i, g)) for s in span for i in range(j)}
-        return basis, orders
+        """Basis and invariant factors (n_1 = exponent, each later order dividing the previous one)."""
+        return abelian_structure(self.elements, self.add, self.zero)
 
     @cached_property
     def log_table(self) -> dict:

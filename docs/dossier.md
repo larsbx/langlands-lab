@@ -164,6 +164,10 @@ The degree twist χ·α^{deg} gives L(χ, αT); nothing new.
 realising D − R(S) (Miller-style accumulation of line functions for any principal divisor,
 Laurent expansion at P₀, normalised).  The group law comes from its 2-cocycle, checked
 symmetric and associative; the inertia subgroup {(O, a)} is 𝔽_p with the additive law.
+Its invariant factors come from a recursive decomposition (`abelian.py`: an element of
+maximal order, the quotient decomposed recursively, generators lifted and corrected), which
+handles non-cyclic cases such as y² = x³ + 8 over 𝔽₁₃ with E(𝔽₁₃) ≅ ℤ/4 × ℤ/4, where a
+greedy search for direct complements fails (review finding on PR #6).
 Cl⁰_𝔪 ≅ ℤ/40 for 37a1 mod 5 and has order 63 mod 7.  Characters through a basis; then
 L_𝔪(χ, T) = ∏_{x ≠ P₀}(1 − χ(x)T^{deg x})⁻¹ in ℤ[ℤ/N][[T]] to order 4 (mod 5) and 3 (mod 7):
 - the 32 (resp. 54) ramified characters (nontrivial on inertia, conductor exactly 𝔪, wild):

@@ -62,3 +62,45 @@ def test_l_functions_of_ray_class_characters(p, order):
             assert not cyc.is_zero_in_cyclotomic_field(L[2])
             assert cyc.equal_in_cyclotomic_field(cyc.mul(L[2], conjugate(L[2])), cyc.scale(p * p, cyc.unit(N, 0)))
             assert cyc.all_conjugates_at_most(cyc.mul(L[1], conjugate(L[1])), 4 * p)
+
+
+# ------------------------------------------------ invariant-factor decomposition --
+from itertools import product  # noqa: E402
+from math import prod  # noqa: E402
+
+from langlands.abelian import abelian_structure  # noqa: E402
+from langlands.ec import Curve  # noqa: E402
+from langlands.gf import GF  # noqa: E402
+
+
+@pytest.mark.parametrize("shape", [(4, 4), (2, 2, 2), (6, 2), (8, 4, 2), (3, 9), (12,), (2, 4, 4)])
+def test_abelian_structure_on_products_of_cyclic_groups(shape):
+    elems = list(product(*[range(n) for n in shape]))
+    add = lambda a, b: tuple((x + y) % n for x, y, n in zip(a, b, shape))  # noqa: E731
+    basis, orders = abelian_structure(elems, add, tuple(0 for _ in shape))
+    assert prod(orders) == len(elems)
+    assert all(orders[i] % orders[i + 1] == 0 for i in range(len(orders) - 1))
+    gen = {tuple(0 for _ in shape)}
+    for b, m in zip(basis, orders):
+        gen = {add(g, tuple((k * x) % n for x, n in zip(b, shape))) for g in gen for k in range(m)}
+    assert len(gen) == len(elems)
+
+
+def test_noncyclic_ray_class_group_y2_eq_x3_plus_8_over_F13():
+    """Review finding: E(F_13) = Z/4 x Z/4 for y^2 = x^3 + 8; the greedy decomposition raised because a
+    maximal-order element's cyclic subgroup is not complemented by any raw element.  The recursive
+    invariant-factor decomposition handles it; characters and L-series then work."""
+    E = Curve.from_ints(GF.of_order(13, 1), 0, 8)
+    assert E.structure.orders == (4, 4)
+    P0 = E.points[1]
+    T = next(P for P in E.points[1:] if P != P0 and P != E.neg(P0))
+    G = RayClassGroup(E, P0, T)
+    basis, orders = G.structure
+    assert prod(orders) == 13 * 16 and orders[0] % orders[-1] == 0
+    assert len(G.log_table) == 13 * 16
+    chars = all_characters(G)
+    assert len(chars) == 13 * 16 and sum(1 for c in chars if c.is_ramified) == 13 * 16 - 16
+    pts = closed_points(E, 2)
+    chi = next(c for c in chars if c.is_ramified)
+    L = l_series(G, chi, 2, pts)
+    assert cyc.equal_in_cyclotomic_field(cyc.mul(L[2], conjugate(L[2])), cyc.scale(169, cyc.unit(chi.N, 0)))

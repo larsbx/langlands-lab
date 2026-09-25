@@ -48,6 +48,7 @@ langlands/
   laurent.py            Laurent series; local expansions at every point incl. O; tame symbols
   gl1.py                branch 1: Lang fibers, characters, closed points, L(χ,T), Abel, Weil reciprocity
   ramified_cft.py       branch 1, ramified: generalized Jacobian with modulus 2P_0, ray class characters, L_m(chi, T)
+  abelian.py            invariant-factor decomposition of a small finite abelian group (recursive, no complement search)
   carlitz.py            branch 3: Carlitz module, Fermat–Carlitz, reciprocity, annihilators
   local_field.py        F_q((1/t)) as exact Laurent polynomials with truncated division
   bruhat_tits.py        branch 3: tree, reduction, Gamma_0(n)\T, harmonic cochains, Hecke operators
@@ -66,7 +67,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 540 tests (~40 s with a warm lake cache; first Lean build ~2 min)
+pytest                      # all branches + Lean gate, 548 tests (~40 s with a warm lake cache; first Lean build ~2 min)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py
