@@ -75,3 +75,73 @@ def ramanujan_tau(nmax: int) -> tuple[int, ...]:
             for i in range(nmax, m - 1, -1):
                 series[i] -= series[i - m]
     return tuple(series[i - 1] for i in range(1, nmax + 1))  # shift by q
+
+
+# ---------------------------------------------------- Eichler–Selberg, level N --
+def _divisors(n: int):
+    return [d for d in range(1, n + 1) if n % d == 0]
+
+
+def _gcd(a: int, b: int) -> int:
+    from math import gcd
+    return gcd(a, b)
+
+
+def _phi(n: int) -> int:
+    return sum(1 for k in range(1, n + 1) if _gcd(k, n) == 1)
+
+
+def psi(N: int) -> int:
+    """Index of Gamma_0(N) in SL_2(Z): N prod_{p | N} (1 + 1/p)."""
+    out, m, p = N, N, 2
+    while p * p <= m:
+        if m % p == 0:
+            out = out * (p + 1) // p
+            while m % p == 0:
+                m //= p
+        p += 1
+    if m > 1:
+        out = out * (m + 1) // m
+    return out
+
+
+def _weighted_class_number(d: int) -> Fraction:
+    return Fraction(2 * class_number(d), unit_count(d))
+
+
+def _mu(N: int, t: int, f: int, n: int) -> Fraction:
+    """Local factor of the elliptic term: psi(N)/psi(N/N_f) * #{x mod N : x^2 - t x + n = 0 (mod N N_f)},
+    N_f = gcd(N, f).  The condition is well defined on x mod N: the congruence forces N_f | 2x - t
+    (since (2x - t)^2 = t^2 - 4n + 4(x^2 - tx + n) and N_f^2 | f^2 | t^2 - 4n), so shifting x by N
+    changes x^2 - tx + n by N(2x - t + N) = 0 (mod N N_f).  Validated against modular symbols."""
+    Nf = _gcd(N, f)
+    count = sum(1 for x in range(N) if (x * x - t * x + n) % (N * Nf) == 0)
+    return Fraction(psi(N), psi(N // Nf)) * count
+
+
+def eichler_selberg(N: int, k: int, n: int) -> Fraction:
+    """tr T_n | S_k(Gamma_0(N)), trivial character, gcd(n, N) = 1 (Cohen–Zagier / Schoof–van der Vlugt form):
+       A1 = [n = square] n^{k/2-1} (k-1)/12 psi(N)
+       A2 = -1/2 sum_{t^2 < 4n} P_k(t, n) sum_f h_w((t^2-4n)/f^2) mu(t, f, n)
+       A3 = -1/2 sum_{d | n} min(d, n/d)^{k-1} sum_{c | N, gcd(c, N/c) | (n/d - d)} phi(gcd(c, N/c))
+       A4 = [k = 2] sum_{t | n, gcd(N, n/t) = 1} t."""
+    if k < 2 or k % 2:
+        raise ValueError("weight must be even and >= 2")
+    if _gcd(n, N) != 1:
+        raise ValueError("the formula is implemented for gcd(n, N) = 1")
+    A1 = Fraction(isqrt(n) ** (k - 2) * (k - 1) * psi(N), 12) if _is_square(n) else Fraction(0)
+    A2 = Fraction(0)
+    tmax = isqrt(4 * n - 1)
+    for t in range(-tmax, tmax + 1):
+        inner = Fraction(0)
+        for f, d in square_divisors_of_discriminant(t * t - 4 * n):
+            inner += _weighted_class_number(d) * _mu(N, t, f, n)
+        A2 += _P(k, t, n) * inner
+    A2 = -A2 / 2
+    A3 = Fraction(0)
+    for d in _divisors(n):
+        inner = sum(_phi(_gcd(c, N // c)) for c in _divisors(N) if (n // d - d) % _gcd(c, N // c) == 0)
+        A3 += min(d, n // d) ** (k - 1) * inner
+    A3 = -A3 / 2
+    A4 = Fraction(sum(t for t in _divisors(n) if _gcd(N, n // t) == 1)) if k == 2 else Fraction(0)
+    return A1 + A2 + A3 + A4

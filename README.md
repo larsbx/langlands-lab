@@ -10,7 +10,7 @@ computed and which theorem the match instantiates.
 |---|---|---|---|
 | 2 | supersingular ℓ-isogeny graphs mod p | Brandt matrices B(2), B(3) from Φ₂, Φ₃ over 𝔽_{p²}, and B(ℓ) for any odd ℓ by Vélu on a scalar-Frobenius model (no modular polynomial); traces of B(n), n ≤ 49; Hecke polynomials; exact Sturm root counts | Eichler's trace formula (spectral = class numbers), Jacquet–Langlands + Eichler–Shimura (eigenvalues = point counts at ℓ = 2, 3, 5, 7), Ramanujan–Petersson |
 | 2 | modular symbols for Γ₀(N) | Manin symbols, boundary map, Hecke via Heilbronn matrices; cuspidal Hecke polynomials for N ≤ 60 | Jacquet–Langlands between two automorphic computations (= Brandt² at prime level), modularity at composite level |
-| 2 | S_k(SL₂(ℤ)) | Zagier's form of Eichler–Selberg from Hurwitz class numbers; τ(n) from Δ's q-expansion | the simplest fully explicit Arthur–Selberg instance |
+| 2 | S_k(SL₂(ℤ)) and S₂(Γ₀(N)) | Zagier's form of Eichler–Selberg from Hurwitz class numbers; τ(n) from Δ's q-expansion; the level-N formula (class numbers, local factors) against modular-symbol traces for N ≤ 40 | the simplest fully explicit Arthur–Selberg instances, geometric side = class numbers |
 | 1 | E = 37a1 mod p, p ∈ {5, 7} | Lang-isogeny fibers; χ∘N on Pic⁰(𝔽_{pᵏ}); Abel sums of lines; tame symbols from Laurent expansions; L(χ, T) as an Euler product in ℤ[ζ][[T]] | unramified geometric CFT for GL₁: L_χ ↔ character sheaf A_χ, L(E, L_χ) = 1 ≠ Z(E, T), Weil reciprocity with the Deligne sign |
 | 3 | Carlitz module over 𝔽_p[t] | C_P ≡ x^{|P|} (mod P); Frob_P = C_P on C[M]; splitting degrees = ord of P in (A/ann λ)^× | function-field CFT for GL₁ (Carlitz–Hayes) |
 | 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity on GL₂(𝔽₃) by kernel; mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p | the shape "Galois side = commutative algebra of operators on automorphic functions", with the converse (Lafforgue) imported |
@@ -63,7 +63,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 370 tests (~40 s with a warm lake cache; first Lean build ~2 min)
+pytest                      # all branches + Lean gate, 420 tests (~40 s with a warm lake cache; first Lean build ~2 min)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py

@@ -116,10 +116,15 @@ class ManinSymbols:
     def index(self) -> dict:
         return {x: i for i, x in enumerate(self.points)}
 
-    def act(self, x: tuple[int, int], g: tuple[int, int, int, int]) -> tuple[int, int]:
+    def act(self, x: tuple[int, int], g: tuple[int, int, int, int]) -> tuple[int, int] | None:
+        """(c : d) . g, or None when the image is not in P^1(Z/N) (only for det g not prime to N;
+        such terms are dropped from the Hecke action, as in Merel / Cremona)."""
         a, b, c2, d2 = g
         c, d = x
-        return self.canonical(c * a + d * c2, c * b + d * d2)
+        u, v = (c * a + d * c2) % self.N, (c * b + d * d2) % self.N
+        if gcd(gcd(u, v), self.N) != 1:
+            return None
+        return self.canonical(u, v)
 
     @cached_property
     def relations(self) -> sp.Matrix:
@@ -231,7 +236,9 @@ class ManinSymbols:
             x = self.points[gi]
             v = sp.zeros(1, len(self.points))
             for h in H:
-                v[self.index[self.act(x, h)]] += 1
+                y = self.act(x, h)
+                if y is not None:
+                    v[self.index[y]] += 1
             cols.append(self.reduce(v))
         return sp.Matrix.hstack(*cols)
 

@@ -168,3 +168,37 @@ def test_jacquet_langlands_at_2_3_5_7(f):
 def test_isogeny_graph_is_ramanujan_at_5_and_7(p, ell):
     if ell != p:
         assert ramanujan_violations(SupersingularLocus.of(p).hecke_polynomial(ell), ell) == (0, 0)
+
+
+# ------------------------------------------ Eichler–Selberg at level N --
+from fractions import Fraction  # noqa: E402
+from math import gcd  # noqa: E402
+
+from langlands.modular_symbols import ManinSymbols  # noqa: E402
+from langlands.trace_formula import eichler_selberg  # noqa: E402
+
+
+def test_level_N_formula_reduces_to_zagier_at_level_1():
+    assert all(eichler_selberg(1, 12, n) == eichler_selberg_level1(12, n) for n in range(1, 20))
+    assert all(eichler_selberg(1, k, 2) == eichler_selberg_level1(k, 2) for k in (4, 16, 18, 20, 24))
+
+
+@pytest.mark.parametrize("N", list(range(2, 41)))
+def test_eichler_selberg_level_N_against_modular_symbols(N):
+    """Geometric side (class numbers, local factors mu, A3, A4) = spectral side (1/2 tr T_n on cuspidal
+    modular symbols) for weight 2, all n <= 12 prime to N."""
+    M = ManinSymbols(N)
+    for n in range(1, 13):
+        if gcd(n, N) != 1:
+            continue
+        spectral = Fraction(M.cuspidal_hecke_matrix(n).trace(), 2) if M.cuspidal_basis.cols else Fraction(0)
+        assert eichler_selberg(N, 2, n) == spectral, (N, n)
+
+
+@pytest.mark.parametrize("p", (11, 13, 17, 19, 23, 29, 31, 37, 41, 43))
+def test_level_p_formula_agrees_with_eichler_brandt_formula(p):
+    """Two class-number formulas: tr T_n | S_2(Gamma_0(p)) = tr B(n) - sigma(n) (Eisenstein eigenvalue)."""
+    for n in range(1, 13):
+        if n % p:
+            sigma = sum(d for d in range(1, n + 1) if n % d == 0)
+            assert eichler_selberg(p, 2, n) == eichler_brandt_trace(p, n) - sigma, (p, n)

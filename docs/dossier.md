@@ -54,6 +54,17 @@ Zagier's form, tr T_n | S_k = −½ Σ_{t²≤4n} P_k(t,n) H(4n−t²) − ½ Σ
 reproduces τ(n) for n ≤ 30 (τ from Δ = q∏(1−qⁿ)²⁴, independently), dim S_k for
 k ≤ 36, and a₂ = 216, −528, 456 for k = 16, 18, 20, tr T₂ = 1080 for k = 24.
 
+### 2.4b Eichler–Selberg at level N (COMPUTED, both sides)
+`eichler_selberg(N, k, n)` for Γ₀(N), trivial character, gcd(n, N) = 1 (Cohen–Zagier /
+Schoof–van der Vlugt form): A₁ = [n = □] n^{k/2−1}(k−1)ψ(N)/12, the elliptic term with
+weighted class numbers and the local factor μ(t,f,n) = ψ(N)/ψ(N/N_f)·#{x mod N :
+x² − tx + n ≡ 0 (mod N N_f)}, the hyperbolic term with φ(gcd(c, N/c)), and A₄ = Σ_{t|n,
+gcd(N,n/t)=1} t at weight 2.  Checked for every N ≤ 40 and n ≤ 12 prime to N against
+½·tr T_n on cuspidal modular symbols (weight 2), against Zagier's level-1 form, and at
+prime level against Eichler's Brandt formula minus the Eisenstein eigenvalue σ(n): three
+routes to the same numbers.  The reading of μ's x-sum ("x mod N, condition mod N·N_f")
+was fixed by these tests; it is well defined because the congruence forces N_f | 2x − t.
+
 ### 2.5 Jacquet–Langlands as an integer oracle (COMPUTED; modularity IMPORTED)
 For each rational newform of prime level p ≤ 101 (Cremona model, discriminant
 checked to be ±p^k), a₂, a₃ are point counts over 𝔽₂, 𝔽₃.  A common eigenvector
