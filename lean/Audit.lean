@@ -14,3 +14,9 @@ open Oracles
 #print axioms frobenius_matrices_mod3_37a1
 #print axioms eichler_selberg_level_N
 #print axioms isogeny_graphs_recomputed
+#print axioms gl1_character
+#print axioms gl1_character_one
+#print axioms gl2_pseudocharacter
+#print axioms exChar_comm
+#print axioms gl2_F3_pseudocharacter
+#print axioms gl2_F3_pseudocharacter_one

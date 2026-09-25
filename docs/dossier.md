@@ -305,6 +305,7 @@ Status vocabulary: **PROVED** = a Lean theorem with a term-level proof (no `deci
 `Grp`, `Hom`, and `LRInvariant g f` (functions on Ĝ^I invariant under left and right
 diagonal multiplication: 𝒪(Ĝ\Ĝ^I/Ĝ)).  `ExcursionData gΓ gĜ k` packages V. Lafforgue's
 relations for a character of the excursion algebra with values in k:
+- (E0) `map_unit`: Θ_I(f)(1,…,1) = f(1,…,1) for f ∈ 𝒪(Ĝ\Ĝ^I/Ĝ) (`map_const`: constants are fixed);
 - (E1) `functorial`: Θ_J(f^ζ)(γ) = Θ_I(f)(γ∘ζ) for ζ: I → J;
 - (E2) `map_mul`, `map_add`: f ↦ Θ_I(f)(γ) is a ring homomorphism;
 - (E3) `compose`: Θ_I(f)(γ_iγ'_i) = Θ_{I⊔I⊔I}(f̃)(γ ⊔ γ' ⊔ 1), f̃(x⊔x'⊔x'') = f(x_i x''_i⁻¹ x'_i).
@@ -315,13 +316,44 @@ Theorems: `lrInvariant_pullback`, `lrInvariant_tilde` (the constructions stay in
 `ofHom_const` — on constant tuples the value is f(1,…,1); `heckeFun`, `lrInvariant_heckeFun`,
 and `hecke_eq_character`: the unramified Hecke operator is the excursion operator of
 f_V(g₀,g₁) = χ_V(g₀g₁⁻¹) at (Frob_v, 1), with value χ_V(ρ(Frob_v)) on ρ-data;
-`excursion_comm`.  IMPORTED (not formalised): Lafforgue's converse, excursion data ⇒
-Ĝ-pseudocharacter ⇒ semisimple parameter.
+`excursion_comm`.
+
+**The converse for GL₁ (PROVED, `ExcursionGL1.lean`).**  For φ: Ĝ → k multiplicative into a
+commutative monoid k (Ĝ = GL₁ = k^×, φ = id) and f_φ(x₀,x₁) = φ(x₀x₁⁻¹), *every* excursion datum
+D satisfying (E0)–(E3) yields a character χ(γ) := Θ_{Bool}(f_φ)(γ,1):
+`gl1_character`: χ(γγ') = χ(γ)χ(γ'), and `gl1_character_one`: χ(1) = 1.  The proof is the
+abelian case of Lafforgue's argument: (E3) rewrites χ(γγ') as Θ(f̃)(γ,γ',1); f̃ factors
+pointwise as (f_φ∘pr₁)(f_φ∘pr₂)(f_φ^{swap}∘pr₃) (`tilde_hecke_factors`, using only that φ is
+multiplicative and k commutative); (E2) and (E1) split the product into
+χ(γ)χ(γ')Θ(f_φ^{swap})(1,1), and (E0) evaluates the last factor to φ(1) = 1.  Axioms:
+propext, Quot.sound.
+
+**Excursion data ⇒ pseudocharacter, rank 2 (PROVED, `ExcursionGL2.lean`).**  For T: Ĝ → k a
+class function (T(xy) = T(yx)) satisfying the 2×2 Procesi identity on Ĝ,
+T(x)T(y)T(z) + T(xyz) + T(xzy) = T(xy)T(z) + T(xz)T(y) + T(yz)T(x), and f_T(x₀,x₁) = T(x₀x₁⁻¹),
+every excursion datum D gives χ(γ) := Θ_{Bool}(f_T)(γ,1) satisfying the same identity on Γ
+(`gl2_pseudocharacter`), with χ(1) = T(1) (`exChar_one`, by (E0)) and χ(γγ') = χ(γ'γ)
+(`exChar_comm`): a 2-dimensional pseudocharacter in Taylor's sense.  Proof: on the index set
+Idx = {o,a,b,c} with q = (1,γ₁,γ₂,γ₃), every function of the differences h_i = g_i g_o⁻¹ through
+a conjugation-invariant Φ lies in 𝒪(Ĝ\Ĝ^Idx/Ĝ) (`lrInvariant_ofRel`); (E1) and one or two
+(E3)s identify Θ_Idx of T(h_i), T(h_ih_j), T(h_ih_jh_l) at q with χ(γ_i), χ(γ_iγ_j), χ(γ_iγ_jγ_l)
+(`theta_t1`–`theta_t3`); (E2) assembles the two sides of the identity into Θ_Idx(F_L)(q),
+Θ_Idx(F_R)(q), and F_L = F_R pointwise by the identity on Ĝ at (h_a,h_b,h_c).
+Instance (`ExcursionGL2F3.lean`): GL₂(𝔽₃) is a `Grp` on the enumerated list (associativity, unit
+laws and tr(xy) = tr(yx) algebraic; closure and x⁻¹x = 1 by kernel over 48², 48 elements), the
+Procesi identity is transported from the kernel-checked `procesi_GL2_F3`, and
+`gl2_F3_pseudocharacter`: every excursion datum for GL₂(𝔽₃) with values in 𝔽₃ is a 2-dimensional
+pseudocharacter Γ → 𝔽₃, with χ(1) = 2 (`gl2_F3_pseudocharacter_one`).  Axioms: propext, Quot.sound.
+
+IMPORTED (not formalised): the remaining step for non-abelian Ĝ, pseudocharacter ⇒ semisimple
+parameter (Taylor for GL₂, Lafforgue's Ĝ-pseudocharacters and geometric invariant theory in general),
+and the excursion relations for GL_n, n ≥ 3, where the identity is Procesi's for n×n matrices.
 
 ### 3.6 GL₂-pseudocharacters (KERNEL)
 `procesi_GL2_F2`, `procesi_GL2_F3`: Σ_{σ∈S₃} sgn(σ) T_σ(g₁,g₂,g₃) = 0 for T = trace on every
 triple of GL₂(𝔽₂) (6³) and GL₂(𝔽₃) (48³ = 110 592 triples; ≈ 3 min in the kernel), the
 defining relation of a 2-dimensional pseudocharacter.  Python checks the same (`procesi_identity_holds`).
+`procesi_GL2_F3` is consumed by the PROVED rank-2 converse of §3.5 (`gl2_F3_pseudocharacter`).
 
 ### 3.7 An arithmetic excursion instance: the mod-3 parameter of 37a1 (KERNEL + COMPUTED)
 - `brandt_eigenvector_37a1`: the exported v = (−1, 1, 0) on the supersingular locus at p = 37

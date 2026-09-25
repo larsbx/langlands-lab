@@ -12,3 +12,6 @@ import LanglandsOracles.Pseudocharacter
 import LanglandsOracles.ExcursionInstance
 import LanglandsOracles.LevelNCertificates
 import LanglandsOracles.Isogeny
+import LanglandsOracles.ExcursionGL1
+import LanglandsOracles.ExcursionGL2
+import LanglandsOracles.ExcursionGL2F3

@@ -9,7 +9,8 @@ les groupes réductifs, §10; Introduction to chtoucas, Prop. 3.x) are:
 
   (E1)  S_{J, f^ζ, (γ_j)} = S_{I, f, (γ_{ζ(i)})}                       for ζ : I → J, f^ζ(x) = f(x ∘ ζ);
   (E2)  f ↦ S_{I, f, (γ_i)} is a unital algebra homomorphism (constants map to constants);
-  (E3)  S_{I, f, (γ_i γ'_i)} = S_{I ⊔ I ⊔ I, f̃, (γ_i) ⊔ (γ'_i) ⊔ (1)}   with f̃(x ⊔ x' ⊔ x'') = f(x_i x''_i^{-1} x'_i).
+  (E3)  S_{I, f, (γ_i γ'_i)} = S_{I ⊔ I ⊔ I, f̃, (γ_i) ⊔ (γ'_i) ⊔ (1)}   with f̃(x ⊔ x' ⊔ x'') = f(x_i x''_i^{-1} x'_i);
+  (E0)  S_{I, f, (1)} = f(1, …, 1)                                      (trivial Galois elements).
 
 Galois side ⇒ excursion data: a homomorphism ρ : Γ → Ĝ gives Θ_I(f)(γ) = f(ρ ∘ γ), and (E1)–(E3)
 hold (`ExcursionData.ofHom`).  The unramified Hecke operator for a representation V of Ĝ is the
@@ -58,11 +59,25 @@ theorem inv_mul_rev (u v : G) : g.inv (g.mul u v) = g.mul (g.inv v) (g.inv u) :=
   apply g.inv_unique
   rw [g.mul_assoc, ← g.mul_assoc (g.inv u), g.inv_mul, g.one_mul, g.inv_mul]
 
+theorem inv_inv (a : G) : g.inv (g.inv a) = a :=
+  (g.inv_unique a (g.inv a) (g.mul_inv a)).symm
+
 theorem mul_inv_cancel_left (a b : G) : g.mul a (g.mul (g.inv a) b) = b := by
   rw [← g.mul_assoc, g.mul_inv, g.one_mul]
 
 theorem inv_mul_cancel_left (a b : G) : g.mul (g.inv a) (g.mul a b) = b := by
   rw [← g.mul_assoc, g.inv_mul, g.one_mul]
+
+/-- (h a h') (h b h')⁻¹ = h (a b⁻¹) h⁻¹: left-right translates differ by conjugation. -/
+theorem conj_of_lr (h h' a b : G) :
+    g.mul (g.mul (g.mul h a) h') (g.inv (g.mul (g.mul h b) h'))
+      = g.mul (g.mul h (g.mul a (g.inv b))) (g.inv h) := by
+  simp only [g.inv_mul_rev, g.mul_assoc, g.mul_inv_cancel_left]
+
+/-- (h a h⁻¹) (h b h⁻¹) = h (a b) h⁻¹. -/
+theorem conj_mul (h a b : G) :
+    g.mul (g.mul (g.mul h a) (g.inv h)) (g.mul (g.mul h b) (g.inv h)) = g.mul (g.mul h (g.mul a b)) (g.inv h) := by
+  simp only [g.mul_assoc, g.inv_mul_cancel_left]
 
 end Grp
 
@@ -95,6 +110,18 @@ theorem lrInvariant_pullback {Ĝ k I J : Type} (g : Grp Ĝ) (ζ : I → J) (f : 
   intro h h' x
   exact hf h h' (fun i => x (ζ i))
 
+theorem lrInvariant_mul {Ĝ k I : Type} [Mul k] (g : Grp Ĝ) {f f' : (I → Ĝ) → k}
+    (hf : LRInvariant g f) (hf' : LRInvariant g f') : LRInvariant g (fun x => f x * f' x) := by
+  intro h h' x
+  show f _ * f' _ = f x * f' x
+  rw [hf h h' x, hf' h h' x]
+
+theorem lrInvariant_add {Ĝ k I : Type} [Add k] (g : Grp Ĝ) {f f' : (I → Ĝ) → k}
+    (hf : LRInvariant g f) (hf' : LRInvariant g f') : LRInvariant g (fun x => f x + f' x) := by
+  intro h h' x
+  show f _ + f' _ = f x + f' x
+  rw [hf h h' x, hf' h h' x]
+
 theorem lrInvariant_tilde {Ĝ k I : Type} (g : Grp Ĝ) (f : (I → Ĝ) → k)
     (hf : LRInvariant g f) : LRInvariant g (tilde g f) := by
   intro h h' x
@@ -114,6 +141,8 @@ structure ExcursionData {Γ Ĝ : Type} (gΓ : Grp Γ) (gĜ : Grp Ĝ) (k : Type) 
   /-- k-linearity and unitality of the character: the constant function c ∈ O(Ĝ\Ĝ^I/Ĝ) has value c
   (with `map_mul` this gives Θ(c·f) = c·Θ(f) and Θ(1) = 1; without it Θ ≡ 0 would qualify). -/
   map_const : ∀ {I : Type} (c : k) (γ : I → Γ), Θ (fun _ => c) γ = c
+  /-- (E0): on the trivial tuple the excursion value is f(1, …, 1). -/
+  map_unit : ∀ {I : Type} (f : (I → Ĝ) → k), LRInvariant gĜ f → Θ f (fun _ => gΓ.one) = f (fun _ => gĜ.one)
   functorial : ∀ {I J : Type} (ζ : I → J) (f : (I → Ĝ) → k), LRInvariant gĜ f →
     ∀ γ : J → Γ, Θ (pullback ζ f) γ = Θ f (fun i => γ (ζ i))
   map_mul : ∀ {I : Type} (f f' : (I → Ĝ) → k), LRInvariant gĜ f → LRInvariant gĜ f' →
@@ -128,6 +157,10 @@ def ExcursionData.ofHom {Γ Ĝ : Type} {gΓ : Grp Γ} {gĜ : Grp Ĝ} (k : Type) 
     (ρ : Hom gΓ gĜ) : ExcursionData gΓ gĜ k where
   Θ := fun f γ => f (fun i => ρ.toFun (γ i))
   map_const := by intros; rfl
+  map_unit := by
+    intro I f _
+    show f (fun _ => ρ.toFun gΓ.one) = f (fun _ => gĜ.one)
+    rw [ρ.map_one]
   functorial := by intros; rfl
   map_mul := by intros; rfl
   map_add := by intros; rfl
@@ -158,17 +191,25 @@ theorem lrInvariant_heckeFun {Ĝ k : Type} (g : Grp Ĝ) (χ : Ĝ → k)
     (hχ : ∀ h x, χ (g.mul (g.mul h x) (g.inv h)) = χ x) : LRInvariant g (heckeFun g χ) := by
   intro h h' x
   unfold heckeFun
-  -- (h a h') (h b h')^{-1} = h (a b^{-1}) h^{-1}
-  have key : g.mul (g.mul (g.mul h (x true)) h') (g.inv (g.mul (g.mul h (x false)) h'))
-      = g.mul (g.mul h (g.mul (x true) (g.inv (x false)))) (g.inv h) := by
-    simp only [g.inv_mul_rev, g.mul_assoc, g.mul_inv_cancel_left]
-  rw [key]
+  rw [g.conj_of_lr]
   exact hχ h _
+
+/-- The pair (γ, 1) indexed by Bool (true ↦ γ). -/
+def pair {Γ : Type} (gΓ : Grp Γ) (γ : Γ) : Bool → Γ := fun b => if b then γ else gΓ.one
+
+theorem pair_mul {Γ : Type} (gΓ : Grp Γ) (γ γ' : Γ) :
+    pair gΓ (gΓ.mul γ γ') = fun b => gΓ.mul (pair gΓ γ b) (pair gΓ γ' b) := by
+  funext b
+  cases b <;> simp [pair, gΓ.mul_one]
+
+theorem pair_one {Γ : Type} (gΓ : Grp Γ) : pair gΓ gΓ.one = fun _ => gΓ.one := by
+  funext b
+  cases b <;> rfl
 
 /-- The unramified Hecke eigenvalue is the excursion value of f_V at (Frob_v, 1): χ_V(ρ(Frob_v)). -/
 theorem hecke_eq_character {Γ Ĝ : Type} {gΓ : Grp Γ} {gĜ : Grp Ĝ} (k : Type) [Mul k] [Add k]
     (ρ : Hom gΓ gĜ) (χ : Ĝ → k) (frob : Γ) :
-    (ExcursionData.ofHom k ρ).Θ (heckeFun gĜ χ) (fun b => if b then frob else gΓ.one) = χ (ρ.toFun frob) := by
+    (ExcursionData.ofHom k ρ).Θ (heckeFun gĜ χ) (pair gΓ frob) = χ (ρ.toFun frob) := by
   show χ (gĜ.mul (ρ.toFun frob) (gĜ.inv (ρ.toFun gΓ.one))) = χ (ρ.toFun frob)
   rw [ρ.map_one, gĜ.inv_one, gĜ.mul_one]
 
