@@ -75,6 +75,18 @@ For p ∈ {11, 17, 19, 37} (all forms rational) the class-number side gives
 tr B(ℓ) − (ℓ+1) = Σ_E a_ℓ(E) for ℓ ≤ 31 — Eichler's formula against point counts at
 primes where no Φ_ℓ is available.
 
+### 2.5b Modular symbols: an independent automorphic oracle (COMPUTED)
+`modular_symbols.py`: Manin symbols (c : d) ∈ ℙ¹(ℤ/N) with the S- and T-relations,
+H₁(X₀(N), cusps; ℚ) as an exact quotient, the boundary map through Cremona's cusp
+equivalence criterion, and Hecke operators through Merel's Heilbronn matrices.  For every
+N ≤ 60: dim = 2g + c − 1 and the cuspidal part has dimension 2g (genus and cusp formulas
+IMPORTED as the reference).  For prime p ≤ 53 and ℓ ∈ {2,3,5,7}: the characteristic
+polynomial of T_ℓ on cuspidal modular symbols equals the square of the Brandt Hecke
+polynomial — Jacquet–Langlands checked between two independent automorphic
+computations, with no elliptic curve involved.  At the composite genus-one levels
+14, 15, 20, 27, 32, 36 the point counts of the curves used in the Tate tests are the
+T_p-eigenvalues for p ≤ 13 (modularity at composite level).
+
 ### 2.6 Ramanujan–Petersson (COMPUTED; Deligne IMPORTED as the reason)
 For p ≤ 71 and ℓ ∈ {2,3}, and p ≤ 37 and ℓ ∈ {5,7}: the Hecke polynomial is real-rooted and no root has
 λ² > 4ℓ (Sturm counts on H and on the resultant G(y) = ∏(y − λᵢ²)).  So each

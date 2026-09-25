@@ -38,18 +38,23 @@ class RationalNewform:
         """#E(F_ell) for the general Weierstrass model, by brute force over F_ell^2 (any prime ell of good reduction)."""
         if ell == self.conductor:
             raise ValueError("bad reduction")
-        a1, a2, a3, a4, a6 = self.a_invariants
-        affine = sum(
-            1
-            for x in range(ell)
-            for y in range(ell)
-            if (y * y + a1 * x * y + a3 * y - (x**3 + a2 * x * x + a4 * x + a6)) % ell == 0
-        )
-        return affine + 1
+        return point_count_general(self.a_invariants, ell)
 
     def a(self, ell: int) -> int:
         """a_ell = ell + 1 - #E(F_ell), by point count (any prime ell != conductor)."""
         return ell + 1 - self.point_count(ell)
+
+
+def point_count_general(a_invariants: tuple[int, int, int, int, int], ell: int) -> int:
+    """#E(F_ell) for a general Weierstrass model by brute force (any prime ell of good reduction)."""
+    a1, a2, a3, a4, a6 = a_invariants
+    affine = sum(
+        1
+        for x in range(ell)
+        for y in range(ell)
+        if (y * y + a1 * x * y + a3 * y - (x**3 + a2 * x * x + a4 * x + a6)) % ell == 0
+    )
+    return affine + 1
 
 
 # Cremona's tables: minimal models of the rational newforms of prime level <= 101.
