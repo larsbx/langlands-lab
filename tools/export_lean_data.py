@@ -120,11 +120,12 @@ def galois_mod2_block() -> list[str]:
             "  " + ",\n  ".join(rows) + "]"]
 
 
-def mod_ell_cert_block(ell: int, zeta: int) -> list[str]:
+def mod_ell_cert_block(ell: int, zeta: int, bound: int = 60) -> list[str]:
     """Word certificates for ImageModL.lean: S = {E12(1), E21(1), diag(1, zeta)} generates GL_2(F_ell); a greedy
-    cover of the curves by class pairs (A, B) such that every (g, h) in A x B generates; for each pair the
-    conjugators of class A onto its first representative and, for each h in B, words in {gRep, h} for S."""
-    from collections import deque
+    cover of the curves by class pairs (A, B) such that every (g, h) in A x B generates (candidate pairs tested
+    lazily, most-covering first); for each pair the conjugators of class A onto its first representative and,
+    for each h in B, words in {gRep, h} for S."""
+    import numpy as np
     from langlands.mod_ell_image import GL2, frobenius_charpolys
     from langlands.newforms import CREMONA_PRIME_LEVEL
     G = GL2(ell)
@@ -132,51 +133,57 @@ def mod_ell_cert_block(ell: int, zeta: int) -> list[str]:
     S = [G.index[(1, 1, 0, 1)], G.index[(1, 0, 1, 1)], G.index[(1, 0, 0, zeta)]]
     assert G.generated(frozenset(S)) == full
     code = lambda i: (lambda m: m[0] + ell * (m[1] + ell * (m[2] + ell * m[3])))(G.elements[i])
-    primes = [p for p in range(2, 61) if all(p % d for d in range(2, int(p**0.5) + 1))]
+    primes = [p for p in range(2, bound + 1) if all(p % d for d in range(2, int(p**0.5) + 1))]
     curves = {}
     for f in CREMONA_PRIME_LEVEL:
         ps = [p for p in primes if p not in (ell, f.conductor)]
         first = {}
-        for p, chi in zip(ps, frobenius_charpolys(f, ell, 60)):
+        for p, chi in zip(ps, frobenius_charpolys(f, ell, bound)):
             first.setdefault(chi, p)
         curves[f.label] = (f, first)
     good = sorted({c for _, fr in curves.values() for c in fr if (c[0] ** 2 - 4 * c[1]) % ell})
-    cert = {}
-    for A in good:
-        gA = G.with_charpoly(A)[0]
-        for B in good:
-            if A != B and all(G.generated(frozenset({gA, h})) == full for h in G.with_charpoly(B)):
-                cert[(A, B)] = True
-    need = {lab for lab, (_, fr) in curves.items() if any(A in fr and B in fr for (A, B) in cert)}
+    classes = {chi: G.with_charpoly(chi) for chi in good}
+    tested: dict[tuple, bool] = {}
+    colcache: dict[int, np.ndarray] = {}
+
+    def col(g):
+        if g not in colcache:
+            colcache[g] = G.column(g)
+        return colcache[g]
+
+    def certified(A, B):
+        if (A, B) not in tested:
+            gA = classes[A][0]
+            hs = classes[B]
+            sample = hs[::max(1, len(hs) // 4)]  # cheap rejection first, then the whole class
+            tested[(A, B)] = (all(G.generates_full([col(gA), col(h)], [gA, h]) for h in sample)
+                              and all(G.generates_full([col(gA), col(h)], [gA, h]) for h in hs))
+        return tested[(A, B)]
+
+    need = set(curves)
     chosen = []
     while need:
-        best = max(cert, key=lambda AB: (len([l for l in need if AB[0] in curves[l][1] and AB[1] in curves[l][1]]), AB))
+        cands = sorted(((A, B) for A in good for B in good if A != B),
+                       key=lambda AB: (-len([l for l in need if AB[0] in curves[l][1] and AB[1] in curves[l][1]]), AB))
+        best = next(((A, B) for (A, B) in cands
+                     if any(A in curves[l][1] and B in curves[l][1] for l in need) and certified(A, B)), None)
+        if best is None:
+            break  # the remaining curves have no certified pair among their observed classes (e.g. 11a1 mod 5)
         cov = {l for l in need if best[0] in curves[l][1] and best[1] in curves[l][1]}
         chosen.append((best, cov))
         need -= cov
-    inv = lambda i: G.index[G._inv(G.elements[i])]
     pair_rows = []
     for (A, B), _ in chosen:
-        cA, cB = G.with_charpoly(A), G.with_charpoly(B)
+        cA, cB = classes[A], classes[B]
         gA = cA[0]
-        wit = []
-        for g in cA:
-            C = next(c for c in range(G.n) if G.table[G.table[c][gA]][inv(c)] == g)
-            wit.append(f"({code(g)}, {code(C)}, {code(inv(C))})")
+        conj = G.conjugator_map(gA)
+        inv = G.inv_all.tolist()
+        wit = [f"({code(g)}, {code(conj[g])}, {code(inv[conj[g]])})" for g in cA]
         words = []
         for h in cB:
-            gens = [gA, h]
-            seen = {gens[0]: [0], gens[1]: [1]}
-            dq = deque(gens)
-            while dq and not all(s in seen for s in S):
-                x = dq.popleft()
-                for i, g in enumerate(gens):
-                    y = G.table[x][g]
-                    if y not in seen:
-                        seen[y] = seen[x] + [i]
-                        dq.append(y)
-            ws = lean_list(f"({code(s)}, [" + ", ".join("true" if i else "false" for i in seen[s]) + "])" for s in S)
-            words.append(f"({code(h)}, {ws})")
+            ws = G.words_to([gA, h], S)
+            assert all(ws[s] for s in S)
+            words.append(f"({code(h)}, " + lean_list(f"({code(s)}, [" + ", ".join("true" if i else "false" for i in ws[s]) + "])" for s in S) + ")")
         pair_rows.append(f"      {{ tA := {A[0]}, dA := {A[1]}, tB := {B[0]}, dB := {B[1]}, gRep := {code(gA)},\n"
                          f"        witnessesA := {lean_list(wit)},\n        wordsB := {lean_list(words)} }}")
     curve_rows = []
@@ -185,9 +192,10 @@ def mod_ell_cert_block(ell: int, zeta: int) -> list[str]:
             if lab in cov:
                 curve_rows.append(f'      {{ label := "{lab}", ainvs := {lean_list(f.a_invariants)}, pair := {k}, p1 := {fr[A]}, p2 := {fr[B]} }}')
                 break
-    return [f"/-- Mod-{ell} image certificates: S, {len(chosen)} certified class pairs, and the {len(curve_rows)} curves they cover",
+    return ["set_option maxRecDepth 16384 in",
+            f"/-- Mod-{ell} image certificates: S, {len(chosen)} certified class pairs, and the {len(curve_rows)} curves they cover",
             f"    (curves with a rational {ell}-torsion point or an {ell}-isogeny are absent: their image is not full). -/",
-            f"def mod{ell}Cert : ModLData :=",
+            f"noncomputable def mod{ell}Cert : ModLData :=",
             f"  {{ ell := {ell}, S := {lean_list(code(s) for s in S)},",
             "    pairs := [\n" + ",\n".join(pair_rows) + "],",
             "    curves := [\n" + ",\n".join(curve_rows) + "] }"]
@@ -214,7 +222,7 @@ def trace_block() -> list[str]:
 
 def render() -> str:
     lines = ["-- GENERATED by tools/export_lean_data.py; do not edit.", "import LanglandsOracles.Matrix", "import LanglandsOracles.CertTypes", "", "namespace Oracles", ""]
-    lines += brandt_block() + [""] + brandt_eigenvector_block() + [""] + gl1_block() + [""] + function_field_block() + [""] + galois_mod3_block() + [""] + galois_mod2_block() + [""] + mod_ell_cert_block(5, 2) + [""] + mod_ell_cert_block(7, 3) + [""] + trace_block() + ["", "end Oracles", ""]
+    lines += brandt_block() + [""] + brandt_eigenvector_block() + [""] + gl1_block() + [""] + function_field_block() + [""] + galois_mod3_block() + [""] + galois_mod2_block() + [""] + mod_ell_cert_block(5, 2) + [""] + mod_ell_cert_block(7, 3) + [""] + mod_ell_cert_block(11, 2) + [""] + trace_block() + ["", "end Oracles", ""]
     return "\n".join(lines)
 
 

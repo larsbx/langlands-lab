@@ -496,12 +496,26 @@ left-invertible matrix kills no nonzero vector, while a singular 2×2 matrix kil
 `FieldFacts ℓ` record (ℓ = 5, 7: decided or kernel-checked, including inverses of all 480 / 2016
 elements).  The data (`mod5Cert`, `mod7Cert`, exported) are chosen by a greedy cover: mod 5, three
 pairs cover the 14 curves other than 11a1 (rational 5-torsion); mod 7, four pairs cover all 15.
-Kernel: `pairs5_ok`, `pairs7_ok` (all witnesses and words), `curves5_ok`, `curves7_ok` (for each
-curve, a_{p₁}, a_{p₂} mod ℓ from Lean's point counts of the Weierstrass model match the pair).
-Headlines `mod5_images_full`, `mod7_images_full` (`data_sound`): for every listed curve, any
-multiplicatively closed subset of GL₂(𝔽_ℓ) containing elements with the characteristic polynomials
-of ρ̄_ℓ(Frob_{p₁}), ρ̄_ℓ(Frob_{p₂}) is all of GL₂(𝔽_ℓ); with Eichler–Shimura mod ℓ as the only
-imported input, ρ̄₅ is surjective for those 14 curves and ρ̄₇ for all 15.  The whole module (both ℓ)
-builds in ≈ 70 s; axioms propext, Quot.sound.  Python mirror: `test_word_certificates_are_valid`.
+The same for ℓ = 11 (13 200 elements): the inverse is now generic
+(`invGen`, adjugate over a det⁻¹ found by search, confirmed on GL₂ by kernel), the ℓ-specific facts are
+assembled by `FieldFacts.of` from four decided/kernel-checked statements, and the certified pairs
+are found lazily (most-covering candidate pair first; Python products on the fly, no multiplication
+table above 2016 elements).  Kernel: `pairsℓ_ok` (all witnesses and words), `curvesℓ_ok` (for each
+curve, a_{p₁}, a_{p₂} mod ℓ from Lean's point counts of the Weierstrass model match the pair), for
+ℓ ∈ {5, 7, 11}.  Headlines `mod5_images_full`, `mod7_images_full`, `mod11_images_full` (`data_sound`): for every listed curve, any multiplicatively closed subset of
+GL₂(𝔽_ℓ) containing elements with the characteristic polynomials of ρ̄_ℓ(Frob_{p₁}), ρ̄_ℓ(Frob_{p₂})
+is all of GL₂(𝔽_ℓ); with Eichler–Shimura mod ℓ as the only imported input, ρ̄₅ is surjective for
+the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁ for all 15 — the mod-ℓ images of all fifteen curves
+are certified for every ℓ ≤ 11 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
+Python mirror: `test_word_certificates_are_valid` checks exactly what Lean checks (S generates,
+conjugators, words) for ℓ = 5, 7, 11 and the full pair closures for ℓ ≤ 7.  The whole module
+(ℓ = 5, 7, 11) builds in ≈ 7 min under 5 GB; ℓ = 13 (28 560 elements; its S closure alone ≈ 3 min) is the
+next step.  Kernel bookkeeping that made this feasible, recorded in `Generation.lean`: the closure keeps
+the visited set and the frontier as bitmasks and scans the code range in chunks of 64 (one shift-and-mod
+test skips an empty chunk), so every product acts on machine literals; the scan's accumulator is forced
+with a cheap GMP test (`a % 2 = 2`) — forcing it with a `match` against `Nat.succ` makes the kernel carry
+the value as `Nat.succ` of a literal and lose accelerated arithmetic (300 s instead of 2 s), an unforced
+fold hits the kernel's recursion limit, and `Nat.log2` is not GMP-accelerated (3 s per call on a
+14 000-bit number); the ℓ ≥ 11 checks lift the default heartbeat limit.
 `forced_full_classes` (Python) now prunes the first set to conjugacy representatives only when every
 set is conjugation-invariant (review fix; counterexample test in GL₂(𝔽₂)).

@@ -88,21 +88,64 @@ def test_conjugacy_pruning_only_for_invariant_sets():
     assert G.is_conjugation_invariant(G.with_charpoly((1, 1)))
 
 
-@pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3)])
-def test_word_certificates_are_valid(ell, zeta):
-    """Mirror of lean/LanglandsOracles/ImageModL.lean: S = {E12(1), E21(1), diag(1, zeta)} generates GL_2(F_ell), and
-    for every class pair (A, B) the exporter certifies, every (g, h) in A x B generates -- the words in {gRep, h}
-    for S plus the conjugators of A onto gRep are exactly the data Lean verifies."""
+def _parse_cert(ell):
+    """The exported mod-ell certificate from Data.lean: S, pairs (tA, dA, tB, dB, gRep, witnesses, words), curves."""
     import re
+    text = (Path(__file__).resolve().parents[1] / "lean" / "LanglandsOracles" / "Data.lean").read_text()
+    block = text.split(f"def mod{ell}Cert")[1].split("\n/--")[0]
+    S = [int(v) for v in re.search(r"S := \[([^\]]*)\]", block).group(1).split(",")]
+    pairs = []
+    for m in re.finditer(r"tA := (\d+), dA := (\d+), tB := (\d+), dB := (\d+), gRep := (\d+),\s*witnessesA := \[(.*?)\],\s*wordsB := \[(.*?)\] \}", block, re.S):
+        tA, dA, tB, dB, gRep = (int(m.group(i)) for i in range(1, 6))
+        wit = [tuple(int(v) for v in w) for w in re.findall(r"\((\d+), (\d+), (\d+)\)", m.group(6))]
+        words = [(int(h), [(int(s), [b == "true" for b in bs.split(", ") if b])
+                           for s, bs in re.findall(r"\((\d+), \[([^\]]*)\]\)", ws)])
+                 for h, ws in re.findall(r"\((\d+), \[((?:\(\d+, \[[^\]]*\]\)(?:, )?)+)\]\)", m.group(7))]
+        pairs.append((tA, dA, tB, dB, gRep, wit, words))
+    curves = re.findall(r'label := "([^"]+)", ainvs := \[([^\]]*)\], pair := (\d+), p1 := (\d+), p2 := (\d+)', block)
+    return S, pairs, curves
+
+
+@pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3), (11, 2)])
+def test_word_certificates_are_valid(ell, zeta):
+    """Mirror of lean/LanglandsOracles/ImageModL.lean: S = {E12(1), E21(1), diag(1, zeta)} generates GL_2(F_ell);
+    for every certified pair, the conjugators send gRep onto every element of class A, the words in {gRep, h}
+    evaluate to S for every h in class B, and the classes are single conjugacy classes without scalars; for
+    ell <= 7 additionally every (g, h) in A x B generates (the fact the words certify)."""
     G = GL2(ell)
     full = frozenset(range(G.n))
-    S = [G.index[(1, 1, 0, 1)], G.index[(1, 0, 1, 1)], G.index[(1, 0, 0, zeta)]]
-    assert G.generated(frozenset(S)) == full
-    data = Path(__file__).resolve().parents[1] / "lean" / "LanglandsOracles" / "Data.lean"
-    block = data.read_text().split(f"def mod{ell}Cert")[1].split("def mod")[0] if ell == 5 else data.read_text().split(f"def mod{ell}Cert")[1].split("def traceData")[0]
-    pairs = [tuple(int(v) for v in m) for m in re.findall(r"tA := (\d+), dA := (\d+), tB := (\d+), dB := (\d+)", block)]
-    assert pairs
-    for tA, dA, tB, dB in pairs:
+    code = lambda i: (lambda m: m[0] + ell * (m[1] + ell * (m[2] + ell * m[3])))(G.elements[i])
+    decode = {code(i): i for i in range(G.n)}
+    S, pairs, curves = _parse_cert(ell)
+    assert [G.elements[decode[s]] for s in S] == [(1, 1, 0, 1), (1, 0, 1, 1), (1, 0, 0, zeta)]
+    assert G.generated(frozenset(decode[s] for s in S)) == full
+    assert pairs and curves
+    assert len(pairs) == block_pair_count(ell)
+    for tA, dA, tB, dB, gRep, wit, words in pairs:
         A, B = G.with_charpoly((tA, dA)), G.with_charpoly((tB, dB))
-        assert len(G.conjugacy_class_representatives(A)) == 1 and len(G.conjugacy_class_representatives(B)) == 1
-        assert all(G.generated(frozenset({g, h})) == full for g in A for h in B)
+        assert decode[gRep] == A[0]
+        assert {g for g, _, _ in wit} == {code(g) for g in A} and {h for h, _ in words} == {code(h) for h in B}
+        for g, C, Ci in wit:
+            assert G.mul(decode[C], decode[Ci]) == G.one and G.mul(G.mul(decode[C], decode[gRep]), decode[Ci]) == decode[g]
+        for h, ws in words:
+            assert [s for s, _ in ws] == S
+            for s, w in ws:
+                gens = [decode[gRep], decode[h]]
+                val = gens[w[0]]
+                for b in w[1:]:
+                    val = G.mul(val, gens[b])
+                assert val == decode[s]
+        if ell <= 7:
+            assert len(G.conjugacy_class_representatives(A)) == 1 and len(G.conjugacy_class_representatives(B)) == 1
+            assert all(G.generated(frozenset({g, h})) == full for g in A for h in B)
+    labels = [c[0] for c in curves]
+    assert labels == ([l for l in ALL_LABELS if l != "11a1"] if ell == 5 else ALL_LABELS)
+
+
+ALL_LABELS = [f.label for f in CREMONA_PRIME_LEVEL]
+
+
+def block_pair_count(ell):
+    import re
+    text = (Path(__file__).resolve().parents[1] / "lean" / "LanglandsOracles" / "Data.lean").read_text()
+    return int(re.search(rf"Mod-{ell} image certificates: S, (\d+) certified class pairs", text).group(1))

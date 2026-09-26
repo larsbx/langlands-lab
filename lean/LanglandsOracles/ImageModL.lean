@@ -21,7 +21,10 @@ matrix kills no nonzero vector, `det_ne_zero_of_left_inverse`).  Everything spec
 
 Arithmetic input: for each curve, Lean's own point counts give a_{p₁}, a_{p₂} mod ℓ (`curves_ok`),
 so ρ̄_ℓ(Frob_{p₁}) ∈ A and ρ̄_ℓ(Frob_{p₂}) ∈ B by Eichler–Shimura, the only imported step.  Results:
-mod 5 for the 14 curves other than 11a1 (rational 5-torsion), mod 7 for all 15.
+mod 5 for the 14 curves other than 11a1 (rational 5-torsion); mod 7 and mod 11 for all 15.
+Kernel bookkeeping that made this feasible: the closure scans the code range (codes from `List.range` are
+literals) and forces its accumulator with a cheap GMP test rather than a `match` on `Nat.succ` (which drops
+the value off the accelerated path), and the ℓ ≥ 11 checks lift the default heartbeat limit.
 -/
 namespace Oracles
 
@@ -174,7 +177,7 @@ theorem classB'_of_charpoly (ff : FieldFacts n) {pr : PairCert} {h : Mat2 n} (ht
 
 /-- The closure of S under `mulNat` covers every code of GL₂(ℤ/n). -/
 def S_generates (n : Nat) [NeZero n] (S : List Nat) : Bool :=
-  ((gl n).map encode).all fun x => (closureIdx (mulNat n) S (n ^ 4) (mask 0 S) S).testBit x
+  ((gl n).map encode).all fun x => (closureIdx (mulNat n) S (n ^ 4) (n ^ 4) (mask 0 S) (mask 0 S)).testBit x
 
 def pairOk (n : Nat) [NeZero n] (S : List Nat) (pr : PairCert) : Bool :=
   pr.dA % n != 0 && pr.dB % n != 0 && encode (decode n pr.gRep) == pr.gRep &&
@@ -251,7 +254,7 @@ theorem pair_sound (ff : FieldFacts n) (S : List Nat) (hS : S_generates n S = tr
     intro y hy s hs
     obtain ⟨ys, hys, rfl⟩ := hSH s hs
     exact ⟨M2.mul y ys, hmul' y hy ys hys, mulNat_codes y ys⟩
-  have hmem := closureIdx_mem H' (mulNat n) S hm S hSH (n ^ 4)
+  have hmem := closureIdx_mem H' (mulNat n) S hm (n ^ 4) S hSH (n ^ 4)
   -- conjugate back
   unfold S_generates at hS
   intro z hz
@@ -301,58 +304,95 @@ theorem data_sound (ff : FieldFacts n) (d : ModLData) (hS : S_generates n d.S = 
 
 -- ---------------------------------------------------------------- ℓ = 5 and ℓ = 7 --
 
-/-- Adjugate over det⁻¹, tables for 𝔽₅ and 𝔽₇. -/
-def inv5 (x : Mat2 5) : Mat2 5 :=
-  let u : Fin 5 := match x.det with | 1 => 1 | 2 => 3 | 3 => 2 | 4 => 4 | _ => 0
-  ⟨u * x.d, u * (0 - x.b), u * (0 - x.c), u * x.a⟩
+/-- The inverse on codes: adjugate over det⁻¹, det⁻¹ found by search in ℤ/n (a kernel check confirms
+it on the codes of GL₂). -/
+def invCode (n i : Nat) : Nat :=
+  let a := i % n; let b := i / n % n; let c := i / n / n % n; let d := i / n / n / n % n
+  let det := (n - b * c % n + a * d % n) % n
+  let u := ((List.range n).find? fun k => det * k % n == 1).getD 0
+  u * d % n + n * (u * (n - b) % n + n * (u * (n - c) % n + n * (u * a % n)))
 
-def inv7 (x : Mat2 7) : Mat2 7 :=
-  let u : Fin 7 := match x.det with | 1 => 1 | 2 => 4 | 3 => 5 | 4 => 2 | 5 => 3 | 6 => 6 | _ => 0
-  ⟨u * x.d, u * (0 - x.b), u * (0 - x.c), u * x.a⟩
+def invOk (n : Nat) [NeZero n] : Bool :=
+  ((gl n).map encode).all fun i => mulNat n (invCode n i) i == encode (M2.one : Mat2 n)
 
-theorem inv_all5 : (gl 5).all (fun z => M2.mul (inv5 z) z == M2.one) = true := by decide +kernel
-theorem inv_all7 : (gl 7).all (fun z => M2.mul (inv7 z) z == M2.one) = true := by decide +kernel
+theorem inv_of_invOk (h : invOk n = true) : ∀ z ∈ gl n, ∃ z' : Mat2 n, M2.mul z' z = M2.one := by
+  intro z hz
+  refine ⟨decode n (invCode n (encode z)), ?_⟩
+  have e := beq_iff_eq.mp (List.all_eq_true.mp h _ (List.mem_map_of_mem hz))
+  rw [mulNat_eq] at e
+  simp only [mulIdx, decode_encode] at e
+  exact encode_inj e
 
-theorem trace_sq5 : ∀ x : Mat2 5, (M2.mul x x).trace = x.trace * x.trace - 2 * x.det := by
-  intro x
-  obtain ⟨a, b, c, d⟩ := x
-  have key : ∀ a b c d : Fin 5, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by decide
-  exact key a b c d
+/-- The negation facts about ℤ/n that the vector argument needs (n² cases each, decided per n). -/
+structure NegFacts (n : Nat) [NeZero n] : Prop where
+  mul_neg : ∀ b c : Fin n, b * (0 - c) = 0 - b * c
+  sub_eq : ∀ x y : Fin n, x - y = x + (0 - y)
+  neg_eq_zero : ∀ c : Fin n, 0 - c = 0 → c = 0
+  one_ne_zero : (1 : Fin n) ≠ 0
 
-theorem trace_sq7 : ∀ x : Mat2 7, (M2.mul x x).trace = x.trace * x.trace - 2 * x.det := by
-  intro x
-  obtain ⟨a, b, c, d⟩ := x
-  have key : ∀ a b c d : Fin 7, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by
-    decide +kernel
-  exact key a b c d
+/-- A singular matrix kills (d, −c) and (−b, a): from `NegFacts` and the semiring laws, no n⁴-case decide. -/
+theorem kernel_vectors_of (nf : NegFacts n) : ∀ a b c d : Fin n, a * d - b * c = 0 →
+    applyV ⟨a, b, c, d⟩ (d, 0 - c) = (0, 0) ∧ applyV ⟨a, b, c, d⟩ (0 - b, a) = (0, 0) := by
+  intro a b c d h
+  simp only [applyV]
+  rw [nf.mul_neg, nf.mul_neg, nf.mul_neg, nf.mul_neg, ← nf.sub_eq, ← nf.sub_eq, h,
+    (R).mul_comm d c, Fin.sub_self, (R).add_comm (0 - a * b), (R).add_comm (0 - c * b), ← nf.sub_eq, ← nf.sub_eq,
+    (R).mul_comm b a, Fin.sub_self, (R).mul_comm d a, (R).mul_comm c b, h]
+  exact ⟨rfl, rfl⟩
 
-theorem ff5 : FieldFacts 5 where
-  trace_sq := trace_sq5
-  kernel_vectors := by decide +kernel
-  neg_eq_zero := by decide
-  one_ne_zero := by decide
-  inv := fun z hz => ⟨inv5 z, beq_iff_eq.mp (List.all_eq_true.mp inv_all5 z hz)⟩
+/-- `FieldFacts n` from Cayley–Hamilton for tr², the negation facts, and the kernel check of inverses. -/
+def FieldFacts.of (hsq : ∀ a b c d : Fin n, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c))
+    (nf : NegFacts n) (hinv : invOk n = true) : FieldFacts n where
+  trace_sq := fun x => by obtain ⟨a, b, c, d⟩ := x; exact hsq a b c d
+  kernel_vectors := kernel_vectors_of nf
+  neg_eq_zero := nf.neg_eq_zero
+  one_ne_zero := nf.one_ne_zero
+  inv := inv_of_invOk hinv
 
-theorem ff7 : FieldFacts 7 where
-  trace_sq := trace_sq7
-  kernel_vectors := by decide +kernel
-  neg_eq_zero := by decide
-  one_ne_zero := by decide
-  inv := fun z hz => ⟨inv7 z, beq_iff_eq.mp (List.all_eq_true.mp inv_all7 z hz)⟩
+/-- Cayley–Hamilton for the trace of the square, over ℤ/n for a literal n: expand with the semiring laws,
+name the four products, and let `omega` settle the additive identity in ℤ/n. -/
+macro "trace_sq_tac" : tactic => `(tactic| (
+  intro a b c d
+  rw [(isCSR_fin _).mul_add, (isCSR_fin _).add_mul, (isCSR_fin _).add_mul, (isCSR_fin _).mul_comm d a, (isCSR_fin _).mul_comm c b]
+  generalize a * a = P
+  generalize a * d = T
+  generalize d * d = U
+  generalize b * c = Q
+  omega))
+
+theorem traceSq5 : ∀ a b c d : Fin 5, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by trace_sq_tac
+theorem traceSq7 : ∀ a b c d : Fin 7, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by trace_sq_tac
+theorem traceSq11 : ∀ a b c d : Fin 11, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by trace_sq_tac
+
+theorem negFacts5 : NegFacts 5 := ⟨by decide, by decide, by decide, by decide⟩
+theorem negFacts7 : NegFacts 7 := ⟨by decide, by decide, by decide, by decide⟩
+theorem negFacts11 : NegFacts 11 := ⟨by decide, by decide, by decide, by decide⟩
+
+theorem ff5 : FieldFacts 5 := FieldFacts.of traceSq5 negFacts5 (by decide +kernel)
+theorem ff7 : FieldFacts 7 := FieldFacts.of traceSq7 negFacts7 (by decide +kernel)
+set_option maxHeartbeats 0 in
+theorem ff11 : FieldFacts 11 := FieldFacts.of traceSq11 negFacts11 (by decide +kernel)
 
 theorem S5_generates : S_generates 5 mod5Cert.S = true := by decide +kernel
 theorem S7_generates : S_generates 7 mod7Cert.S = true := by decide +kernel
+set_option maxHeartbeats 0 in
+theorem S11_generates : S_generates 11 mod11Cert.S = true := by decide +kernel
 theorem pairs5_ok : mod5Cert.pairs.all (pairOk 5 mod5Cert.S) = true := by decide +kernel
 theorem pairs7_ok : mod7Cert.pairs.all (pairOk 7 mod7Cert.S) = true := by decide +kernel
+set_option maxHeartbeats 0 in
+theorem pairs11_ok : mod11Cert.pairs.all (pairOk 11 mod11Cert.S) = true := by decide +kernel
 theorem curves5_ok : mod5Cert.curves.all (curveOk 5 mod5Cert) = true := by decide +kernel
 theorem curves7_ok : mod7Cert.curves.all (curveOk 7 mod7Cert) = true := by decide +kernel
+set_option maxHeartbeats 0 in
+theorem curves11_ok : mod11Cert.curves.all (curveOk 11 mod11Cert) = true := by decide +kernel
 
-theorem mod5_curve_labels : mod5Cert.curves.map (·.label) =
-    ["17a1", "19a1", "37a1", "37b1", "43a1", "53a1", "61a1", "67a1", "73a1", "79a1", "83a1", "89a1", "89b1", "101a1"] := by
-  decide +kernel
-theorem mod7_curve_labels : mod7Cert.curves.map (·.label) =
-    ["11a1", "17a1", "19a1", "37a1", "37b1", "43a1", "53a1", "61a1", "67a1", "73a1", "79a1", "83a1", "89a1", "89b1", "101a1"] := by
-  decide +kernel
+def allLabels : List String :=
+  ["11a1", "17a1", "19a1", "37a1", "37b1", "43a1", "53a1", "61a1", "67a1", "73a1", "79a1", "83a1", "89a1", "89b1", "101a1"]
+
+theorem mod5_curve_labels : mod5Cert.curves.map (·.label) = allLabels.filter (· != "11a1") := by decide +kernel
+theorem mod7_curve_labels : mod7Cert.curves.map (·.label) = allLabels := by decide +kernel
+set_option maxHeartbeats 0 in
+theorem mod11_curve_labels : mod11Cert.curves.map (·.label) = allLabels := by decide +kernel
 
 end Mat2
 
@@ -373,5 +413,13 @@ theorem mod7_images_full {c : CurveCert} (hc : c ∈ mod7Cert.curves)
     (hA : g.trace = finN (apMod 7 c.ainvs c.p1) ∧ g.det = finN c.p1)
     (hB : h.trace = finN (apMod 7 c.ainvs c.p2) ∧ h.det = finN c.p2) : ∀ z ∈ gl 7, z ∈ H :=
   data_sound ff7 mod7Cert S7_generates pairs7_ok curves7_ok hc H hmul hg hh hA hB
+
+open Mat2 in
+/-- **ρ̄₁₁ is surjective for all 15 Cremona curves of prime level.** -/
+theorem mod11_images_full {c : CurveCert} (hc : c ∈ mod11Cert.curves)
+    (H : List (Mat2 11)) (hmul : ∀ x ∈ H, ∀ y ∈ H, M2.mul x y ∈ H) {g h : Mat2 11} (hg : g ∈ H) (hh : h ∈ H)
+    (hA : g.trace = finN (apMod 11 c.ainvs c.p1) ∧ g.det = finN c.p1)
+    (hB : h.trace = finN (apMod 11 c.ainvs c.p2) ∧ h.det = finN c.p2) : ∀ z ∈ gl 11, z ∈ H :=
+  data_sound ff11 mod11Cert S11_generates pairs11_ok curves11_ok hc H hmul hg hh hA hB
 
 end Oracles
