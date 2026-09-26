@@ -120,30 +120,77 @@ def galois_mod2_block() -> list[str]:
             "  " + ",\n  ".join(rows) + "]"]
 
 
-def mod5_witness_block() -> list[str]:
-    """For ImageMod5.lean: gRep = the first element of GL_2(F_5) (in Lean's `gl 5` order) with charpoly
-    x^2 - 3x + 2, and for every g in that class a conjugator C with C gRep C^-1 = g, as base-5 codes."""
-    from itertools import product
-    p = 5
-    def code(m):
-        return m[0] + p * (m[1] + p * (m[2] + p * m[3]))
-    def mul(x, y):
-        return ((x[0] * y[0] + x[1] * y[2]) % p, (x[0] * y[1] + x[1] * y[3]) % p,
-                (x[2] * y[0] + x[3] * y[2]) % p, (x[2] * y[1] + x[3] * y[3]) % p)
-    def inv(m):
-        u = pow((m[0] * m[3] - m[1] * m[2]) % p, -1, p)
-        return tuple((u * e) % p for e in (m[3], -m[1], -m[2], m[0]))
-    gl = [m for m in product(range(p), repeat=4) if (m[0] * m[3] - m[1] * m[2]) % p]
-    classA = [m for m in gl if (m[0] + m[3]) % p == 3 and (m[0] * m[3] - m[1] * m[2]) % p == 2]
-    g_rep = classA[0]
-    rows = []
-    for g in classA:
-        C = next(c for c in gl if mul(mul(c, g_rep), inv(c)) == g)
-        rows.append(f"({code(g)}, {code(C)}, {code(inv(C))})")
-    assert len(rows) == 30
-    return ["/-- (code g, code C, code C⁻¹) with C·gRep·C⁻¹ = g for every g with charpoly x² − 3x + 2 in GL₂(𝔽₅); gRep is the first such. -/",
-            f"def mod5GRep : Nat := {code(g_rep)}",
-            "def mod5Witnesses : List (Nat × Nat × Nat) := " + lean_list(rows)]
+def mod_ell_cert_block(ell: int, zeta: int) -> list[str]:
+    """Word certificates for ImageModL.lean: S = {E12(1), E21(1), diag(1, zeta)} generates GL_2(F_ell); a greedy
+    cover of the curves by class pairs (A, B) such that every (g, h) in A x B generates; for each pair the
+    conjugators of class A onto its first representative and, for each h in B, words in {gRep, h} for S."""
+    from collections import deque
+    from langlands.mod_ell_image import GL2, frobenius_charpolys
+    from langlands.newforms import CREMONA_PRIME_LEVEL
+    G = GL2(ell)
+    full = frozenset(range(G.n))
+    S = [G.index[(1, 1, 0, 1)], G.index[(1, 0, 1, 1)], G.index[(1, 0, 0, zeta)]]
+    assert G.generated(frozenset(S)) == full
+    code = lambda i: (lambda m: m[0] + ell * (m[1] + ell * (m[2] + ell * m[3])))(G.elements[i])
+    primes = [p for p in range(2, 61) if all(p % d for d in range(2, int(p**0.5) + 1))]
+    curves = {}
+    for f in CREMONA_PRIME_LEVEL:
+        ps = [p for p in primes if p not in (ell, f.conductor)]
+        first = {}
+        for p, chi in zip(ps, frobenius_charpolys(f, ell, 60)):
+            first.setdefault(chi, p)
+        curves[f.label] = (f, first)
+    good = sorted({c for _, fr in curves.values() for c in fr if (c[0] ** 2 - 4 * c[1]) % ell})
+    cert = {}
+    for A in good:
+        gA = G.with_charpoly(A)[0]
+        for B in good:
+            if A != B and all(G.generated(frozenset({gA, h})) == full for h in G.with_charpoly(B)):
+                cert[(A, B)] = True
+    need = {lab for lab, (_, fr) in curves.items() if any(A in fr and B in fr for (A, B) in cert)}
+    chosen = []
+    while need:
+        best = max(cert, key=lambda AB: (len([l for l in need if AB[0] in curves[l][1] and AB[1] in curves[l][1]]), AB))
+        cov = {l for l in need if best[0] in curves[l][1] and best[1] in curves[l][1]}
+        chosen.append((best, cov))
+        need -= cov
+    inv = lambda i: G.index[G._inv(G.elements[i])]
+    pair_rows = []
+    for (A, B), _ in chosen:
+        cA, cB = G.with_charpoly(A), G.with_charpoly(B)
+        gA = cA[0]
+        wit = []
+        for g in cA:
+            C = next(c for c in range(G.n) if G.table[G.table[c][gA]][inv(c)] == g)
+            wit.append(f"({code(g)}, {code(C)}, {code(inv(C))})")
+        words = []
+        for h in cB:
+            gens = [gA, h]
+            seen = {gens[0]: [0], gens[1]: [1]}
+            dq = deque(gens)
+            while dq and not all(s in seen for s in S):
+                x = dq.popleft()
+                for i, g in enumerate(gens):
+                    y = G.table[x][g]
+                    if y not in seen:
+                        seen[y] = seen[x] + [i]
+                        dq.append(y)
+            ws = lean_list(f"({code(s)}, [" + ", ".join("true" if i else "false" for i in seen[s]) + "])" for s in S)
+            words.append(f"({code(h)}, {ws})")
+        pair_rows.append(f"      {{ tA := {A[0]}, dA := {A[1]}, tB := {B[0]}, dB := {B[1]}, gRep := {code(gA)},\n"
+                         f"        witnessesA := {lean_list(wit)},\n        wordsB := {lean_list(words)} }}")
+    curve_rows = []
+    for lab, (f, fr) in curves.items():
+        for k, ((A, B), cov) in enumerate(chosen):
+            if lab in cov:
+                curve_rows.append(f'      {{ label := "{lab}", ainvs := {lean_list(f.a_invariants)}, pair := {k}, p1 := {fr[A]}, p2 := {fr[B]} }}')
+                break
+    return [f"/-- Mod-{ell} image certificates: S, {len(chosen)} certified class pairs, and the {len(curve_rows)} curves they cover",
+            f"    (curves with a rational {ell}-torsion point or an {ell}-isogeny are absent: their image is not full). -/",
+            f"def mod{ell}Cert : ModLData :=",
+            f"  {{ ell := {ell}, S := {lean_list(code(s) for s in S)},",
+            "    pairs := [\n" + ",\n".join(pair_rows) + "],",
+            "    curves := [\n" + ",\n".join(curve_rows) + "] }"]
 
 
 def trace_block() -> list[str]:
@@ -166,8 +213,8 @@ def trace_block() -> list[str]:
 
 
 def render() -> str:
-    lines = ["-- GENERATED by tools/export_lean_data.py; do not edit.", "import LanglandsOracles.Matrix", "", "namespace Oracles", ""]
-    lines += brandt_block() + [""] + brandt_eigenvector_block() + [""] + gl1_block() + [""] + function_field_block() + [""] + galois_mod3_block() + [""] + galois_mod2_block() + [""] + mod5_witness_block() + [""] + trace_block() + ["", "end Oracles", ""]
+    lines = ["-- GENERATED by tools/export_lean_data.py; do not edit.", "import LanglandsOracles.Matrix", "import LanglandsOracles.CertTypes", "", "namespace Oracles", ""]
+    lines += brandt_block() + [""] + brandt_eigenvector_block() + [""] + gl1_block() + [""] + function_field_block() + [""] + galois_mod3_block() + [""] + galois_mod2_block() + [""] + mod_ell_cert_block(5, 2) + [""] + mod_ell_cert_block(7, 3) + [""] + trace_block() + ["", "end Oracles", ""]
     return "\n".join(lines)
 
 

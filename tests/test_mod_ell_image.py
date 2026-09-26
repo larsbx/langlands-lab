@@ -1,5 +1,7 @@
 """Images of rho_ell forced from point counts: 37a1 is surjective mod 3, 5, 7; 11a1 (rational 5-torsion)
 is not forced mod 5; and the criterion refuses to conclude from too little data."""
+from pathlib import Path
+
 import pytest
 
 from langlands.mod_ell_image import GL2, forced_full, forced_full_classes, frobenius_charpolys
@@ -55,9 +57,10 @@ def test_group_orders():
 
 
 def test_mod5_certificate_classes_of_37a1():
-    """The classes lean/LanglandsOracles/ImageMod5.lean certifies: x^2 - 3x + 2 (rho_5(Frob_2), 30 elements,
-    a single conjugacy class of diag(1, 2)) and x^2 - 2x + 3 (rho_5(Frob_3), 20 elements); every pair
-    generates GL_2(F_5), and the first representative in Lean's enumeration order has code 455."""
+    """The Frobenius classes of 37a1 at p = 2, 3: x^2 - 3x + 2 (30 elements, a single conjugacy class of
+    diag(1, 2)) and x^2 - 2x + 3 (20 elements); every pair generates GL_2(F_5), and the first representative
+    in Lean's enumeration order has base-5 code 455 (the mod-5 certificate in ImageModL.lean uses this class
+    as B of its first certified pair)."""
     from langlands.newforms import newforms_of_level
     E37 = newforms_of_level(37)[0]
     assert (E37.a(2) % 5, E37.a(3) % 5) == (3, 2)
@@ -69,3 +72,37 @@ def test_mod5_certificate_classes_of_37a1():
     assert all(G.generated(frozenset({g, h})) == full for g in A for h in B)
     code = lambda m: m[0] + 5 * (m[1] + 5 * (m[2] + 5 * m[3]))
     assert code(G.elements[A[0]]) == 455
+
+
+def test_conjugacy_pruning_only_for_invariant_sets():
+    """Reducing the first set to conjugacy representatives is sound only when every set is closed under
+    conjugation.  In GL_2(F_2) the sets [(0, 3), (3,)] are not: element 3 alone generates a proper subgroup
+    meeting both, so the answer must be False (a pruned search would wrongly certify the full image)."""
+    G = GL2(2)
+    assert not G.is_conjugation_invariant((3,)) or len(G.conjugates(3)) == 1
+    sets = [(0, 3), (3,)]
+    if G.is_conjugation_invariant((3,)):
+        pytest.skip("element 3 is central in this enumeration; pick a non-invariant set")
+    assert not forced_full_classes(G, sets)
+    # with every element of the first set tried, the proper subgroup <3> is found; invariant sets are still pruned
+    assert G.is_conjugation_invariant(G.with_charpoly((1, 1)))
+
+
+@pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3)])
+def test_word_certificates_are_valid(ell, zeta):
+    """Mirror of lean/LanglandsOracles/ImageModL.lean: S = {E12(1), E21(1), diag(1, zeta)} generates GL_2(F_ell), and
+    for every class pair (A, B) the exporter certifies, every (g, h) in A x B generates -- the words in {gRep, h}
+    for S plus the conjugators of A onto gRep are exactly the data Lean verifies."""
+    import re
+    G = GL2(ell)
+    full = frozenset(range(G.n))
+    S = [G.index[(1, 1, 0, 1)], G.index[(1, 0, 1, 1)], G.index[(1, 0, 0, zeta)]]
+    assert G.generated(frozenset(S)) == full
+    data = Path(__file__).resolve().parents[1] / "lean" / "LanglandsOracles" / "Data.lean"
+    block = data.read_text().split(f"def mod{ell}Cert")[1].split("def mod")[0] if ell == 5 else data.read_text().split(f"def mod{ell}Cert")[1].split("def traceData")[0]
+    pairs = [tuple(int(v) for v in m) for m in re.findall(r"tA := (\d+), dA := (\d+), tB := (\d+), dB := (\d+)", block)]
+    assert pairs
+    for tA, dA, tB, dB in pairs:
+        A, B = G.with_charpoly((tA, dA)), G.with_charpoly((tB, dB))
+        assert len(G.conjugacy_class_representatives(A)) == 1 and len(G.conjugacy_class_representatives(B)) == 1
+        assert all(G.generated(frozenset({g, h})) == full for g in A for h in B)

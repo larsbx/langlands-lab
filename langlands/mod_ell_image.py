@@ -60,20 +60,31 @@ class GL2:
             frontier = new
         return frozenset(seen)
 
-    def conjugacy_class_representatives(self, elements: tuple[int, ...]) -> list[int]:
+    def conjugates(self, x: int) -> frozenset[int]:
         inv = [self.index[self._inv(m)] for m in self.elements]
+        return frozenset(self.table[self.table[c][x]][inv[c]] for c in range(self.n))
+
+    def conjugacy_class_representatives(self, elements: tuple[int, ...]) -> list[int]:
         seen, reps = set(), []
         for x in elements:
             if x in seen:
                 continue
             reps.append(x)
-            seen.update(self.table[self.table[c][x]][inv[c]] for c in range(self.n))
+            seen.update(self.conjugates(x))
         return reps
+
+    def is_conjugation_invariant(self, elements: tuple[int, ...]) -> bool:
+        S = frozenset(elements)
+        return all(self.conjugates(x) <= S for x in S)
 
 
 def forced_full_classes(G: GL2, classes: list[tuple[int, ...]]) -> bool:
     """True iff every subgroup of G meeting each of the given element sets is G.  Branches carry the
-    small list of generators chosen so far; the subgroup they generate is the state."""
+    small list of generators chosen so far; the subgroup they generate is the state.
+
+    The first set is reduced to conjugacy-class representatives only when *every* set is closed under
+    conjugation (then "H meets all sets" is invariant under H -> cHc^-1); otherwise every element of the
+    first set is tried, which is always sound."""
     full = frozenset(range(G.n))
 
     @lru_cache(maxsize=None)
@@ -93,7 +104,9 @@ def forced_full_classes(G: GL2, classes: list[tuple[int, ...]]) -> bool:
 
     if not classes:
         return False
-    return all(forced(G.generated(frozenset({x})), (x,), 1) for x in G.conjugacy_class_representatives(classes[0]))
+    firsts = (G.conjugacy_class_representatives(classes[0]) if all(G.is_conjugation_invariant(c) for c in classes)
+              else list(classes[0]))
+    return all(forced(G.generated(frozenset({x})), (x,), 1) for x in firsts)
 
 
 def forced_full(ell: int, polys: tuple[tuple[int, int], ...]) -> bool:

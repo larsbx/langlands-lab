@@ -14,7 +14,7 @@ computed and which theorem the match instantiates.
 | 1 | E = 37a1 mod p, p ∈ {5, 7} | Lang-isogeny fibers; χ∘N on Pic⁰(𝔽_{pᵏ}); Abel sums of lines; tame symbols from Laurent expansions; L(χ, T) as an Euler product in ℤ[ζ][[T]] | unramified geometric CFT for GL₁: L_χ ↔ character sheaf A_χ, L(E, L_χ) = 1 ≠ Z(E, T), Weil reciprocity with the Deligne sign |
 | 1 | E = 37a1 mod p, modulus 2P₀ | generalized Jacobian J_𝔪(𝔽_p) as pairs with its 2-cocycle; ray class characters; L_𝔪(χ, T) as Euler products | ramified geometric CFT for GL₁ (Rosenlicht–Serre): conductor-2 Artin–Schreier characters have L of degree 2 satisfying the Riemann hypothesis |
 | 3 | Carlitz module over 𝔽_p[t] | C_P ≡ x^{|P|} (mod P); Frob_P = C_P on C[M]; splitting degrees = ord of P in (A/ann λ)^× | function-field CFT for GL₁ (Carlitz–Hayes) |
-| 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity proved over every commutative semiring (kernel cross-checks on GL₂(𝔽₂), GL₂(𝔽₃)); mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p; images of ρ̄₃ and ρ̄₅ (37a1: full, the latter by multiplication-table closures in the kernel) and ρ̄₂ (all 15 curves: S₃ or C₂) certified; pseudocharacter ⇒ representation found by kernel search on GL₂(𝔽₃), unique up to conjugacy; mod-5, mod-7 images of all 15 curves forced from point counts | the shape "Galois side = commutative algebra of operators on automorphic functions"; the converse proved for GL₁ and, up to "pseudocharacter ⇒ parameter", for GL₂ |
+| 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity proved over every commutative semiring (kernel cross-checks on GL₂(𝔽₂), GL₂(𝔽₃)); mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p; images certified in the kernel: ρ̄₂ (all 15 curves: S₃ or C₂), ρ̄₃ (37a1), ρ̄₅ (14 curves) and ρ̄₇ (all 15) full, the last two by word certificates against a fixed generating set; pseudocharacter ⇒ representation found by kernel search on GL₂(𝔽₃), unique up to conjugacy; mod-5, mod-7 images of all 15 curves forced from point counts | the shape "Galois side = commutative algebra of operators on automorphic functions"; the converse proved for GL₁ and, up to "pseudocharacter ⇒ parameter", for GL₂ |
 | 3 | Bruhat–Tits tree of PGL₂(𝔽_q((1/t))) | GL₂(𝔽_q[t]) reduction (Serre's half-line computed), Γ₀(𝔫)\𝒯 via ℙ¹(A/𝔫), cuspidal harmonic cochains, Hecke operators T_𝔭; elliptic curves over 𝔽₂(t) with a_𝔭 by point counts and L(E,T) by Euler product | Gekeler's genus, Drinfeld's Ramanujan bound, Drinfeld's dictionary for GL₂: the level-t³ and level-t⁴ eigenforms over 𝔽₂(t) are y² + txy = x³ + x and y² + txy + t²y = x³ + x + t³ + t² + t |
 
 **Lean 4 in the oracle loop** (`lean/`): core Lean, no Mathlib, no `native_decide`,
@@ -70,7 +70,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 598 tests (~40 s with a warm lake cache; first Lean build ~2 min)
+pytest                      # all branches + Lean gate, 601 tests (~40 s with a warm lake cache; first Lean build ~2 min)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py
