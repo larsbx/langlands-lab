@@ -4,7 +4,7 @@ import LanglandsOracles.Pseudocharacter
 # Generation certificates in GL₂(ℤ/n): breadth-first multiplicative closure on machine naturals.
 
 Matrices over ℤ/n are encoded as base-n indices i < n⁴, closures keep the set of seen elements as
-a bitmask, and every step is a GMP operation in the kernel.  `generatedIdx_sub` proves soundness:
+a bitmask and the frontier as a list of codes, and every step is a GMP operation in the kernel.  `generatedIdx_sub` proves soundness:
 each index whose bit is set decodes to a product of the generators, so a kernel evaluation
 "`generatedIdx gens` has every bit of GL₂ set" certifies that any multiplicatively closed subset
 containing the generators is all of GL₂(ℤ/n).  `mem_gl`: the enumeration `gl n` is complete.
@@ -82,40 +82,50 @@ theorem testBit_mask {m : Nat} {l : List Nat} {i : Nat} (h : (mask m l).testBit 
         exact Or.inr (List.mem_cons.mpr (Or.inl (of_decide_eq_true h'').symm))
     · exact Or.inr (List.mem_cons_of_mem _ h')
 
-/-- One code's contribution: the products of x with the generators that are not yet seen, added to the mask. -/
-def addProducts (m : Nat → Nat → Nat) (gens : List Nat) (seen x acc : Nat) : Nat :=
-  gens.foldl (fun acc g => let j := m x g; if seen.testBit j || acc.testBit j then acc else acc ||| 2 ^ j) acc
+/-- One bit of a machine natural through accelerated operations only: `Nat.testBit` unfolds a chain of
+instances at every call, and the kernel caches every link. -/
+def bit (m i : Nat) : Bool := Nat.beq (Nat.mod (Nat.shiftRight m i) 2) 1
 
-/-- The codes base, base + 1, …, base + i − 1 of one chunk: products with the generators for those in the
-frontier.  The accumulator is forced to a literal at every step by a cheap GMP test (`a % 2 = 2`, never
-true): matching it against `Nat.succ` instead makes the kernel carry the value as `Nat.succ` of a literal and
-lose the accelerated arithmetic (300 s instead of 2 s per scan). -/
-def chunkMask (m : Nat → Nat → Nat) (gens : List Nat) (seen frontier base : Nat) : Nat → Nat → Nat
-  | 0, acc => acc
-  | i + 1, acc =>
-    let a := if frontier.testBit (base + i) then addProducts m gens seen (base + i) acc else acc
-    if a % 2 = 2 then chunkMask m gens seen frontier base i 0 else chunkMask m gens seen frontier base i a
+theorem bit_eq (m i : Nat) : bit m i = m.testBit i := by
+  rw [Nat.testBit_eq_decide_div_mod_eq]
+  show Nat.beq (m >>> i % 2) 1 = _
+  rw [Nat.shiftRight_eq_div_pow]
+  cases h : Nat.beq (m / 2 ^ i % 2) 1
+  · exact (decide_eq_false (Nat.ne_of_beq_eq_false h)).symm
+  · exact (decide_eq_true (Nat.eq_of_beq_eq_true h)).symm
 
-/-- The mask of the products of the frontier with the generators that are not yet seen, scanning the code
-range in chunks of 64 and skipping a chunk with one shift-and-mod test when the frontier has no bit in it. -/
-def stepMask (m : Nat → Nat → Nat) (gens : List Nat) (seen frontier : Nat) : Nat → Nat → Nat
-  | 0, acc => acc
-  | c + 1, acc =>
-    let a := if (frontier >>> (64 * c)) % 18446744073709551616 = 0 then acc
-      else chunkMask m gens seen frontier (64 * c) 64 acc
-    if a % 2 = 2 then stepMask m gens seen frontier c 0 else stepMask m gens seen frontier c a
+/-- The products of one frontier code with the generators: each unseen product is marked in `seen` and
+listed.  Every intermediate mask is forced to a literal by a cheap GMP test, so no chain of unevaluated
+operations is ever carried (that chain is what hits the kernel's recursion limit). -/
+def addList (m : Nat → Nat → Nat) (x : Nat) : List Nat → Nat → List Nat → Nat × List Nat
+  | [], seen, new => (seen, new)
+  | g :: gs, seen, new =>
+    let j := m x g
+    if bit seen j then addList m x gs seen new
+    else
+      let s := Nat.lor seen (Nat.pow 2 j)
+      if Nat.beq (Nat.mod s 2) 2 then addList m x gs 0 [] else addList m x gs s (j :: new)
 
-/-- Breadth-first multiplicative closure on bitmasks, with fuel. -/
-def closureIdx (m : Nat → Nat → Nat) (gens : List Nat) (bound : Nat) : Nat → Nat → Nat → Nat
+/-- One breadth-first layer: the frontier's products with the generators. -/
+def growList (m : Nat → Nat → Nat) (gens : List Nat) : List Nat → Nat → List Nat → Nat × List Nat
+  | [], seen, new => (seen, new)
+  | x :: xs, seen, new =>
+    match addList m x gens seen new with
+    | (s, n) => growList m gens xs s n
+
+/-- Breadth-first multiplicative closure: the seen set as a bitmask, the frontier as a list of codes, with
+fuel.  Nothing scans the code range, so the cost is one product per (element, generator). -/
+def closureList (m : Nat → Nat → Nat) (gens : List Nat) : Nat → Nat → List Nat → Nat
   | 0, seen, _ => seen
-  | k + 1, seen, frontier =>
-    let new := stepMask m gens seen frontier (bound / 64 + 1) 0
-    if new = 0 then seen else closureIdx m gens bound k (seen ||| new) new
+  | _ + 1, seen, [] => seen
+  | k + 1, seen, x :: xs =>
+    match growList m gens (x :: xs) seen [] with
+    | (s, n) => closureList m gens k s n
 
 /-- The semigroup generated by a list of encoded matrices (its closure under multiplication; in a
 finite group, the subgroup). -/
 def generatedIdx (n : Nat) [NeZero n] (gens : List Nat) : Nat :=
-  closureIdx (mulIdx n) gens (n ^ 4) (n ^ 4) (mask 0 gens) (mask 0 gens)
+  closureList (mulIdx n) gens (n ^ 4) (mask 0 gens) gens
 
 section soundness
 
@@ -127,95 +137,72 @@ include hm
 /-- Every index produced is the code of an element of H: the invariant of the closure. -/
 def Codes (H : List (Mat2 n)) (i : Nat) : Prop := ∃ x ∈ H, i = encode x
 
+/-- The invariant on a (seen mask, frontier list) pair. -/
+def Inv (H : List (Mat2 n)) (p : Nat × List Nat) : Prop :=
+  (∀ i, p.1.testBit i = true → Codes H i) ∧ ∀ i ∈ p.2, Codes H i
+
+omit [NeZero n] hm in
+theorem inv_zero_nil : Inv H (0, []) :=
+  ⟨fun i h => by rw [Nat.zero_testBit] at h; exact absurd h Bool.false_ne_true, fun _ h => absurd h List.not_mem_nil⟩
+
 omit [NeZero n] in
-theorem addProducts_codes (seen x acc : Nat) (hx : Codes H x) (hacc : ∀ j, acc.testBit j = true → Codes H j) :
-    ∀ j, (addProducts m gens seen x acc).testBit j = true → Codes H j := by
-  unfold addProducts
-  suffices h : ∀ (gs : List Nat), (∀ g ∈ gs, g ∈ gens) → ∀ acc : Nat, (∀ j, acc.testBit j = true → Codes H j) →
-      ∀ j, (gs.foldl (fun acc g => let j := m x g; if seen.testBit j || acc.testBit j then acc else acc ||| 2 ^ j) acc).testBit j = true
-        → Codes H j from h gens (fun _ h => h) acc hacc
-  intro gs
-  induction gs with
-  | nil => intro _ acc hacc j hj; exact hacc j hj
-  | cons g gs ih =>
-    intro hgs acc hacc j hj
+theorem addList_inv (x : Nat) (hx : Codes H x) :
+    ∀ (gs : List Nat), (∀ g ∈ gs, g ∈ gens) → ∀ (seen : Nat) (new : List Nat), Inv H (seen, new) →
+      Inv H (addList m x gs seen new)
+  | [], _, _, _, h => h
+  | g :: gs, hgs, seen, new, ⟨hs, hn⟩ => by
     have hg : g ∈ gens := hgs g (List.mem_cons_self ..)
-    refine ih (fun g' hg' => hgs g' (List.mem_cons_of_mem _ hg')) _ ?_ j hj
-    intro j' hj0
-    have hj' : (if (seen.testBit (m x g) || acc.testBit (m x g)) = true then acc else acc ||| 2 ^ (m x g)).testBit j' = true := hj0
-    split at hj'
-    · exact hacc j' hj'
-    · rw [Nat.testBit_or, Nat.testBit_two_pow] at hj'
-      rcases Bool.or_eq_true _ _ |>.mp hj' with h | h
-      · exact hacc j' h
-      · obtain ⟨y, hy, rfl⟩ := hx
-        obtain ⟨z, hz, e⟩ := hm y hy g hg
-        exact ⟨z, hz, (of_decide_eq_true h).symm.trans e⟩
-
-omit [NeZero n] in
-theorem chunkMask_codes (seen frontier base : Nat) (hf : ∀ i, frontier.testBit i = true → Codes H i) :
-    ∀ (i acc : Nat), (∀ j, acc.testBit j = true → Codes H j) →
-      ∀ j, (chunkMask m gens seen frontier base i acc).testBit j = true → Codes H j
-  | 0, _, hacc, j, hj => hacc j hj
-  | i + 1, acc, hacc, j, hj => by
-    unfold chunkMask at hj
-    have hstep : ∀ j, (if frontier.testBit (base + i) then addProducts m gens seen (base + i) acc else acc).testBit j = true
-        → Codes H j := by
-      intro j hj
-      split at hj
-      · next hfx => exact addProducts_codes H m gens hm seen (base + i) acc (hf _ hfx) hacc j hj
-      · exact hacc j hj
-    dsimp only at hj
-    generalize ha : (if frontier.testBit (base + i) then addProducts m gens seen (base + i) acc else acc) = a at hj hstep
-    split at hj
-    · exact chunkMask_codes seen frontier base hf i 0 (fun j h => by rw [Nat.zero_testBit] at h; exact absurd h Bool.false_ne_true) j hj
-    · exact chunkMask_codes seen frontier base hf i a hstep j hj
-
-omit [NeZero n] in
-/-- Every bit of the step mask is the code of a product of a frontier element with a generator. -/
-theorem stepMask_codes (seen frontier : Nat) (hf : ∀ i, frontier.testBit i = true → Codes H i) :
-    ∀ (c acc : Nat), (∀ j, acc.testBit j = true → Codes H j) →
-      ∀ j, (stepMask m gens seen frontier c acc).testBit j = true → Codes H j
-  | 0, _, hacc, j, hj => hacc j hj
-  | c + 1, acc, hacc, j, hj => by
-    unfold stepMask at hj
-    have hstep : ∀ j, (if (frontier >>> (64 * c)) % 18446744073709551616 = 0 then acc
-        else chunkMask m gens seen frontier (64 * c) 64 acc).testBit j = true → Codes H j := by
-      intro j hj
-      split at hj
-      · exact hacc j hj
-      · exact chunkMask_codes H m gens hm seen frontier (64 * c) hf 64 acc hacc j hj
-    dsimp only at hj
-    generalize ha : (if (frontier >>> (64 * c)) % 18446744073709551616 = 0 then acc
-        else chunkMask m gens seen frontier (64 * c) 64 acc) = a at hj hstep
-    split at hj
-    · exact stepMask_codes seen frontier hf c 0 (fun j h => by rw [Nat.zero_testBit] at h; exact absurd h Bool.false_ne_true) j hj
-    · exact stepMask_codes seen frontier hf c a hstep j hj
-
-omit [NeZero n] in
-theorem closureIdx_sub (bound : Nat) :
-    ∀ (k seen frontier : Nat), (∀ i, seen.testBit i = true → Codes H i) →
-      (∀ i, frontier.testBit i = true → Codes H i) → ∀ i, (closureIdx m gens bound k seen frontier).testBit i = true → Codes H i
-  | 0, _, _, hs, _ => hs
-  | k + 1, seen, frontier, hs, hf => by
-    have hnew := stepMask_codes H m gens hm seen frontier hf (bound / 64 + 1) 0 (fun j h => by rw [Nat.zero_testBit] at h; exact absurd h Bool.false_ne_true)
-    unfold closureIdx
-    simp only
+    have hgs' : ∀ g' ∈ gs, g' ∈ gens := fun g' h => hgs g' (List.mem_cons_of_mem _ h)
+    have hj : Codes H (m x g) := by
+      obtain ⟨y, hy, rfl⟩ := hx
+      obtain ⟨z, hz, e⟩ := hm y hy g hg
+      exact ⟨z, hz, e⟩
+    unfold addList
+    dsimp only
     split
-    · exact hs
-    · exact closureIdx_sub bound k _ _
-        (fun i hi => by
-          rw [Nat.testBit_or] at hi
-          exact (Bool.or_eq_true _ _ |>.mp hi).elim (hs i) (hnew i))
-        hnew
+    · exact addList_inv x hx gs hgs' seen new ⟨hs, hn⟩
+    · split
+      · exact addList_inv x hx gs hgs' 0 [] (inv_zero_nil H)
+      · refine addList_inv x hx gs hgs' _ _ ⟨fun i hi => ?_, fun i hi => ?_⟩
+        · have hi' : (seen ||| 2 ^ (m x g)).testBit i = true := hi
+          rw [Nat.testBit_or, Nat.testBit_two_pow] at hi'
+          rcases Bool.or_eq_true _ _ |>.mp hi' with h | h
+          · exact hs i h
+          · exact (of_decide_eq_true h) ▸ hj
+        · rcases List.mem_cons.mp hi with rfl | hi
+          · exact hj
+          · exact hn i hi
+
+omit [NeZero n] in
+theorem growList_inv : ∀ (fr : List Nat), (∀ x ∈ fr, Codes H x) → ∀ (seen : Nat) (new : List Nat),
+    Inv H (seen, new) → Inv H (growList m gens fr seen new)
+  | [], _, _, _, h => h
+  | x :: xs, hfr, seen, new, h => by
+    have hx : Codes H x := hfr x (List.mem_cons_self ..)
+    have hxs : ∀ y ∈ xs, Codes H y := fun y hy => hfr y (List.mem_cons_of_mem _ hy)
+    unfold growList
+    split
+    · next s n heq => exact growList_inv xs hxs s n (heq ▸ addList_inv H m gens hm x hx gens (fun _ h => h) seen new h)
+
+omit [NeZero n] in
+theorem closureList_sub : ∀ (k seen : Nat) (frontier : List Nat), (∀ i, seen.testBit i = true → Codes H i) →
+    (∀ x ∈ frontier, Codes H x) → ∀ i, (closureList m gens k seen frontier).testBit i = true → Codes H i
+  | 0, _, _, hs, _ => hs
+  | _ + 1, _, [], hs, _ => hs
+  | k + 1, seen, x :: xs, hs, hf => by
+    unfold closureList
+    split
+    · next s n heq =>
+      have hinv : Inv H (s, n) := heq ▸ growList_inv H m gens hm (x :: xs) hf seen [] ⟨hs, fun _ h => absurd h List.not_mem_nil⟩
+      exact closureList_sub k s n hinv.1 hinv.2
 
 /-- Starting from codes of elements of H, every bit set by the closure is the code of an element of H. -/
-theorem closureIdx_mem (bound : Nat) (init : List Nat) (hinit : ∀ i ∈ init, Codes H i) (k : Nat) :
-    ∀ x : Mat2 n, (closureIdx m gens bound k (mask 0 init) (mask 0 init)).testBit (encode x) = true → x ∈ H := by
+theorem closureList_mem (init : List Nat) (hinit : ∀ i ∈ init, Codes H i) (k : Nat) :
+    ∀ x : Mat2 n, (closureList m gens k (mask 0 init) init).testBit (encode x) = true → x ∈ H := by
   intro x hx
   have hmask : ∀ i, (mask 0 init).testBit i = true → Codes H i := fun i hi =>
     (testBit_mask hi).elim (fun h => by rw [Nat.zero_testBit] at h; exact absurd h Bool.false_ne_true) (hinit i)
-  obtain ⟨y, hy, e⟩ := closureIdx_sub H m gens hm bound k _ _ hmask hmask _ hx
+  obtain ⟨y, hy, e⟩ := closureList_sub H m gens hm k _ _ hmask hinit _ hx
   rw [encode_inj e]
   exact hy
 
@@ -246,7 +233,7 @@ theorem generated_of_pairs (n : Nat) [NeZero n] (P Q : Mat2 n → Bool)
     intro y hy i hi
     obtain ⟨w, hw, rfl⟩ := hgens i hi
     exact ⟨M2.mul y w, hmul y hy w hw, by simp only [mulIdx, decode_encode]⟩
-  exact closureIdx_mem H (mulIdx n) _ hm _ _ hgens _ x hx'
+  exact closureList_mem H (mulIdx n) _ hm _ hgens _ x hx'
 
 end Mat2
 

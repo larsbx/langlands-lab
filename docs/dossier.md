@@ -489,33 +489,41 @@ in {gRep, h} (length ≤ 17) whose values are the elements of S, verified by a f
 multiplicatively closed H ∋ g ∈ A, h ∈ B is conjugated by C⁻¹ to H′ ∋ gRep, C⁻¹hC; C⁻¹hC is again in
 B because B is cut out by tr and tr² (Cayley–Hamilton `trace_sq`, decided per ℓ), both invariant by
 `trace_mul_comm`; the words put S in H′, the closure of S is GL₂(𝔽_ℓ) (soundness of the closure via
-the generic `closureIdx_mem` with the `mulNat` oracle), and conjugating back uses that conjugation
+the generic `closureList_mem` with the `mulNat` oracle), and conjugating back uses that conjugation
 by a unit preserves the enumerated GL₂(𝔽_ℓ), PROVED without determinant multiplicativity: a
 left-invertible matrix kills no nonzero vector, while a singular 2×2 matrix kills (d, −c) or (−b, a)
 (`kernel_vectors`, decided per ℓ; `det_ne_zero_of_left_inverse`).  Everything specific to ℓ is a
 `FieldFacts ℓ` record (ℓ = 5, 7: decided or kernel-checked, including inverses of all 480 / 2016
 elements).  The data (`mod5Cert`, `mod7Cert`, exported) are chosen by a greedy cover: mod 5, three
 pairs cover the 14 curves other than 11a1 (rational 5-torsion); mod 7, four pairs cover all 15.
-The same for ℓ = 11 (13 200 elements): the inverse is now generic
-(`invGen`, adjugate over a det⁻¹ found by search, confirmed on GL₂ by kernel), the ℓ-specific facts are
+The same for ℓ = 11 (13 200 elements) and ℓ = 13 (26 208 elements): the inverse is now generic
+(`invCode`, adjugate over det^(ℓ−2), confirmed on the codes of GL₂ by kernel), the ℓ-specific facts are
 assembled by `FieldFacts.of` from four decided/kernel-checked statements, and the certified pairs
 are found lazily (most-covering candidate pair first; Python products on the fly, no multiplication
 table above 2016 elements).  Kernel: `pairsℓ_ok` (all witnesses and words), `curvesℓ_ok` (for each
 curve, a_{p₁}, a_{p₂} mod ℓ from Lean's point counts of the Weierstrass model match the pair), for
-ℓ ∈ {5, 7, 11}.  Headlines `mod5_images_full`, `mod7_images_full`, `mod11_images_full` (`data_sound`): for every listed curve, any multiplicatively closed subset of
+ℓ ∈ {5, 7, 11, 13}.  Headlines `mod5_images_full`, `mod7_images_full`, `mod11_images_full`, `mod13_images_full` (`data_sound`): for every listed curve, any multiplicatively closed subset of
 GL₂(𝔽_ℓ) containing elements with the characteristic polynomials of ρ̄_ℓ(Frob_{p₁}), ρ̄_ℓ(Frob_{p₂})
 is all of GL₂(𝔽_ℓ); with Eichler–Shimura mod ℓ as the only imported input, ρ̄₅ is surjective for
-the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁ for all 15 — the mod-ℓ images of all fifteen curves
-are certified for every ℓ ≤ 11 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
+the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃ for all 15 — the mod-ℓ images of all fifteen curves
+are certified for every ℓ ≤ 13 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
 Python mirror: `test_word_certificates_are_valid` checks exactly what Lean checks (S generates,
-conjugators, words) for ℓ = 5, 7, 11 and the full pair closures for ℓ ≤ 7.  The whole module
-(ℓ = 5, 7, 11) builds in ≈ 7 min under 5 GB; ℓ = 13 (28 560 elements; its S closure alone ≈ 3 min) is the
-next step.  Kernel bookkeeping that made this feasible, recorded in `Generation.lean`: the closure keeps
-the visited set and the frontier as bitmasks and scans the code range in chunks of 64 (one shift-and-mod
-test skips an empty chunk), so every product acts on machine literals; the scan's accumulator is forced
-with a cheap GMP test (`a % 2 = 2`) — forcing it with a `match` against `Nat.succ` makes the kernel carry
-the value as `Nat.succ` of a literal and lose accelerated arithmetic (300 s instead of 2 s), an unforced
-fold hits the kernel's recursion limit, and `Nat.log2` is not GMP-accelerated (3 s per call on a
-14 000-bit number); the ℓ ≥ 11 checks lift the default heartbeat limit.
+conjugators, words) for ℓ = 5, 7, 11, 13 and the full pair closures for ℓ ≤ 7.  The instances
+(`ModLImages`, ℓ = 5, 7, 11, 13) build in ≈ 5 min under 8 GB.  Kernel bookkeeping that made
+this feasible (`Generation.lean`, `ImageModL.lean`): the kernel caches the normal form of every closed
+term it meets until the declaration is checked, so memory is the number of distinct terms evaluated, not
+the size of the data.  Hence (i) every arithmetic step is a `Nat.*` call on literals — an operator's
+instance chain (`HMod.hMod → Mod.mod → Nat.mod`) is unfolded and cached link by link at every call,
+and writing `Nat.mod` directly divides the kernel's memory by 2.5 and its time by 3; (ii) the closure
+keeps the visited set as a bitmask and the frontier as a list of codes and never scans the code range
+(the scan of n⁴ codes per layer was 3× slower and 2× larger than the list); (iii) membership in a class
+is tested on codes (`trCode`, `detCode`, `allCodes`, PROVED equal to the `Fin` trace and determinant)
+rather than on filtered lists of matrices, whose lazy construction the kernel also caches element by
+element; (iv) every intermediate mask is forced by a cheap GMP test (`Nat.beq (s % 2) 2`) — an unforced
+fold carries a chain of unevaluated operations and hits the kernel's recursion limit, and forcing with
+a `match` against `Nat.succ` makes the kernel carry the value as `Nat.succ` of a literal and lose
+accelerated arithmetic (300 s instead of 2 s); (v) `Nat.log2` is not GMP-accelerated (3 s per call on a
+14 000-bit number); (vi) the ℓ ≥ 11 checks lift the default heartbeat limit.  Before (i)–(iii) the
+ℓ = 13 checks were killed at 13.6 GB.
 `forced_full_classes` (Python) now prunes the first set to conjugacy representatives only when every
 set is conjugation-invariant (review fix; counterexample test in GL₂(𝔽₂)).
