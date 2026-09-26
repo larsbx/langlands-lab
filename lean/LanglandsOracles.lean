@@ -20,3 +20,4 @@ import LanglandsOracles.ImageMod3
 import LanglandsOracles.Generation
 import LanglandsOracles.ImageMod2
 import LanglandsOracles.PseudocharSearch
+import LanglandsOracles.ImageMod5

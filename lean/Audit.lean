@@ -32,3 +32,5 @@ open Oracles
 #print axioms Mat2.rep_certified
 #print axioms Mat2.bad_not_realised
 #print axioms Mat2.rep_unique
+#print axioms Mat2.mulNat_eq
+#print axioms mod5_image_37a1_full

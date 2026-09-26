@@ -474,6 +474,30 @@ force surjectivity.  Results from p ≤ 60:
   shared by 1 and the unipotents, and the normaliser of the non-split Cartan (order 16) meets every
   observed class.  Refining (x − 1)² to its non-scalar part — what the computed matrix at p = 7
   supplies — forces GL₂(𝔽₃); this is exactly the criterion `ImageMod3.lean` certifies.
-Controls: single classes inside a Borel are never forced.  Not in Lean: the closures over GL₂(𝔽₅)
-(480) and GL₂(𝔽₇) (2016) are beyond the kernel budget at the current encoding; the ℓ = 3 case is
-the kernel certificate of §3.8.
+Controls: single classes inside a Borel are never forced.  The ℓ = 3 case is the kernel certificate
+of §3.8; ℓ = 5 is certified in Lean below; ℓ = 7 (2016 elements) stays Python-only.
+
+**ρ̄₅ of 37a1 is surjective, in Lean (PROVED + KERNEL, `ImageMod5.lean`).**  Products of base-5
+codes are computed by machine-natural arithmetic (`mulNat`, PROVED equal to the `Fin` product), and
+for each generator a *column* is built — one natural whose base-1024 digit x is the code of x·g for
+every code x < 5⁴ — and verified digit by digit against `mulNat` (`colOk`, kernel); closures then
+cost one digit extraction per product (`closureCols`, soundness `closureCols_mem` PROVED via the
+generic `closureIdx_mem` of `Generation.lean`, now parametrised by a multiplication oracle).  The
+Frobenius input is Lean's own point counts: a₂ ≡ 3, a₃ ≡ 2 mod 5 (`frob_classes5_37a1`), so
+ρ̄₅(Frob₂) has characteristic polynomial x² − 3x + 2 = (x − 1)(x − 2) (30 conjugates, class A) and
+ρ̄₅(Frob₃) has x² − 2x + 3, irreducible (20 conjugates, class B); neither class contains a scalar.
+Kernel: `pairs_generate5` closes only the 20 pairs (gRep, h), gRep a fixed representative of A, h
+over B (a first attempt with all 600 pairs exhausted memory).  The other 29 representatives are
+reduced to gRep by a PROVED conjugation argument (`generated_by_classA_classB`): exported conjugators
+C with C·gRep·C⁻¹ = g and C·C⁻¹ = C⁻¹·C = 1 (`mod5Witnesses`, verified by kernel); H is replaced by
+C⁻¹HC, which is multiplicatively closed, contains gRep and C⁻¹hC, and C⁻¹hC is again in class B
+because the class is characterised by tr h = 2, tr h² = 3 (Cayley–Hamilton decided over 𝔽₅,
+`trace_sq`), both conjugation-invariant by `trace_mul_comm`; the certificate gives GL₂(𝔽₅) ⊆ C⁻¹HC
+and conjugating back gives GL₂(𝔽₅) ⊆ H — which needs "C⁻¹zC ∈ GL₂(𝔽₅) for z ∈ GL₂(𝔽₅)", PROVED
+without determinant multiplicativity: every element of the enumerated GL₂(𝔽₅) has an inverse
+(kernel, 480 products), and a matrix with a left inverse cannot kill a nonzero vector, while a
+singular 2×2 matrix over 𝔽₅ kills one (`singular_kernel`, decided over the 625 matrices), so
+det(C⁻¹zC) ≠ 0 (`det_ne_zero_of_left_inverse`).  Headline `mod5_image_37a1_full`: any
+multiplicatively closed subset of GL₂(𝔽₅) containing elements with the two characteristic polynomials
+is all of GL₂(𝔽₅); with Eichler–Shimura mod 5 as the only imported input, the image of ρ̄₅ is full.
+Module build ≈ 75 s; axioms propext, Quot.sound.

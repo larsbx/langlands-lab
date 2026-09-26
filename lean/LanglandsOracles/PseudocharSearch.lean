@@ -41,10 +41,6 @@ def twistIdx (i : Nat) : Nat := encode (twist (decode 3 i))
 
 theorem mem_glIdx {g : Mat2 3} (hg : g ∈ gl 3) : encode g ∈ glIdx := List.mem_map.mpr ⟨g, hg, rfl⟩
 
-theorem encode_inj {g h : Mat2 3} (e : encode g = encode h) : g = h := by
-  have := congrArg (decode 3) e
-  rwa [decode_encode, decode_encode] at this
-
 theorem twist_hom_all :
     glIdx.all (fun i => glIdx.all fun j => twistIdx (mulIdx 3 i j) == mulIdx 3 (twistIdx i) (twistIdx j)) = true := by
   decide +kernel

@@ -52,3 +52,20 @@ def test_too_little_data_is_not_forced():
 
 def test_group_orders():
     assert GL2(3).n == 48 and GL2(5).n == 480 and GL2(7).n == 2016
+
+
+def test_mod5_certificate_classes_of_37a1():
+    """The classes lean/LanglandsOracles/ImageMod5.lean certifies: x^2 - 3x + 2 (rho_5(Frob_2), 30 elements,
+    a single conjugacy class of diag(1, 2)) and x^2 - 2x + 3 (rho_5(Frob_3), 20 elements); every pair
+    generates GL_2(F_5), and the first representative in Lean's enumeration order has code 455."""
+    from langlands.newforms import newforms_of_level
+    E37 = newforms_of_level(37)[0]
+    assert (E37.a(2) % 5, E37.a(3) % 5) == (3, 2)
+    G = GL2(5)
+    A, B = G.with_charpoly((3, 2)), G.with_charpoly((2, 3))
+    assert (len(A), len(B)) == (30, 20)
+    assert len(G.conjugacy_class_representatives(A)) == 1 and len(G.conjugacy_class_representatives(B)) == 1
+    full = frozenset(range(G.n))
+    assert all(G.generated(frozenset({g, h})) == full for g in A for h in B)
+    code = lambda m: m[0] + 5 * (m[1] + 5 * (m[2] + 5 * m[3]))
+    assert code(G.elements[A[0]]) == 455
