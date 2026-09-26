@@ -7,9 +7,9 @@ import LanglandsOracles.Data
 A class pair (A, B) of GL₂(𝔽_ℓ) (characteristic polynomials with distinct roots, so single
 conjugacy classes without scalars) is *certified* when every subgroup meeting both is the whole
 group.  Instead of closing ⟨g, h⟩ for each pair — 480- or 2016-element closures — the certificate is:
-1. once per ℓ, one kernel closure showing that S = {E₁₂(1), E₂₁(1), diag(1, ζ)} generates GL₂(𝔽_ℓ)
-   (`S_generates`, products by `mulNat`);
-2. for the fixed representative gRep of A and every h ∈ B, three short words in {gRep, h} whose
+1. once per ℓ, one kernel closure showing that S = {E₁₂(1), T = [[1, 0], [1, ζ]]} generates GL₂(𝔽_ℓ)
+   (`S_generates`, right multiplications by the two generators specialised on codes, `mulE12`, `mulT`);
+2. for the fixed representative gRep of A and every h ∈ B, two short words in {gRep, h} whose
    values are the elements of S (`wordsB`, verified by a few dozen products each);
 3. for every g ∈ A a conjugator C with C·gRep·C⁻¹ = g (`witnessesA`).
 Soundness (`pair_sound`, PROVED): a multiplicatively closed H containing g ∈ A and h ∈ B is
@@ -44,13 +44,13 @@ def mulNat (n i j : Nat) : Nat :=
   let c := Nat.mod i2 n; let d := Nat.mod (Nat.div i2 n) n
   let a' := Nat.mod j n; let j1 := Nat.div j n; let b' := Nat.mod j1 n; let j2 := Nat.div j1 n
   let c' := Nat.mod j2 n; let d' := Nat.mod (Nat.div j2 n) n
-  Nat.add (Nat.mod (Nat.add (Nat.mod (Nat.mul a a') n) (Nat.mod (Nat.mul b c') n)) n)
-    (Nat.mul n (Nat.add (Nat.mod (Nat.add (Nat.mod (Nat.mul a b') n) (Nat.mod (Nat.mul b d') n)) n)
-      (Nat.mul n (Nat.add (Nat.mod (Nat.add (Nat.mod (Nat.mul c a') n) (Nat.mod (Nat.mul d c') n)) n)
-        (Nat.mul n (Nat.mod (Nat.add (Nat.mod (Nat.mul c b') n) (Nat.mod (Nat.mul d d') n)) n))))))
+  Nat.add (Nat.mod (Nat.add (Nat.mul a a') (Nat.mul b c')) n)
+    (Nat.mul n (Nat.add (Nat.mod (Nat.add (Nat.mul a b') (Nat.mul b d')) n)
+      (Nat.mul n (Nat.add (Nat.mod (Nat.add (Nat.mul c a') (Nat.mul d c')) n)
+        (Nat.mul n (Nat.mod (Nat.add (Nat.mul c b') (Nat.mul d d')) n))))))
 
 theorem mulNat_eq (n : Nat) [NeZero n] (i j : Nat) : mulNat n i j = mulIdx n i j := by
-  simp only [mulNat, mulIdx, encode, decode, M2.mul, finN, Fin.val_add, Fin.val_mul]
+  simp only [mulNat, mulIdx, encode, decode, M2.mul, finN, Fin.val_add, Fin.val_mul, ← Nat.add_mod]
   rfl
 
 theorem mulNat_codes (x y : Mat2 n) : mulNat n (encode x) (encode y) = encode (M2.mul x y) := by
@@ -257,9 +257,40 @@ theorem classB_iff (pr : PairCert) (x : Mat2 n) : classB n pr (encode x) = true 
 
 -- ---------------------------------------------------------------- the certificate --
 
-/-- The closure of S under `mulNat` covers every code of GL₂(ℤ/n). -/
-def S_generates (n : Nat) [NeZero n] (S : List Nat) : Bool :=
-  allCodes n (fun i => bit (closureList (mulNat n) S (n ^ 4) (mask 0 S) S) i) (n ^ 4)
+-- ---------------------------------------------------------------- the generating set --
+
+/-- S = {E₁₂(1), T = [[1, 0], [1, ζ]]}: two generators, each with a specialised right multiplication on
+codes (a handful of operations instead of the generic product). -/
+def E12 : Mat2 n := ⟨1, 1, 0, 1⟩
+def T (z : Nat) : Mat2 n := ⟨1, 0, 1, finN z⟩
+
+/-- x · E₁₂(1) = [[a, a + b], [c, c + d]] on codes. -/
+def mulE12 (n i : Nat) : Nat :=
+  let a := Nat.mod i n; let i1 := Nat.div i n; let b := Nat.mod i1 n; let i2 := Nat.div i1 n
+  let c := Nat.mod i2 n; let d := Nat.mod (Nat.div i2 n) n
+  Nat.add a (Nat.mul n (Nat.add (Nat.mod (Nat.add a b) n) (Nat.mul n (Nat.add c (Nat.mul n (Nat.mod (Nat.add c d) n))))))
+
+/-- x · T = [[a + b, ζb], [c + d, ζd]] on codes. -/
+def mulT (n z i : Nat) : Nat :=
+  let a := Nat.mod i n; let i1 := Nat.div i n; let b := Nat.mod i1 n; let i2 := Nat.div i1 n
+  let c := Nat.mod i2 n; let d := Nat.mod (Nat.div i2 n) n
+  Nat.add (Nat.mod (Nat.add a b) n) (Nat.mul n (Nat.add (Nat.mod (Nat.mul b (Nat.mod z n)) n)
+    (Nat.mul n (Nat.add (Nat.mod (Nat.add c d) n) (Nat.mul n (Nat.mod (Nat.mul d (Nat.mod z n)) n))))))
+
+theorem mulE12_codes (x : Mat2 n) : mulE12 n (encode x) = encode (M2.mul x E12) := by
+  have h : M2.mul x E12 = ⟨x.a, x.a + x.b, x.c, x.c + x.d⟩ := by
+    simp only [M2.mul, E12, (R).mul_one, (R).mul_zero, (R).add_zero]
+  rw [h]; unfold mulE12; dsimp only; rw [digit_a, digit_b, digit_c, digit_d]; rfl
+
+theorem mulT_codes (z : Nat) (x : Mat2 n) : mulT n z (encode x) = encode (M2.mul x (T z)) := by
+  have h : M2.mul x (T z) = ⟨x.a + x.b, x.b * finN z, x.c + x.d, x.d * finN z⟩ := by
+    simp only [M2.mul, T, (R).mul_one, (R).mul_zero, (R).zero_add]
+  rw [h]; unfold mulT; dsimp only; rw [digit_a, digit_b, digit_c, digit_d]; rfl
+
+/-- S is the claimed generating set and its closure covers every code of GL₂(ℤ/n). -/
+def S_generates (n : Nat) [NeZero n] (z : Nat) (S : List Nat) : Bool :=
+  S == [encode (E12 : Mat2 n), encode (T z : Mat2 n)] &&
+    allCodes n (fun i => bit (closureList [mulE12 n, mulT n z] (n ^ 4) (mask 0 S) S) i) (n ^ 4)
 
 def pairOk (n : Nat) [NeZero n] (S : List Nat) (pr : PairCert) : Bool :=
   pr.dA % n != 0 && pr.dB % n != 0 && encode (decode n pr.gRep) == pr.gRep &&
@@ -277,7 +308,7 @@ theorem code_eq {i j : Nat} {m : Mat2 n} (e : Nat.beq (mulNat n i j) (encode m) 
 
 set_option maxRecDepth 8192 in
 /-- **Soundness of a certified pair.** -/
-theorem pair_sound (ff : FieldFacts n) (S : List Nat) (hS : S_generates n S = true) (pr : PairCert) (hok : pairOk n S pr = true)
+theorem pair_sound (ff : FieldFacts n) (z : Nat) (S : List Nat) (hS : S_generates n z S = true) (pr : PairCert) (hok : pairOk n S pr = true)
     (H : List (Mat2 n)) (hmul : ∀ x ∈ H, ∀ y ∈ H, M2.mul x y ∈ H)
     {g h : Mat2 n} (hg : g ∈ H) (hh : h ∈ H)
     (hA : g.trace = finN pr.tA ∧ g.det = finN pr.dA) (hB : h.trace = finN pr.tB ∧ h.det = finN pr.dB) :
@@ -327,18 +358,28 @@ theorem pair_sound (ff : FieldFacts n) (S : List Nat) (hS : S_generates n S = tr
     have hc := evalWord_codes H' hmul' ⟨decode n pr.gRep, hgRep', hgRep.symm⟩ ⟨_, hh', he1⟩ hne
     rw [hev] at hc
     exact hc
-  have hm : ∀ y ∈ H', ∀ s ∈ S, ∃ z ∈ H', mulNat n (encode y) s = encode z := by
-    intro y hy s hs
-    obtain ⟨ys, hys, rfl⟩ := hSH s hs
-    exact ⟨M2.mul y ys, hmul' y hy ys hys, mulNat_codes y ys⟩
-  -- conjugate back
   unfold S_generates at hS
-  intro z hz
-  have hz' := conj_mem_gl ff hCC' hC'C hz
-  have hbit := allCodes_sound hS _ hz'
+  have hSeq : S = [encode (E12 : Mat2 n), encode (T z : Mat2 n)] := beq_iff_eq.mp (Bool.and_eq_true _ _ |>.mp hS).1
+  have hall := (Bool.and_eq_true _ _ |>.mp hS).2
+  have hmem : ∀ s : Mat2 n, encode s ∈ S → s ∈ H' := fun s hs => by
+    obtain ⟨t, ht, e⟩ := hSH _ hs
+    exact encode_inj e ▸ ht
+  have hE : E12 ∈ H' := hmem _ (hSeq ▸ List.mem_cons_self ..)
+  have hT : T z ∈ H' := hmem _ (hSeq ▸ List.mem_cons_of_mem _ (List.mem_cons_self ..))
+  have hm : ∀ y ∈ H', ∀ f ∈ [mulE12 n, mulT n z], ∃ w ∈ H', f (encode y) = encode w := by
+    intro y hy f hf
+    rcases List.mem_cons.mp hf with rfl | hf
+    · exact ⟨M2.mul y E12, hmul' y hy _ hE, mulE12_codes y⟩
+    rcases List.mem_cons.mp hf with rfl | hf
+    · exact ⟨M2.mul y (T z), hmul' y hy _ hT, mulT_codes z y⟩
+    exact absurd hf List.not_mem_nil
+  -- conjugate back
+  intro w hw
+  have hw' := conj_mem_gl ff hCC' hC'C hw
+  have hbit := allCodes_sound hall _ hw'
   rw [bit_eq] at hbit
-  obtain ⟨y, hy, e⟩ := List.mem_map.mp (closureList_mem H' (mulNat n) S hm S hSH (n ^ 4) _ hbit)
-  have h2 : M2.mul (M2.mul C (M2.mul (M2.mul C' z) C)) C' = M2.mul (M2.mul C (M2.mul (M2.mul C' y) C)) C' := by
+  obtain ⟨y, hy, e⟩ := List.mem_map.mp (closureList_mem H' _ hm S hSH (n ^ 4) _ hbit)
+  have h2 : M2.mul (M2.mul C (M2.mul (M2.mul C' w) C)) C' = M2.mul (M2.mul C (M2.mul (M2.mul C' y) C)) C' := by
     rw [e]
   rw [conj_cancel' hCC', conj_cancel' hCC'] at h2
   exact h2 ▸ hy
@@ -356,7 +397,7 @@ def curveOk (n : Nat) (d : ModLData) (c : CurveCert) : Bool :=
 /-- **Soundness of a whole data set**: for every listed curve, any multiplicatively closed subset of
 GL₂(𝔽_ℓ) containing an element with the characteristic polynomial of ρ̄_ℓ(Frob_{p₁}) and one with that
 of ρ̄_ℓ(Frob_{p₂}) — traces a_{p₁}, a_{p₂} from Lean's point counts, determinants p₁, p₂ — is all of GL₂(𝔽_ℓ). -/
-theorem data_sound (ff : FieldFacts n) (d : ModLData) (hS : S_generates n d.S = true)
+theorem data_sound (ff : FieldFacts n) (d : ModLData) (hS : S_generates n d.zeta d.S = true)
     (hpairs : d.pairs.all (pairOk n d.S) = true) (hcurves : d.curves.all (curveOk n d) = true)
     {c : CurveCert} (hc : c ∈ d.curves)
     (H : List (Mat2 n)) (hmul : ∀ x ∈ H, ∀ y ∈ H, M2.mul x y ∈ H) {g h : Mat2 n} (hg : g ∈ H) (hh : h ∈ H)
@@ -372,7 +413,7 @@ theorem data_sound (ff : FieldFacts n) (d : ModLData) (hS : S_generates n d.S = 
     have e3 := beq_iff_eq.mp (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp hok).1).2
     have e4 := beq_iff_eq.mp (Bool.and_eq_true _ _ |>.mp hok).2
     have hmod : ∀ k : Nat, (finN (k % n) : Fin n) = finN k := fun k => Fin.ext (Nat.mod_mod k n)
-    refine pair_sound ff d.S hS pr (List.all_eq_true.mp hpairs pr hprm) H hmul hg hh ⟨?_, ?_⟩ ⟨?_, ?_⟩
+    refine pair_sound ff d.zeta d.S hS pr (List.all_eq_true.mp hpairs pr hprm) H hmul hg hh ⟨?_, ?_⟩ ⟨?_, ?_⟩
     · rw [hA.1, e1]
     · rw [hA.2, ← e2, hmod]
     · rw [hB.1, e3]

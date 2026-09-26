@@ -86,7 +86,7 @@ theorem image_C2 {v : Fin 2 × Fin 2} (hv : v ∈ nonzero) (H : List (Mat2 2))
       intro y hy i hi
       obtain ⟨w, hw, rfl⟩ := hgens i hi
       exact ⟨M2.mul y w, hmul y hy w hw, by simp only [mulIdx, decode_encode]⟩
-    exact closureList_mem H (mulIdx 2) _ hm _ hgens _ x hx'
+    exact generatedIdx_mem H _ hgens hm x hx'
 
 theorem stab_length (v : Fin 2 × Fin 2) (hv : v ∈ nonzero) : (stab v).length = 2 := by
   have : nonzero.all (fun v => (stab v).length == 2) = true := by decide +kernel
