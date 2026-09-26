@@ -77,13 +77,16 @@ theorem image_C2 {v : Fin 2 × Fin 2} (hv : v ∈ nonzero) (H : List (Mat2 2))
     have := List.all_eq_true.mp (List.all_eq_true.mp stab_generated v hv) h hh'
     rw [beq_iff_eq.mpr (hfix h hh), Bool.not_true, Bool.false_or] at this
     have hx' := List.all_eq_true.mp this x hx
-    have hgens : ∀ i ∈ [encode h], decode 2 i ∈ H := by
+    have hgens : ∀ i ∈ [encode h], Codes H i := by
       intro i hi
       rcases List.mem_cons.mp hi with rfl | hi
-      · rw [decode_encode]; exact hh
+      · exact ⟨h, hh, rfl⟩
       exact absurd hi List.not_mem_nil
-    have := generatedIdx_sub H hmul _ hgens _ hx'
-    rwa [decode_encode] at this
+    have hm : ∀ y ∈ H, ∀ i ∈ [encode h], ∃ z ∈ H, mulIdx 2 (encode y) i = encode z := by
+      intro y hy i hi
+      obtain ⟨w, hw, rfl⟩ := hgens i hi
+      exact ⟨M2.mul y w, hmul y hy w hw, by simp only [mulIdx, decode_encode]⟩
+    exact closureIdx_mem H (mulIdx 2) _ hm _ hgens _ x hx'
 
 theorem stab_length (v : Fin 2 × Fin 2) (hv : v ∈ nonzero) : (stab v).length = 2 := by
   have : nonzero.all (fun v => (stab v).length == 2) = true := by decide +kernel

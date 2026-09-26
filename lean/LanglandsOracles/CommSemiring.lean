@@ -69,6 +69,15 @@ instance : IsPrime 7 := ⟨by decide⟩
 theorem not_isPrime_four : ¬ IsPrime 4 := fun h => (h.prime.2 2 (by decide) (by decide)) rfl
 theorem not_isPrime_one : ¬ IsPrime 1 := fun h => absurd h.prime.1 (by decide)
 
+/-- Inverses exist in ℤ/p for the prime instances (decided); with `isCSR_fin` this is the field
+𝔽_p.  The general statement for every `IsPrime p` needs Bézout and is not proved here. -/
+theorem fin2_inverses : ∀ a : Fin 2, a ≠ 0 → ∃ b, a * b = 1 := by decide
+theorem fin3_inverses : ∀ a : Fin 3, a ≠ 0 → ∃ b, a * b = 1 := by decide
+theorem fin5_inverses : ∀ a : Fin 5, a ≠ 0 → ∃ b, a * b = 1 := by decide
+theorem fin7_inverses : ∀ a : Fin 7, a ≠ 0 → ∃ b, a * b = 1 := by decide
+/-- ℤ/4 is not a field: 2 has no inverse. -/
+theorem fin4_not_field : ¬ ∀ a : Fin 4, a ≠ 0 → ∃ b, a * b = 1 := by decide
+
 /-- ℤ/n for every n ≥ 1 (the field 𝔽_p when n = p is prime). -/
 theorem isCSR_fin (n : Nat) [NeZero n] : IsCSR (Fin n) where
   add_assoc a b c := Fin.ext (by

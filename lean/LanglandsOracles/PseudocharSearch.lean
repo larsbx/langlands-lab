@@ -41,10 +41,6 @@ def twistIdx (i : Nat) : Nat := encode (twist (decode 3 i))
 
 theorem mem_glIdx {g : Mat2 3} (hg : g ∈ gl 3) : encode g ∈ glIdx := List.mem_map.mpr ⟨g, hg, rfl⟩
 
-theorem encode_inj {g h : Mat2 3} (e : encode g = encode h) : g = h := by
-  have := congrArg (decode 3) e
-  rwa [decode_encode, decode_encode] at this
-
 theorem twist_hom_all :
     glIdx.all (fun i => glIdx.all fun j => twistIdx (mulIdx 3 i j) == mulIdx 3 (twistIdx i) (twistIdx j)) = true := by
   decide +kernel
@@ -143,6 +139,39 @@ theorem trace_rep_certified :
 
 /-- The negative control is not realised: the exhaustive search over generator images finds nothing. -/
 theorem bad_not_realised : searchRep Tbad g₀ h₀ = none := by decide +kernel
+
+-- ------------------------------------------------------------- uniqueness --
+
+/-- Every candidate assignment that extends to a representation with trace T. -/
+def searchAll (T : Mat2 3 → Fin 3) (g₀ h₀ : Mat2 3) : List Nat :=
+  (candidates T g₀).flatMap fun A => (candidates T h₀).filterMap fun B =>
+    let gens := [(encode g₀, A), (encode h₀, B)]
+    let tbl := extend gens 48 (tset 0 one3 one3) [one3]
+    if relationsHold T gens tbl then some tbl else none
+
+/-- A conjugator c with c·ρ₁(g) = ρ₂(g)·c on the two generators, then verified on all 48 elements. -/
+def conjugator (tbl₁ tbl₂ : Nat) (g₀ h₀ : Mat2 3) : Option Nat :=
+  glIdx.find? fun c => [encode g₀, encode h₀].all fun i =>
+    mulIdx 3 c (tget tbl₁ i - 1) == mulIdx 3 (tget tbl₂ i - 1) c
+
+def conjugateAll (tbl₁ tbl₂ : Nat) (g₀ h₀ : Mat2 3) : Bool :=
+  match conjugator tbl₁ tbl₂ g₀ h₀ with
+  | some c => glIdx.all fun i => mulIdx 3 c (tget tbl₁ i - 1) == mulIdx 3 (tget tbl₂ i - 1) c
+  | none => false
+
+def solsTprime : List Nat := searchAll Tprime g₀ h₀
+def solsTrace : List Nat := searchAll M2.trace g₀ h₀
+
+/-- **Uniqueness up to conjugacy** (the other half of Taylor's statement, for this instance): the search
+finds exactly 24 = |GL₂(𝔽₃)|/|centre| representations with trace T′, all conjugate to the first
+(which `rep_certified` certifies; conjugates of a homomorphism are homomorphisms). -/
+theorem rep_unique :
+    (solsTprime.length == 24 && solsTprime.all fun t => conjugateAll (solsTprime.headD 0) t g₀ h₀) = true := by
+  decide +kernel
+
+theorem trace_rep_unique :
+    (solsTrace.length == 24 && solsTrace.all fun t => conjugateAll (solsTrace.headD 0) t g₀ h₀) = true := by
+  decide +kernel
 
 end Mat2
 
