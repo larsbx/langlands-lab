@@ -17,12 +17,12 @@ computed and which theorem the match instantiates.
 | 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity proved over every commutative semiring (kernel cross-checks on GL₂(𝔽₂), GL₂(𝔽₃)); mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p; images certified in the kernel: ρ̄₂ (all 15 curves: S₃ or C₂), ρ̄₃ (37a1), ρ̄₅ (14 curves) and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇ (all 15) full, by word certificates against a fixed generating set; pseudocharacter ⇒ representation found by kernel search on GL₂(𝔽₃), unique up to conjugacy; mod-5, mod-7 images of all 15 curves forced from point counts | the shape "Galois side = commutative algebra of operators on automorphic functions"; the converse proved for GL₁ and, up to "pseudocharacter ⇒ parameter", for GL₂ |
 | 3 | Bruhat–Tits tree of PGL₂(𝔽_q((1/t))) | GL₂(𝔽_q[t]) reduction (Serre's half-line computed), Γ₀(𝔫)\𝒯 via ℙ¹(A/𝔫), cuspidal harmonic cochains, Hecke operators T_𝔭; elliptic curves over 𝔽₂(t) with a_𝔭 by point counts and L(E,T) by Euler product | Gekeler's genus, Drinfeld's Ramanujan bound, Drinfeld's dictionary for GL₂: the level-t³ and level-t⁴ eigenforms over 𝔽₂(t) are y² + txy = x³ + x and y² + txy + t²y = x³ + x + t³ + t² + t |
 
-**Lean 4 in the oracle loop** (`lean/`): core Lean, no Mathlib, no `native_decide`,
+**Lean 4 in the oracle loop** (`proof/langlands/`): core Lean, no Mathlib, no `native_decide`,
 no `sorry`.  Lean independently recomputes the arithmetic side (reduced forms and
 class numbers, Hurwitz numbers, Eichler–Selberg at level 1, τ(n) from Δ, Eichler's
 Brandt trace formula, Φ_N, Z(E, T), the Carlitz module) and the kernel certifies by
 `decide` the identities on data exported from Python (`tools/export_lean_data.py`
-→ `lean/LanglandsOracles/Data.lean`): Brandt row sums, commutation, Aut-weighted
+→ `proof/langlands/LanglandsOracles/Data.lean`): Brandt row sums, commutation, Aut-weighted
 symmetry, 12·tr B(n) = Eichler's formula for n ∈ {1, ℓ, ℓ², ℓℓ'}, and the
 branch-1 L-series vanishing in ℤ[ζ_N] versus Z(E, T), and the level-N Eichler–Selberg
 formula against modular-symbol traces.  `pytest` runs `lake build`
@@ -33,7 +33,8 @@ See `docs/dossier.md` for the numbers and the PROVED / IMPORTED ledger.
 ## Layout
 
 ```
-langlands/
+estate.toml             estate manifest (canonical layout; audit: tools/audit_estate_layout.py)
+kernel/langlands/
   gf.py                 F_{p^k}: irreducible search (Rabin), log/exp tables, roots with multiplicity
   qforms.py             h(d) by reduced forms, w(d), Hurwitz H(N)
   trace_formula.py      Eichler–Selberg (level 1, Zagier form); Eichler's Brandt trace (level p); τ(n)
@@ -61,7 +62,7 @@ langlands/
   galois_rep.py         rho_ell(Frob_p) on E[ell] as a matrix over the splitting field; Weil pairing by Miller (biextension commutator)
 tests/                  one file per branch + the Lean gate; all exact, no floating point
 tools/export_lean_data.py  Python → Lean data bridge (deterministic; checked by the gate)
-lean/                   lake project LanglandsOracles: oracles + kernel-checked certificates
+proof/langlands/        lake project LanglandsOracles: oracles + kernel-checked certificates
 docs/dossier.md         results ledger
 ```
 

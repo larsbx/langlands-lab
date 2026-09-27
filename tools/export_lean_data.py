@@ -1,4 +1,4 @@
-"""Export exact Python-side data as Lean literals: lean/LanglandsOracles/Data.lean.
+"""Export exact Python-side data as Lean literals: proof/langlands/LanglandsOracles/Data.lean.
 
 Lean re-derives the arithmetic side (class numbers, Eichler's formula, zeta) and certifies
 the exported spectral data (Brandt matrices, L-series coefficient vectors) against it.
@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "kernel"))
 
 from langlands.brandt import SupersingularLocus  # noqa: E402
 from langlands.gl1 import all_characters, closed_points, l_series  # noqa: E402
@@ -230,7 +230,7 @@ def render() -> str:
 
 
 if __name__ == "__main__":
-    target = ROOT / "lean" / "LanglandsOracles" / "Data.lean"
+    target = ROOT / "proof" / "langlands" / "LanglandsOracles" / "Data.lean"
     text = render()
     if "--check" in sys.argv:
         sys.exit(0 if target.read_text() == text else 1)

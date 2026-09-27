@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-LEAN = ROOT / "lean"
+LEAN = ROOT / "proof" / "langlands"
 
 
 def lake() -> str:
@@ -23,7 +23,7 @@ def lake() -> str:
 @pytest.mark.slow
 def test_exported_data_is_deterministic_and_current():
     r = subprocess.run(["python3", str(ROOT / "tools" / "export_lean_data.py"), "--check"], cwd=ROOT)
-    assert r.returncode == 0, "lean/LanglandsOracles/Data.lean is stale: run tools/export_lean_data.py"
+    assert r.returncode == 0, "proof/langlands/LanglandsOracles/Data.lean is stale: run tools/export_lean_data.py"
 
 
 @pytest.mark.slow

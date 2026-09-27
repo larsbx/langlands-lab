@@ -8,7 +8,7 @@
   (whether x² − a_p x + p has a root ±1 mod ell).  For ell = 2 the class of Frob_p in GL_2(F_2) = S_3 is
   fully determined by the number of roots of the 2-division cubic, and its trace is a_p mod 2.
 * `ExcursionData.of_hom` on finite groups with the relations (E1)–(E3) checked exhaustively for |I| ≤ 2
-  (the finite shadow of `lean/LanglandsOracles/Excursion.lean`).
+  (the finite shadow of `proof/langlands/LanglandsOracles/Excursion.lean`).
 """
 from __future__ import annotations
 

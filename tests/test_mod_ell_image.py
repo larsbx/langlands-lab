@@ -22,7 +22,7 @@ def test_37a1_mod_3_needs_a_matrix():
     """Mod 3, characteristic polynomials alone cannot force surjectivity: (x-1)^2 is shared by the identity
     and the unipotents, and the normaliser of the non-split Cartan (order 16) meets every observed charpoly
     class.  Refining (x-1)^2 to its non-scalar part -- what the computed matrix at p = 7 supplies, and what
-    lean/LanglandsOracles/ImageMod3.lean certifies -- forces GL_2(F_3)."""
+    proof/langlands/LanglandsOracles/ImageMod3.lean certifies -- forces GL_2(F_3)."""
     polys = frobenius_charpolys(E37, 3, 60)
     assert (2, 1) in polys and not forced_full(3, polys)
     G = GL2(3)
@@ -100,7 +100,7 @@ def test_conjugacy_pruning_only_for_invariant_sets():
 def _parse_cert(ell):
     """The exported mod-ell certificate from Data.lean: S, pairs (tA, dA, tB, dB, gRep, witnesses, words), curves."""
     import re
-    text = (Path(__file__).resolve().parents[1] / "lean" / "LanglandsOracles" / "Data.lean").read_text()
+    text = (Path(__file__).resolve().parents[1] / "proof" / "langlands" / "LanglandsOracles" / "Data.lean").read_text()
     block = text[text.index(f"def mod{ell}Pair0"):text.index("\n/--", text.index(f"def mod{ell}Cert"))]
     S = [int(v) for v in re.search(r"S := \[([^\]]*)\]", block).group(1).split(",")]
     pairs = []
@@ -117,7 +117,7 @@ def _parse_cert(ell):
 
 @pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3), (11, 2), (13, 2), (17, 3)])
 def test_word_certificates_are_valid(ell, zeta):
-    """Mirror of lean/LanglandsOracles/ImageModL.lean: S = {E12(1), T = [[1, 0], [1, zeta]]} generates GL_2(F_ell);
+    """Mirror of proof/langlands/LanglandsOracles/ImageModL.lean: S = {E12(1), T = [[1, 0], [1, zeta]]} generates GL_2(F_ell);
     for every certified pair, the conjugators send gRep onto every element of class A, the words in {gRep, h}
     evaluate to S for every h in class B, and the classes are single conjugacy classes without scalars; for
     ell <= 7 additionally every (g, h) in A x B generates (the fact the words certify)."""
@@ -156,5 +156,5 @@ ALL_LABELS = [f.label for f in CREMONA_PRIME_LEVEL]
 
 def block_pair_count(ell):
     import re
-    text = (Path(__file__).resolve().parents[1] / "lean" / "LanglandsOracles" / "Data.lean").read_text()
+    text = (Path(__file__).resolve().parents[1] / "proof" / "langlands" / "LanglandsOracles" / "Data.lean").read_text()
     return int(re.search(rf"Mod-{ell} image certificates: S, (\d+) certified class pairs", text).group(1))
