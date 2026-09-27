@@ -17,7 +17,8 @@ whole class.  Elements are indices into a multiplication table.
 from __future__ import annotations
 
 from functools import lru_cache
-from itertools import product
+
+import numpy as np
 
 from .newforms import RationalNewform
 
@@ -25,15 +26,42 @@ Mat = tuple[int, int, int, int]
 
 
 class GL2:
-    """GL_2(F_ell) with a multiplication table on indices."""
+    """GL_2(F_ell) on indices, with vectorised (numpy) products: entries as arrays, products by fancy
+    indexing through the base-ell code of a matrix.  A full multiplication table (as nested lists) is kept
+    for small ell only; everything else works from per-generator product columns."""
 
-    def __init__(self, ell: int) -> None:
-        self.ell = ell
-        self.elements: list[Mat] = [m for m in product(range(ell), repeat=4) if (m[0] * m[3] - m[1] * m[2]) % ell]
+    def __init__(self, ell: int, table: bool | None = None) -> None:
+        self.ell = p = ell
+        # lexicographic (a, b, c, d) order, d fastest: the order of Lean's `gl n`
+        grid = np.indices((p, p, p, p)).reshape(4, -1)
+        a, b, c, d = (grid[i].astype(np.int64) for i in range(4))
+        codes = a + p * (b + p * (c + p * d))
+        keep = (a * d - b * c) % p != 0
+        self.A, self.B, self.C, self.D = a[keep], b[keep], c[keep], d[keep]
+        self.codes = codes[keep]
+        self.n = int(keep.sum())
+        self.code2idx = np.full(p**4, -1, dtype=np.int64)
+        self.code2idx[self.codes] = np.arange(self.n)
+        self.elements: list[Mat] = list(zip(self.A.tolist(), self.B.tolist(), self.C.tolist(), self.D.tolist()))
         self.index = {m: i for i, m in enumerate(self.elements)}
-        self.table = [[self.index[self._mul(x, y)] for y in self.elements] for x in self.elements]
         self.one = self.index[(1, 0, 0, 1)]
-        self.n = len(self.elements)
+        self.table = ([self.row(i).tolist() for i in range(self.n)]
+                      if (table if table is not None else self.n <= 2016) else None)
+        # inverses of every element: adjugate over det^-1 (Fermat: det^(p-2))
+        det = (self.A * self.D - self.B * self.C) % p
+        u = np.array([pow(int(x), p - 2, p) for x in range(p)])[det]
+        self.inv_all = self._idx((u * self.D) % p, (u * (p - self.B)) % p, (u * (p - self.C)) % p, (u * self.A) % p)
+
+    # ---- elementwise products on index arrays ----
+    def _idx(self, a, b, c, d) -> np.ndarray:
+        return self.code2idx[a + self.ell * (b + self.ell * (c + self.ell * d))]
+
+    def mul_vec(self, X, Y) -> np.ndarray:
+        """index of X[k] * Y[k] for all k (X, Y index arrays, broadcastable)."""
+        p = self.ell
+        a, b, c, d = self.A[X], self.B[X], self.C[X], self.D[X]
+        e, f, g, h = self.A[Y], self.B[Y], self.C[Y], self.D[Y]
+        return self._idx((a * e + b * g) % p, (a * f + b * h) % p, (c * e + d * g) % p, (c * f + d * h) % p)
 
     def _mul(self, x: Mat, y: Mat) -> Mat:
         p = self.ell
@@ -44,25 +72,37 @@ class GL2:
         u = pow((m[0] * m[3] - m[1] * m[2]) % self.ell, -1, self.ell)
         return tuple((u * e) % self.ell for e in (m[3], -m[1], -m[2], m[0]))
 
+    def mul(self, i: int, j: int) -> int:
+        return self.table[i][j] if self.table is not None else int(self.mul_vec(np.int64(i), np.int64(j)))
+
+    def column(self, g: int) -> np.ndarray:
+        """[index of x*g for every x] (the kernel's `column`)."""
+        return self.mul_vec(np.arange(self.n), np.int64(g))
+
+    def row(self, g: int) -> np.ndarray:
+        """[index of g*x for every x]."""
+        return self.mul_vec(np.int64(g), np.arange(self.n))
+
+    # ---- invariants and classes ----
     def charpoly(self, i: int) -> tuple[int, int]:
         a, b, c, d = self.elements[i]
         return ((a + d) % self.ell, (a * d - b * c) % self.ell)  # (trace, det): x^2 - t x + d
 
     def with_charpoly(self, chi: tuple[int, int]) -> tuple[int, ...]:
-        return tuple(i for i in range(self.n) if self.charpoly(i) == chi)
-
-    def generated(self, gens: frozenset[int]) -> frozenset[int]:
-        seen = {self.one, *gens}
-        frontier, gl = list(seen), list(gens)
-        while frontier:
-            new = [z for x in frontier for g in gl if (z := self.table[x][g]) not in seen]
-            seen.update(new)
-            frontier = new
-        return frozenset(seen)
+        t, d = chi
+        mask = ((self.A + self.D) % self.ell == t) & ((self.A * self.D - self.B * self.C) % self.ell == d)
+        return tuple(np.flatnonzero(mask).tolist())
 
     def conjugates(self, x: int) -> frozenset[int]:
-        inv = [self.index[self._inv(m)] for m in self.elements]
-        return frozenset(self.table[self.table[c][x]][inv[c]] for c in range(self.n))
+        c = np.arange(self.n)
+        return frozenset(np.unique(self.mul_vec(self.mul_vec(c, np.int64(x)), self.inv_all)).tolist())
+
+    def conjugator_map(self, x: int) -> dict[int, int]:
+        """{c x c^-1 : c} with one conjugator per conjugate (the first in index order)."""
+        c = np.arange(self.n)
+        g = self.mul_vec(self.mul_vec(c, np.int64(x)), self.inv_all)
+        u, first = np.unique(g, return_index=True)
+        return dict(zip(u.tolist(), c[first].tolist()))
 
     def conjugacy_class_representatives(self, elements: tuple[int, ...]) -> list[int]:
         seen, reps = set(), []
@@ -76,6 +116,70 @@ class GL2:
     def is_conjugation_invariant(self, elements: tuple[int, ...]) -> bool:
         S = frozenset(elements)
         return all(self.conjugates(x) <= S for x in S)
+
+    # ---- closures ----
+    def closure_mask(self, cols: list[np.ndarray], start: list[int]) -> np.ndarray:
+        """Boolean mask of the closure of `start` under right multiplication by the generators of `cols`."""
+        seen = np.zeros(self.n, dtype=bool)
+        frontier = np.unique(np.array(start, dtype=np.int64))
+        seen[frontier] = True
+        while frontier.size and cols:  # no generators: the closure is the start set itself
+            cand = np.unique(np.concatenate([col[frontier] for col in cols]))
+            cand = cand[~seen[cand]]
+            seen[cand] = True
+            frontier = cand
+        return seen
+
+    def generated(self, gens: frozenset[int]) -> frozenset[int]:
+        if self.table is None:
+            mask = self.closure_mask([self.column(g) for g in gens], [self.one, *gens])
+            return frozenset(np.flatnonzero(mask).tolist())
+        seen = {self.one, *gens}
+        frontier, gl = list(seen), list(gens)
+        while frontier:
+            new = [z for x in frontier for g in gl if (z := self.table[x][g]) not in seen]
+            seen.update(new)
+            frontier = new
+        return frozenset(seen)
+
+    def generates_full(self, cols: list[np.ndarray], start: list[int]) -> bool:
+        return bool(self.closure_mask(cols, start).all())
+
+    def words_to(self, gens: list[int], targets: list[int]) -> dict[int, list[int]]:
+        """Breadth-first words (letters = generator positions, read left to right) in the given generators
+        reaching each target, or an empty dict entry if unreachable; the kernel evaluates them with `evalWord`."""
+        cols = [self.column(g) for g in gens]
+        parent = np.full(self.n, -1, dtype=np.int64)
+        letter = np.full(self.n, -1, dtype=np.int64)
+        seen = np.zeros(self.n, dtype=bool)
+        roots = np.array(gens, dtype=np.int64)
+        seen[roots] = True
+        for i, g in enumerate(gens):
+            letter[g] = i
+        frontier = np.unique(roots)
+        want = np.array(targets, dtype=np.int64)
+        while frontier.size and not seen[want].all():
+            new = []
+            for i, col in enumerate(cols):
+                cand = col[frontier]
+                fresh = ~seen[cand]
+                u, first = np.unique(cand[fresh], return_index=True)
+                seen[u] = True
+                parent[u] = frontier[fresh][first]
+                letter[u] = i
+                new.append(u)
+            frontier = np.unique(np.concatenate(new)) if new else frontier[:0]
+        out = {}
+        for t in targets:
+            if not seen[t]:
+                out[t] = []
+                continue
+            w, x = [], t
+            while x != -1:
+                w.append(int(letter[x]))
+                x = int(parent[x])
+            out[t] = w[::-1]
+        return out
 
 
 def forced_full_classes(G: GL2, classes: list[tuple[int, ...]]) -> bool:
