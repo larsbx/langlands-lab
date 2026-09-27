@@ -16,7 +16,7 @@ The ordering rule is:
 authority -> mathematical/domain concern -> implementation language
 ```
 
-Python under `langlands/` is the canonical executable. Lean under `lean/` is the
+Python under `kernel/langlands/` is the canonical executable. Lean under `proof/langlands/` is the
 proof plane: it recomputes and certifies identities on exported data, and holds
 claim state, not acceptance authority over the Python kernel.
 

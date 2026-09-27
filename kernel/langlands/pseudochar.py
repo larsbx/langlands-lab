@@ -9,7 +9,7 @@ finite search: det is determined by T (det g = (T(g)^2 - T(g^2))/2), the images 
 pair (g0, h0) range over the matrices with the prescribed (trace, det), and a candidate extends to
 G along words in the generators iff the generator relations rho(x g) = rho(x) rho(g) hold on all of
 G.  `find_representation` performs the search; the same search runs in the Lean kernel
-(lean/LanglandsOracles/PseudocharSearch.lean).
+(proof/langlands/LanglandsOracles/PseudocharSearch.lean).
 """
 from __future__ import annotations
 

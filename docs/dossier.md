@@ -178,7 +178,7 @@ L_𝔪(χ, T) = ∏_{x ≠ P₀}(1 − χ(x)T^{deg x})⁻¹ in ℤ[ℤ/N][[T]] t
 - trivial χ: Z(E, T)(1 − T).
 This is the Artin–Schreier layer of geometric class field theory for GL₁ on E, executed.
 
-## Lean 4 in the oracle loop (`lean/`, core Lean 4.34, no Mathlib)
+## Lean 4 in the oracle loop (`proof/langlands/`, core Lean 4.34, no Mathlib)
 
 Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by
 `decide` or `decide +kernel`; the Lean kernel evaluated both sides.  No
@@ -197,7 +197,7 @@ Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by
 
 The bridge is `tools/export_lean_data.py`; the gate `tests/test_lean_gate.py`
 regenerates the data (must be byte-identical), runs `lake build`, and runs
-`lean/Audit.lean` (`#print axioms`): every certificate depends on at most `propext`
+`proof/langlands/Audit.lean` (`#print axioms`): every certificate depends on at most `propext`
 and `Quot.sound` — no `sorryAx`, no `Lean.ofReduceBool`.
 
 ## Branch 3 — Carlitz module, seed of the function-field act
@@ -296,7 +296,7 @@ degree-1 prime, no rational root — as it must be, since in characteristic ≥ 
 algorithm gives conductor exponent exactly 2 at an additive place (tame), so no elliptic
 curve over 𝔽₅(t) has conductor t³∞.
 
-## Branch 3, third act — the excursion algebra in Lean (`lean/LanglandsOracles/Excursion*.lean`, `Pseudocharacter.lean`, `excursion.py`)
+## Branch 3, third act — the excursion algebra in Lean (`proof/langlands/LanglandsOracles/Excursion*.lean`, `Pseudocharacter.lean`, `excursion.py`)
 
 Status vocabulary: **PROVED** = a Lean theorem with a term-level proof (no `decide`);
 **KERNEL** as before.

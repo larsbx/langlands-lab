@@ -22,7 +22,7 @@ def test_37a1_mod_3_needs_a_matrix():
     """Mod 3, characteristic polynomials alone cannot force surjectivity: (x-1)^2 is shared by the identity
     and the unipotents, and the normaliser of the non-split Cartan (order 16) meets every observed charpoly
     class.  Refining (x-1)^2 to its non-scalar part -- what the computed matrix at p = 7 supplies, and what
-    lean/LanglandsOracles/ImageMod3.lean certifies -- forces GL_2(F_3)."""
+    proof/langlands/LanglandsOracles/ImageMod3.lean certifies -- forces GL_2(F_3)."""
     polys = frobenius_charpolys(E37, 3, 60)
     assert (2, 1) in polys and not forced_full(3, polys)
     G = GL2(3)
@@ -90,7 +90,7 @@ def test_conjugacy_pruning_only_for_invariant_sets():
 
 @pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3)])
 def test_word_certificates_are_valid(ell, zeta):
-    """Mirror of lean/LanglandsOracles/ImageModL.lean: S = {E12(1), E21(1), diag(1, zeta)} generates GL_2(F_ell), and
+    """Mirror of proof/langlands/LanglandsOracles/ImageModL.lean: S = {E12(1), E21(1), diag(1, zeta)} generates GL_2(F_ell), and
     for every class pair (A, B) the exporter certifies, every (g, h) in A x B generates -- the words in {gRep, h}
     for S plus the conjugators of A onto gRep are exactly the data Lean verifies."""
     import re
@@ -98,7 +98,7 @@ def test_word_certificates_are_valid(ell, zeta):
     full = frozenset(range(G.n))
     S = [G.index[(1, 1, 0, 1)], G.index[(1, 0, 1, 1)], G.index[(1, 0, 0, zeta)]]
     assert G.generated(frozenset(S)) == full
-    data = Path(__file__).resolve().parents[1] / "lean" / "LanglandsOracles" / "Data.lean"
+    data = Path(__file__).resolve().parents[1] / "proof" / "langlands" / "LanglandsOracles" / "Data.lean"
     block = data.read_text().split(f"def mod{ell}Cert")[1].split("def mod")[0] if ell == 5 else data.read_text().split(f"def mod{ell}Cert")[1].split("def traceData")[0]
     pairs = [tuple(int(v) for v in m) for m in re.findall(r"tA := (\d+), dA := (\d+), tB := (\d+), dB := (\d+)", block)]
     assert pairs

@@ -6,7 +6,7 @@ id = "larsbx/langlands-lab"
 kind = "research"
 lifecycle = "active"
 default_branch = "main"
-layout_status = "transitional"
+layout_status = "canonical"
 
 [principles]
 ordering = ["authority", "domain", "language"]
@@ -16,9 +16,11 @@ generated_surfaces = "derived_only"
 vendor_code = "non_local"
 experimental_code = "non_authoritative"
 
+# The manifest is the whole policy plane: no policy/ silo is created for it.
+
 [[plane]]
 id = "policy"
-target = "policy"
+target = "estate.toml"
 authority = "governance"
 required = true
 current = ["estate.toml"]
@@ -28,18 +30,18 @@ id = "kernel"
 target = "kernel"
 authority = "canonical_executable"
 required = true
-current = ["langlands"]
+current = ["kernel"]
 
 [[plane]]
 id = "proof"
 target = "proof"
 authority = "claim_state"
 required = true
-current = ["lean"]
+current = ["proof"]
 
 [[plane]]
 id = "conformance"
-target = "conformance"
+target = "tests"
 authority = "evidence"
 required = true
 current = ["tests"]
@@ -56,7 +58,7 @@ id = "docs"
 target = "docs"
 authority = "exposition"
 required = true
-current = ["docs"]
+current = ["docs", "README.md", "ARCHITECTURE.md"]
 
 [[language]]
 name = "Python"
@@ -73,14 +75,12 @@ acceptance_authority = false
 [migration]
 mode = "boundary_first"
 mass_move = false
-next = [
-  "split CI by authority plane",
-]
+next = []
 
 [governance]
 repository = "larsbx/estate-governance"
-revision = "bd0a9491488f54f28b4a3b9076051349092383bb"
+revision = "57a253679a0ce8a903e1fb073521774b70d2bde4"
 
 [governance.sha256]
-"docs/architecture/estate-repository-template-v1.md" = "b5eab7543c877484a159b47cbe36aa6255c51bd6ec5863dbb9fe13d9a2c06f6b"
-"tools/audit_estate_layout.py" = "f462c397dee8a596a2a7a8c40fd5ded2989652322186c568b712366294251003"
+"docs/architecture/estate-repository-template-v1.md" = "f42e850517da2813d8b6fb0829fb3e1090b00e37cae508890c460072e5487d84"
+"tools/audit_estate_layout.py" = "438d0819f64cb7abf5ca56baa355b0b1ee69f8597f8c70e17ced5879ab12ef33"
