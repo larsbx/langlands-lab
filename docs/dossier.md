@@ -480,39 +480,43 @@ of §3.8; ℓ = 5 and ℓ = 7 are certified in Lean below.
 **ρ̄₅ and ρ̄₇ surjective in Lean, for all covered curves (PROVED + KERNEL, `ImageModL.lean`,
 `CertTypes.lean`).**  Closures of ⟨g, h⟩ over 480 or 2016 elements are too expensive in the kernel
 (a first mod-5 attempt with 600 column closures exhausted memory).  The reduction is a *word
-certificate*: (1) once per ℓ, one kernel closure shows that S = {E₁₂(1), T = [[1, 0], [1, ζ]]}
-generates GL₂(𝔽_ℓ) (`S_generates`, products of base-ℓ codes by `mulNat`, PROVED equal to the `Fin`
-product); (2) for a class pair (A, B) — characteristic polynomials with distinct roots, hence single
-conjugacy classes without scalars — a fixed representative gRep of A, and for every h ∈ B two words
-in {gRep, h} (length ≤ 28) whose values are the elements of S, verified by a few dozen products each;
+certificate*: (1) S = {E₁₂(1), E₂₁(1), diag(1, ζ)} generates GL₂(𝔽_ℓ) — a THEOREM (`gl2_generated`):
+for c ≠ 0, E₂₁(−c)·E₁₂(t)·g·E₁₂(−b₁) = diag(1, δ) with t = (1 − a)c⁻¹, every step undone by the inverse
+elementary matrix, E₁₂(u) = E₁₂(1)^u, diag(1, δ) = diag(1, ζ)^k, and c = 0 is reduced to c ≠ 0 by
+E₂₁(1); the scalar inverse c⁻¹ comes from the GL₂ inverse of diag(c, 1), δ ≠ 0 from the product staying
+in the enumerated GL₂ (`mul_mem_gl`); the only kernel input is that ζ generates 𝔽_ℓ^× (`zetaGen`, ℓ²
+operations), so nothing about S is enumerated; (2) for a class pair (A, B) — characteristic polynomials with distinct roots, hence single
+conjugacy classes without scalars — a fixed representative gRep of A, and for every h ∈ B three words
+in {gRep, h} (length ≤ 27, each packed as one natural) whose values are the elements of S, verified by a few dozen products each;
 (3) for every g ∈ A a conjugator C with C·gRep·C⁻¹ = g.  Soundness (`pair_sound`, PROVED): a
 multiplicatively closed H ∋ g ∈ A, h ∈ B is conjugated by C⁻¹ to H′ ∋ gRep, C⁻¹hC; C⁻¹hC is again in
 B because B is cut out by tr and tr² (Cayley–Hamilton `trace_sq`, decided per ℓ), both invariant by
-`trace_mul_comm`; the words put S in H′, the closure of S is GL₂(𝔽_ℓ) (soundness of the closure via
-the generic `closureList_mem` with the `mulNat` oracle), and conjugating back uses that conjugation
+`trace_mul_comm`; the words put S in H′, so H′ ⊇ GL₂(𝔽_ℓ) by `gl2_generated`, and conjugating back uses that conjugation
 by a unit preserves the enumerated GL₂(𝔽_ℓ), PROVED without determinant multiplicativity: a
 left-invertible matrix kills no nonzero vector, while a singular 2×2 matrix kills (d, −c) or (−b, a)
 (`kernel_vectors`, decided per ℓ; `det_ne_zero_of_left_inverse`).  Everything specific to ℓ is a
 `FieldFacts ℓ` record (ℓ = 5, 7: decided or kernel-checked, including inverses of all 480 / 2016
 elements).  The data (`mod5Cert`, `mod7Cert`, exported) are chosen by a greedy cover: mod 5, three
 pairs cover the 14 curves other than 11a1 (rational 5-torsion); mod 7, four pairs cover all 15.
-The same for ℓ = 11 (13 200 elements), ℓ = 13 (26 208) and ℓ = 17 (78 336): the inverse is now generic
+The same for ℓ = 11 (13 200 elements), ℓ = 13 (26 208), ℓ = 17 (78 336) and ℓ = 19 (123 120): the inverse is now generic
 (`invCode`, adjugate over det^(ℓ−2), confirmed on the codes of GL₂ by kernel), the ℓ-specific facts are
 assembled by `FieldFacts.of` from four decided/kernel-checked statements, and the certified pairs
 are found lazily (most-covering candidate pair first; a pair is certified exactly when the words the
 kernel will check exist, found by breadth-first search with early exit; no multiplication table above
 2016 elements).  Kernel: `pairsℓ_ok` (all witnesses and words), `curvesℓ_ok` (for each
 curve, a_{p₁}, a_{p₂} mod ℓ from Lean's point counts of the Weierstrass model match the pair), for
-ℓ ∈ {5, 7, 11, 13, 17}, one declaration per certified pair so the kernel frees its cache between them.  Headlines
-`mod5_images_full`, `mod7_images_full`, `mod11_images_full`, `mod13_images_full`, `mod17_images_full` (`data_sound`): for every listed curve, any multiplicatively closed subset of
+ℓ ∈ {5, 7, 11, 13, 17, 19}, one declaration per certified pair so the kernel frees its cache between them.  Headlines
+`mod5_images_full`, …, `mod19_images_full` (`data_sound`): for every listed curve, any multiplicatively closed subset of
 GL₂(𝔽_ℓ) containing elements with the characteristic polynomials of ρ̄_ℓ(Frob_{p₁}), ρ̄_ℓ(Frob_{p₂})
 is all of GL₂(𝔽_ℓ); with Eichler–Shimura mod ℓ as the only imported input, ρ̄₅ is surjective for
-the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇ for all 15 — the mod-ℓ images of all fifteen curves
-are certified for every ℓ ≤ 17 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
+the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉ for all 15 — the mod-ℓ images of all fifteen curves
+are certified for every ℓ ≤ 19 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
 Python mirror: `test_word_certificates_are_valid` checks exactly what Lean checks (S generates,
-conjugators, words) for ℓ = 5, 7, 11, 13, 17 and the full pair closures for ℓ ≤ 7.  The instances
-(`ModLImages`, ℓ = 5, 7, 11, 13, 17) build in ≈ 12 min under 8.5 GB (ℓ = 17: the S closure
-98 s and 7.9 GB, a pair 36 s and 3 GB; the 1.2 MB data file elaborates in 150 s).  Kernel bookkeeping that made
+conjugators, words) for ℓ = 5, 7, 11, 13, 17, 19 and the full pair closures for ℓ ≤ 7.  The instances
+(one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 11 min wall (ℓ = 19 alone; 20 min of kernel
+time in all) under 5 GB per process (ℓ = 19: a pair ≈ 56 s and
+4.6 GB, the inverse check 64 s and 4.2 GB, `S_generates` under a second; the 660 KB data file, words packed
+as naturals, elaborates in 55 s).  Kernel bookkeeping that made
 this feasible (`Generation.lean`, `ImageModL.lean`): the kernel caches the normal form of every closed
 term it meets until the declaration is checked, so memory is the number of distinct terms evaluated, not
 the size of the data.  Hence (i) every arithmetic step is a `Nat.*` call on literals — an operator's
@@ -532,6 +536,8 @@ generators are maps on codes, so right multiplication by a *known* generator is 
 product, PROVED equal to it through the digit lemmas), and S has two elements rather than three, so
 the closure does two products per element; (viii) one declaration per certified pair, since the cache
 is freed between declarations (ℓ = 13: 7.5 GB for the eight pairs together, 1.5 GB each alone).
-Before (i)–(iii) the ℓ = 13 checks were killed at 13.6 GB; before (vii) the ℓ = 17 closure took 11.3 GB.
+Before (i)–(iii) the ℓ = 13 checks were killed at 13.6 GB; before (vii) the ℓ = 17 closure took 11.3 GB.  (ix) Finally the closure is gone: `gl2_generated` proves once that
+E₁₂(1), E₂₁(1), diag(1, ζ) generate GL₂(𝔽_ℓ), so the only enumeration left per ℓ is the class-pair
+certificates (each ≈ ℓ⁴ code scans plus ℓ² words), and ℓ = 19 costs no more than a pair does.
 `forced_full_classes` (Python) now prunes the first set to conjugacy representatives only when every
 set is conjugation-invariant (review fix; counterexample test in GL₂(𝔽₂)).

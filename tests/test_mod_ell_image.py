@@ -107,17 +107,17 @@ def _parse_cert(ell):
     for m in re.finditer(r"tA := (\d+), dA := (\d+), tB := (\d+), dB := (\d+), gRep := (\d+),\s*witnessesA := \[(.*?)\],\s*wordsB := \[(.*?)\] \}", block, re.S):
         tA, dA, tB, dB, gRep = (int(m.group(i)) for i in range(1, 6))
         wit = [tuple(int(v) for v in w) for w in re.findall(r"\((\d+), (\d+), (\d+)\)", m.group(6))]
-        words = [(int(h), [(int(s), [b == "true" for b in bs.split(", ") if b])
-                           for s, bs in re.findall(r"\((\d+), \[([^\]]*)\]\)", ws)])
-                 for h, ws in re.findall(r"\((\d+), \[((?:\(\d+, \[[^\]]*\]\)(?:, )?)+)\]\)", m.group(7))]
+        words = [(int(h), [(int(s), [c == "1" for c in bin(int(w))[3:]])  # 0b1 marker, then the letters
+                           for s, w in re.findall(r"\((\d+), (\d+)\)", ws)])
+                 for h, ws in re.findall(r"\((\d+), \[((?:\(\d+, \d+\)(?:, )?)+)\]\)", m.group(7))]
         pairs.append((tA, dA, tB, dB, gRep, wit, words))
     curves = re.findall(r'label := "([^"]+)", ainvs := \[([^\]]*)\], pair := (\d+), p1 := (\d+), p2 := (\d+)', block)
     return S, pairs, curves
 
 
-@pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3), (11, 2), (13, 2), (17, 3)])
+@pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3), (11, 2), (13, 2), (17, 3), (19, 2)])
 def test_word_certificates_are_valid(ell, zeta):
-    """Mirror of lean/LanglandsOracles/ImageModL.lean: S = {E12(1), T = [[1, 0], [1, zeta]]} generates GL_2(F_ell);
+    """Mirror of lean/LanglandsOracles/ImageModL.lean: S = {E12(1), E21(1), diag(1, zeta)} generates GL_2(F_ell);
     for every certified pair, the conjugators send gRep onto every element of class A, the words in {gRep, h}
     evaluate to S for every h in class B, and the classes are single conjugacy classes without scalars; for
     ell <= 7 additionally every (g, h) in A x B generates (the fact the words certify)."""
@@ -126,7 +126,7 @@ def test_word_certificates_are_valid(ell, zeta):
     code = lambda i: (lambda m: m[0] + ell * (m[1] + ell * (m[2] + ell * m[3])))(G.elements[i])
     decode = {code(i): i for i in range(G.n)}
     S, pairs, curves = _parse_cert(ell)
-    assert [G.elements[decode[s]] for s in S] == [(1, 1, 0, 1), (1, 0, 1, zeta)]
+    assert [G.elements[decode[s]] for s in S] == [(1, 1, 0, 1), (1, 0, 1, 1), (1, 0, 0, zeta)]
     assert G.generated(frozenset(decode[s] for s in S)) == full
     assert pairs and curves
     assert len(pairs) == block_pair_count(ell)
