@@ -24,8 +24,11 @@ structure CurveCert where
   p1 : Nat
   p2 : Nat
 
+/-- The data for one ℓ: ζ (a generator of 𝔽_ℓ^×), the codes of S = {E₁₂(1), [[1,0],[1,ζ]]}, the certified
+pairs and the curves. -/
 structure ModLData where
   ell : Nat
+  zeta : Nat
   S : List Nat
   pairs : List PairCert
   curves : List CurveCert

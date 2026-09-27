@@ -3,7 +3,7 @@ name = "langlands-lab"
 version = "0.1.0"
 description = "Exact finite-field instrumentation of three Langlands entry points"
 requires-python = ">=3.11"
-dependencies = ["sympy>=1.12"]
+dependencies = ["sympy>=1.12", "numpy>=1.26"]
 
 [project.optional-dependencies]
 test = ["pytest>=8", "hypothesis>=6"]
