@@ -123,7 +123,7 @@ class GL2:
         seen = np.zeros(self.n, dtype=bool)
         frontier = np.unique(np.array(start, dtype=np.int64))
         seen[frontier] = True
-        while frontier.size:
+        while frontier.size and cols:  # no generators: the closure is the start set itself
             cand = np.unique(np.concatenate([col[frontier] for col in cols]))
             cand = cand[~seen[cand]]
             seen[cand] = True

@@ -74,6 +74,15 @@ def test_mod5_certificate_classes_of_37a1():
     assert code(G.elements[A[0]]) == 455
 
 
+def test_generated_by_nothing_is_trivial():
+    """The empty generating set generates {1}, with or without the multiplication table (review fix: the
+    vectorised closure concatenated an empty list of product columns)."""
+    groups = (GL2(5), GL2(5, table=False), GL2(11))
+    assert groups[0].table is not None and groups[1].table is None and groups[2].table is None
+    for G in groups:
+        assert G.generated(frozenset()) == frozenset({G.one})
+
+
 def test_conjugacy_pruning_only_for_invariant_sets():
     """Reducing the first set to conjugacy representatives is sound only when every set is closed under
     conjugation.  In GL_2(F_2) the sets [(0, 3), (3,)] are not: element 3 alone generates a proper subgroup
