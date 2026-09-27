@@ -20,7 +20,7 @@ Python under `kernel/langlands/` is the canonical executable. Lean under `proof/
 proof plane: it recomputes and certifies identities on exported data, and holds
 claim state, not acceptance authority over the Python kernel.
 
-The layout is transitional. Each plane in `estate.toml` records its future
-`target` and the existing paths it currently covers; existing paths remain
-authoritative until a dedicated migration PR moves one bounded context. Directory
-renames alone must not change claim status, acceptance, or authority.
+The layout is canonical: every plane in `estate.toml` maps exactly its `target`
+(root-level files aside) and no migration step is pending; the audit enforces
+both. Directory renames alone must not change claim status, acceptance, or
+authority.
