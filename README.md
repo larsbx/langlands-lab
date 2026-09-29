@@ -70,7 +70,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 607 tests (~40 s with a warm lake cache; first Lean build ~12 min, 4 cores)
+pytest                      # all branches + Lean gate, 607 tests (~40 s with a warm lake cache; first Lean build ~3 min, 4 cores)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py

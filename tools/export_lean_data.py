@@ -125,7 +125,8 @@ def mod_ell_cert_block(ell: int, zeta: int, bound: int = 60) -> list[str]:
     given that zeta generates F_ell^x); a greedy
     cover of the curves by class pairs (A, B) such that every (g, h) in A x B generates (candidate pairs tested
     lazily, most-covering first); for each pair the conjugators of class A onto its first representative and,
-    for each h in B, words in {gRep, h} for S."""
+    for each h in B, words in {gRep, h} for S, both listed in the lexicographic order of the class (the order of
+    Lean's `classMats`), which the kernel walks pointwise."""
     import numpy as np
     from langlands.mod_ell_image import GL2, frobenius_charpolys
     from langlands.newforms import CREMONA_PRIME_LEVEL

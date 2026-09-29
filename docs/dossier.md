@@ -514,8 +514,8 @@ the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, �
 are certified for every ℓ ≤ 23 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
 Python mirror: `test_word_certificates_are_valid` checks exactly what Lean checks (S generates,
 conjugators, words) for ℓ = 5, 7, 11, 13, 17, 19, 23 and the full pair closures for ℓ ≤ 7.  The instances
-(one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 12 min wall (ℓ = 23 alone) under 4.1 GB per process (ℓ = 19: a pair ≈ 22 s, ℓ = 23:
-a pair ≈ 53 s; the field facts and `S_generates` under a second; the 660 KB data file, words packed
+(one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 3 min wall (ℓ = 23 alone) under 2.3 GB per process (ℓ = 19: a pair ≈ 13 s, ℓ = 23:
+a pair ≈ 18 s; the field facts and `S_generates` under a second; the 660 KB data file, words packed
 as naturals, elaborates in 55 s).  Kernel bookkeeping that made
 this feasible (`Generation.lean`, `ImageModL.lean`): the kernel caches the normal form of every closed
 term it meets until the declaration is checked, so memory is the number of distinct terms evaluated, not
@@ -543,6 +543,8 @@ at ℓ = 19) is replaced by the adjugate identity over an ℓ² table of scalar 
 enumerated rather than found by scanning ℓ⁴ codes: a class {tr = t, det = d} has at most ℓ² + ℓ elements
 (`classMats`: the (2,2) entry is t − a, and c = (a(t − a) − d)·b⁻¹ when b ≠ 0), PROVED complete
 (`mem_classMats`), so a pair certificate is ℓ² conjugators and ℓ² × 3 words and nothing of size ℓ⁴ is
-evaluated anywhere.
+evaluated anywhere; (xii) and the certificate lists them in the class's enumeration order, so the kernel walks
+the two lists pointwise (`pointwise`, `pointwise_sound`) instead of searching the list for every element
+(ℓ⁴/2 comparisons: an ℓ = 23 pair went from 53 s to 18 s).
 `forced_full_classes` (Python) now prunes the first set to conjugacy representatives only when every
 set is conjugation-invariant (review fix; counterexample test in GL₂(𝔽₂)).

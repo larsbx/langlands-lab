@@ -470,13 +470,34 @@ theorem det_conj (ff : FieldFacts n) {C C' : Mat2 n} (h : M2.mul C C' = M2.one) 
 def S_generates (n : Nat) [NeZero n] (z : Nat) (S : List Nat) : Bool :=
   S == [encode (E12 (1 : Fin n)), encode (E21 (1 : Fin n)), encode (diag (finN z) : Mat2 n)] && zetaGen n z
 
+/-- A predicate checked pointwise along two lists of the same length (the certificate lists its data in
+the enumeration order of the class, so no search is needed). -/
+def pointwise (p : α → β → Bool) : List α → List β → Bool
+  | [], [] => true
+  | a :: as, b :: bs => p a b && pointwise p as bs
+  | _, _ => false
+
+theorem pointwise_sound {p : α → β → Bool} : ∀ {l₁ : List α} {l₂ : List β}, pointwise p l₁ l₂ = true →
+    ∀ a ∈ l₁, ∃ b ∈ l₂, p a b = true
+  | [], _, _, _, ha => absurd ha List.not_mem_nil
+  | _ :: _, [], h, _, _ => absurd h Bool.false_ne_true
+  | a :: as, b :: bs, h, x, hx => by
+    have h1 := (Bool.and_eq_true _ _ |>.mp h).1
+    have h2 := (Bool.and_eq_true _ _ |>.mp h).2
+    rcases List.mem_cons.mp hx with rfl | hx
+    · exact ⟨b, List.mem_cons_self .., h1⟩
+    · obtain ⟨y, hy, hp⟩ := pointwise_sound h2 x hx
+      exact ⟨y, List.mem_cons_of_mem _ hy, hp⟩
+
 def pairOk (n : Nat) [NeZero n] (S : List Nat) (pr : PairCert) : Bool :=
   encode (decode n pr.gRep) == pr.gRep &&
-  (classMats n (finN pr.tA) (finN pr.dA)).all (fun g => pr.witnessesA.any fun w =>
+  pointwise (fun (g : Mat2 n) w =>
     Nat.beq w.1 (encode g) && Nat.beq (mulNat n (mulNat n w.2.1 pr.gRep) w.2.2) (encode g)
-      && Nat.beq (mulNat n w.2.1 w.2.2) (encode (M2.one : Mat2 n)) && Nat.beq (mulNat n w.2.2 w.2.1) (encode (M2.one : Mat2 n))) &&
-  (classMats n (finN pr.tB) (finN pr.dB)).all (fun h => pr.wordsB.any fun e =>
+      && Nat.beq (mulNat n w.2.1 w.2.2) (encode (M2.one : Mat2 n)) && Nat.beq (mulNat n w.2.2 w.2.1) (encode (M2.one : Mat2 n)))
+    (classMats n (finN pr.tA) (finN pr.dA)) pr.witnessesA &&
+  pointwise (fun (h : Mat2 n) e =>
     Nat.beq e.1 (encode h) && S.all fun s => e.2.any fun sw => Nat.beq sw.1 s && Nat.beq (evalWord n pr.gRep e.1 sw.2) s)
+    (classMats n (finN pr.tB) (finN pr.dB)) pr.wordsB
 
 /-- A matrix with (1,1) entry 1 has a nonzero code (1 ≠ 0 in ℤ/n). -/
 theorem encode_ne_zero (ff : FieldFacts n) {x : Mat2 n} (hx : x.a = 1) : encode x ≠ 0 := by
@@ -502,7 +523,7 @@ theorem pair_sound (ff : FieldFacts n) (z : Nat) (S : List Nat) (hS : S_generate
   have h3 := (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp hok).1).2
   have hgRep : encode (decode n pr.gRep) = pr.gRep := beq_iff_eq.mp (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp hok).1).1
   -- the conjugator of g
-  obtain ⟨w, _, hw⟩ := List.any_eq_true.mp (List.all_eq_true.mp h3 g (mem_classMats ff g hA.1 hA.2))
+  obtain ⟨w, _, hw⟩ := pointwise_sound h3 g (mem_classMats ff g hA.1 hA.2)
   have hw4 := (Bool.and_eq_true _ _ |>.mp hw).2
   have hw3 := (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp hw).1).2
   have hw2 := (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp hw).1).1).2
@@ -527,7 +548,7 @@ theorem pair_sound (ff : FieldFacts n) (z : Nat) (S : List Nat) (hS : S_generate
   have hB' : (M2.mul (M2.mul C' h) C).trace = finN pr.tB ∧ Mat2.det (M2.mul (M2.mul C' h) C) = finN pr.dB :=
     ⟨by rw [trace_conj' hCC', hB.1], by rw [det_conj ff hCC', hB.2]⟩
   -- the words put S inside H′
-  obtain ⟨e, _, he⟩ := List.any_eq_true.mp (List.all_eq_true.mp h4 _ (mem_classMats ff _ hB'.1 hB'.2))
+  obtain ⟨e, _, he⟩ := pointwise_sound h4 _ (mem_classMats ff _ hB'.1 hB'.2)
   have he1 : e.1 = encode (M2.mul (M2.mul C' h) C) := Nat.eq_of_beq_eq_true (Bool.and_eq_true _ _ |>.mp he).1
   have hwords := (Bool.and_eq_true _ _ |>.mp he).2
   unfold S_generates at hS

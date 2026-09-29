@@ -133,7 +133,8 @@ def test_word_certificates_are_valid(ell, zeta):
     for tA, dA, tB, dB, gRep, wit, words in pairs:
         A, B = G.with_charpoly((tA, dA)), G.with_charpoly((tB, dB))
         assert decode[gRep] == A[0]
-        assert {g for g, _, _ in wit} == {code(g) for g in A} and {h for h, _ in words} == {code(h) for h in B}
+        # in the enumeration order of the class (Lean's `classMats`: lexicographic in (a, b, c)), which the kernel walks pointwise
+        assert [g for g, _, _ in wit] == [code(g) for g in A] and [h for h, _ in words] == [code(h) for h in B]
         for g, C, Ci in wit:
             assert G.mul(decode[C], decode[Ci]) == G.one and G.mul(G.mul(decode[C], decode[gRep]), decode[Ci]) == decode[g]
         for h, ws in words:
