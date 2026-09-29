@@ -341,34 +341,41 @@ theorem zetaGen_sound {z : Nat} (h : zetaGen n z = true) (d : Fin n) (hd : d ≠
   obtain ⟨k, _, hk⟩ := List.any_eq_true.mp hd'
   exact ⟨k, Fin.ext (by rw [finPow_val]; exact beq_iff_eq.mp hk)⟩
 
+section cancel
+
+variable (hs : ∀ x y : Fin n, x - y = x + (0 - y))
+include hs
+
+theorem neg_add_cancel (x : Fin n) : (0 - x) + x = 0 := by
+  rw [(R).add_comm, ← hs, Fin.sub_self]
+
+theorem add_neg_cancel (x : Fin n) : x + (0 - x) = 0 := by
+  rw [← hs, Fin.sub_self]
+
+theorem add_sub_cancel' (a b : Fin n) : a + (b - a) = b := by
+  rw [hs, (R).add_comm b, ← (R).add_assoc, add_neg_cancel hs, (R).zero_add]
+
+theorem sub_zero' (x : Fin n) : x - 0 = x := by
+  rw [hs, Fin.sub_self, (R).add_zero]
+
+end cancel
+
 section generation
 
 variable (ff : FieldFacts n)
 include ff
 
-theorem neg_add_cancel (x : Fin n) : (0 - x) + x = 0 := by
-  rw [(R).add_comm, ← ff.sub_eq, Fin.sub_self]
-
-theorem add_neg_cancel (x : Fin n) : x + (0 - x) = 0 := by
-  rw [← ff.sub_eq, Fin.sub_self]
-
-theorem add_sub_cancel' (a b : Fin n) : a + (b - a) = b := by
-  rw [ff.sub_eq, (R).add_comm b, ← (R).add_assoc, add_neg_cancel ff, (R).zero_add]
-
-theorem sub_zero' (x : Fin n) : x - 0 = x := by
-  rw [ff.sub_eq, Fin.sub_self, (R).add_zero]
-
 theorem E12_neg_mul (u : Fin n) : M2.mul (E12 (0 - u)) (E12 u) = M2.one := by
-  rw [E12_mul, neg_add_cancel ff]; rfl
+  rw [E12_mul, neg_add_cancel ff.sub_eq]; rfl
 
 theorem E12_mul_neg (u : Fin n) : M2.mul (E12 u) (E12 (0 - u)) = M2.one := by
-  rw [E12_mul, add_neg_cancel ff]; rfl
+  rw [E12_mul, add_neg_cancel ff.sub_eq]; rfl
 
 theorem E21_neg_mul (u : Fin n) : M2.mul (E21 (0 - u)) (E21 u) = M2.one := by
-  rw [E21_mul, neg_add_cancel ff]; rfl
+  rw [E21_mul, neg_add_cancel ff.sub_eq]; rfl
 
 theorem E21_mul_neg (u : Fin n) : M2.mul (E21 u) (E21 (0 - u)) = M2.one := by
-  rw [E21_mul, add_neg_cancel ff]; rfl
+  rw [E21_mul, add_neg_cancel ff.sub_eq]; rfl
 
 theorem mul_mem_gl {x y : Mat2 n} (hx : x ∈ gl n) (hy : y ∈ gl n) : M2.mul x y ∈ gl n := by
   obtain ⟨x', hx'⟩ := ff.inv x hx
@@ -386,7 +393,7 @@ theorem E21_mem_gl (u : Fin n) : E21 u ∈ gl n :=
 theorem scalar_inv {c : Fin n} (hc : c ≠ 0) : ∃ ci : Fin n, c * ci = 1 := by
   have hgl : (⟨c, 0, 0, 1⟩ : Mat2 n) ∈ gl n := mem_gl _ (by
     show (c * 1 - 0 * 0).val ≠ 0
-    rw [(R).mul_one, (R).zero_mul, sub_zero' ff]
+    rw [(R).mul_one, (R).zero_mul, sub_zero' ff.sub_eq]
     exact fun h => hc (Fin.ext h))
   obtain ⟨z', hz'⟩ := ff.inv _ hgl
   have := congrArg M2.a hz'
@@ -452,16 +459,16 @@ theorem generated_of_c_ne (g : Mat2 n) (hg : g ∈ gl n) (hc : g.c ≠ 0) : g �
   obtain ⟨ci, hci⟩ := scalar_inv ff hc
   have h1 : M2.mul (E12 ((1 - a) * ci)) ⟨a, b, c, d⟩ = ⟨1, b + (1 - a) * ci * d, c, d⟩ := by
     have ha : a + (1 - a) * ci * c = 1 := by
-      rw [(R).mul_assoc, (R).mul_comm ci c, hci, (R).mul_one, add_sub_cancel' ff a 1]
+      rw [(R).mul_assoc, (R).mul_comm ci c, hci, (R).mul_one, add_sub_cancel' ff.sub_eq a 1]
     simp only [M2.mul, E12, (R).one_mul, (R).zero_mul, (R).zero_add, ha]
   generalize (1 - a) * ci = t at h1
   generalize b + t * d = b₁ at h1
   have h2 : M2.mul (E21 (0 - c)) ⟨1, b₁, c, d⟩ = ⟨1, b₁, 0, (0 - c) * b₁ + d⟩ := by
-    simp only [M2.mul, E21, (R).one_mul, (R).mul_one, (R).zero_mul, (R).add_zero, neg_add_cancel ff c]
+    simp only [M2.mul, E21, (R).one_mul, (R).mul_one, (R).zero_mul, (R).add_zero, neg_add_cancel ff.sub_eq c]
   generalize (0 - c) * b₁ + d = δ at h2
   have h3 : M2.mul ⟨1, b₁, 0, δ⟩ (E12 (0 - b₁)) = diag δ := by
     simp only [M2.mul, E12, diag, (R).one_mul, (R).mul_one, (R).zero_mul, (R).mul_zero, (R).zero_add, (R).add_zero,
-      neg_add_cancel ff b₁]
+      neg_add_cancel ff.sub_eq b₁]
   have hg1 : (⟨1, b₁, c, d⟩ : Mat2 n) ∈ gl n := h1 ▸ mul_mem_gl ff (E12_mem_gl ff t) hg
   have hg2 : (⟨1, b₁, 0, δ⟩ : Mat2 n) ∈ gl n := h2 ▸ mul_mem_gl ff (E21_mem_gl ff (0 - c)) hg1
   have hg3 : diag δ ∈ gl n := h3 ▸ mul_mem_gl ff hg2 (E12_mem_gl ff (0 - b₁))
@@ -470,7 +477,7 @@ theorem generated_of_c_ne (g : Mat2 n) (hg : g ∈ gl n) (hc : g.c ≠ 0) : g �
     have := bne_iff_ne.mp (List.mem_filter.mp hg3).2
     apply this
     show (1 * δ - 0 * 0).val = 0
-    rw [(R).one_mul, (R).zero_mul, sub_zero' ff, h0]; rfl
+    rw [(R).one_mul, (R).zero_mul, sub_zero' ff.sub_eq, h0]; rfl
   have hH3 : M2.mul ⟨1, b₁, 0, δ⟩ (E12 (0 - b₁)) ∈ H := by rw [h3]; exact diag_mem H hmul hE12 hz hD δ hδ
   have hH2 : M2.mul (E21 (0 - c)) ⟨1, b₁, c, d⟩ ∈ H := by
     rw [h2]; exact descent_right H hmul (E12_neg_mul ff b₁) (E12_mem H hmul hE12 b₁) hH3
@@ -636,28 +643,6 @@ theorem data_sound (ff : FieldFacts n) (d : ModLData) (hS : S_generates n d.zeta
     · rw [hB.2, ← e4, hmod]
   · exact absurd hok Bool.false_ne_true
 
--- ---------------------------------------------------------------- inverses on codes --
-
-/-- The inverse on codes: adjugate over det⁻¹ = det^(n−2) (Fermat; a kernel check confirms it on the
-codes of GL₂, and only that check is used). -/
-def invCode (n i : Nat) : Nat :=
-  let a := Nat.mod i n; let i1 := Nat.div i n; let b := Nat.mod i1 n; let i2 := Nat.div i1 n
-  let c := Nat.mod i2 n; let d := Nat.mod (Nat.div i2 n) n
-  let u := Nat.mod (Nat.pow (detCode n i) (Nat.sub n 2)) n
-  Nat.add (Nat.mod (Nat.mul u d) n) (Nat.mul n (Nat.add (Nat.mod (Nat.mul u (Nat.sub n b)) n)
-    (Nat.mul n (Nat.add (Nat.mod (Nat.mul u (Nat.sub n c)) n) (Nat.mul n (Nat.mod (Nat.mul u a) n))))))
-
-def invOk (n : Nat) [NeZero n] : Bool :=
-  allCodes n (fun i => Nat.beq (mulNat n (invCode n i) i) (encode (M2.one : Mat2 n))) (n ^ 4)
-
-theorem inv_of_invOk (h : invOk n = true) : ∀ z ∈ gl n, ∃ z' : Mat2 n, M2.mul z' z = M2.one := by
-  intro z hz
-  refine ⟨decode n (invCode n (encode z)), ?_⟩
-  have e := Nat.eq_of_beq_eq_true (allCodes_sound h z hz)
-  rw [mulNat_eq] at e
-  simp only [mulIdx, decode_encode] at e
-  exact encode_inj e
-
 /-- The negation facts about ℤ/n that the vector argument needs (n² cases each, decided per n). -/
 structure NegFacts (n : Nat) [NeZero n] : Prop where
   mul_neg : ∀ b c : Fin n, b * (0 - c) = 0 - b * c
@@ -675,15 +660,59 @@ theorem kernel_vectors_of (nf : NegFacts n) : ∀ a b c d : Fin n, a * d - b * c
     (R).mul_comm b a, Fin.sub_self, (R).mul_comm d a, (R).mul_comm c b, h]
   exact ⟨rfl, rfl⟩
 
-/-- `FieldFacts n` from Cayley–Hamilton for tr², the negation facts, and the kernel check of inverses. -/
+/-- Every nonzero scalar has an inverse (n² operations, decided per n). -/
+def invTable (n : Nat) : Bool :=
+  (List.range n).all fun c => c == 0 || (List.range n).any fun u => c * u % n == 1
+
+theorem invTable_sound (h : invTable n = true) (c : Fin n) (hc : c ≠ 0) : ∃ u : Fin n, c * u = 1 := by
+  have hc' := List.all_eq_true.mp h c.val (List.mem_range.mpr c.isLt)
+  have hne : (c.val == 0) = false := by
+    cases hb : c.val == 0
+    · rfl
+    · exact absurd (Fin.ext (beq_iff_eq.mp hb)) hc
+  rw [hne, Bool.false_or] at hc'
+  obtain ⟨u, hu, e⟩ := List.any_eq_true.mp hc'
+  have e := beq_iff_eq.mp e
+  have hn : 1 < n := e ▸ Nat.mod_lt _ (Nat.pos_of_neZero n)
+  exact ⟨finN u, Fin.ext (by
+    show c.val * (u % n) % n = 1 % n
+    rw [Nat.mod_eq_of_lt (List.mem_range.mp hu), Nat.mod_eq_of_lt hn, e])⟩
+
+/-- **The adjugate over an inverse of the determinant is a left inverse**: u·adj(z)·z = 1 when u·det z = 1
+(a ring identity from the semiring laws and the negation facts). -/
+theorem adj_left_inverse (nf : NegFacts n) (z : Mat2 n) {u : Fin n} (hu : u * z.det = 1) :
+    M2.mul ⟨u * z.d, u * (0 - z.b), u * (0 - z.c), u * z.a⟩ z = M2.one := by
+  obtain ⟨a, b, c, d⟩ := z
+  have hu : u * (a * d - b * c) = 1 := hu
+  have nb : ∀ x y : Fin n, (0 - x) * y = 0 - x * y := fun x y => by rw [(R).mul_comm, nf.mul_neg, (R).mul_comm]
+  have e11 : u * d * a + u * (0 - b) * c = 1 := by
+    rw [(R).mul_assoc, (R).mul_assoc, nb, ← (R).mul_add, (R).mul_comm d a, ← nf.sub_eq]; exact hu
+  have e12 : u * d * b + u * (0 - b) * d = 0 := by
+    rw [(R).mul_assoc, (R).mul_assoc, nb, ← (R).mul_add, (R).mul_comm d b, add_neg_cancel nf.sub_eq, (R).mul_zero]
+  have e21 : u * (0 - c) * a + u * a * c = 0 := by
+    rw [(R).mul_assoc, (R).mul_assoc, nb, ← (R).mul_add, (R).mul_comm c a, neg_add_cancel nf.sub_eq, (R).mul_zero]
+  have e22 : u * (0 - c) * b + u * a * d = 1 := by
+    rw [(R).mul_assoc, (R).mul_assoc, nb, ← (R).mul_add, (R).mul_comm c b, (R).add_comm, ← nf.sub_eq]; exact hu
+  show (⟨u * d * a + u * (0 - b) * c, u * d * b + u * (0 - b) * d, u * (0 - c) * a + u * a * c, u * (0 - c) * b + u * a * d⟩ : Mat2 n)
+    = ⟨1, 0, 0, 1⟩
+  rw [e11, e12, e21, e22]
+
+/-- Every invertible matrix has a left inverse: the adjugate over the scalar inverse of its determinant. -/
+theorem inv_of_invTable (nf : NegFacts n) (h : invTable n = true) : ∀ z ∈ gl n, ∃ z' : Mat2 n, M2.mul z' z = M2.one := by
+  intro z hz
+  have hdet : z.det ≠ 0 := fun h0 => bne_iff_ne.mp (List.mem_filter.mp hz).2 (by rw [h0]; rfl)
+  obtain ⟨u, hu⟩ := invTable_sound h z.det hdet
+  exact ⟨_, adj_left_inverse nf z (by rw [(R).mul_comm]; exact hu)⟩
+
+/-- `FieldFacts n` from Cayley–Hamilton for tr², the negation facts, and the scalar inverse table. -/
 theorem FieldFacts.of (hsq : ∀ a b c d : Fin n, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c))
-    (nf : NegFacts n) (hinv : invOk n = true) : FieldFacts n where
+    (nf : NegFacts n) (hinv : invTable n = true) : FieldFacts n where
   trace_sq := fun x => by obtain ⟨a, b, c, d⟩ := x; exact hsq a b c d
   kernel_vectors := kernel_vectors_of nf
   neg_eq_zero := nf.neg_eq_zero
   one_ne_zero := nf.one_ne_zero
   sub_eq := nf.sub_eq
-  inv := inv_of_invOk hinv
+  inv := inv_of_invTable nf hinv
 
 /-- Cayley–Hamilton for the trace of the square, over ℤ/n for a literal n: expand with the semiring laws,
 name the four products, and let `omega` settle the additive identity in ℤ/n. -/

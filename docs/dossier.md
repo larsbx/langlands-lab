@@ -495,12 +495,13 @@ B because B is cut out by tr and tr² (Cayley–Hamilton `trace_sq`, decided per
 by a unit preserves the enumerated GL₂(𝔽_ℓ), PROVED without determinant multiplicativity: a
 left-invertible matrix kills no nonzero vector, while a singular 2×2 matrix kills (d, −c) or (−b, a)
 (`kernel_vectors`, decided per ℓ; `det_ne_zero_of_left_inverse`).  Everything specific to ℓ is a
-`FieldFacts ℓ` record (ℓ = 5, 7: decided or kernel-checked, including inverses of all 480 / 2016
-elements).  The data (`mod5Cert`, `mod7Cert`, exported) are chosen by a greedy cover: mod 5, three
+`FieldFacts ℓ` record (decided per ℓ in ℓ² operations: Cayley–Hamilton for tr², the negation facts, the scalar
+inverse table).  The data (`mod5Cert`, `mod7Cert`, exported) are chosen by a greedy cover: mod 5, three
 pairs cover the 14 curves other than 11a1 (rational 5-torsion); mod 7, four pairs cover all 15.
-The same for ℓ = 11 (13 200 elements), ℓ = 13 (26 208), ℓ = 17 (78 336) and ℓ = 19 (123 120): the inverse is now generic
-(`invCode`, adjugate over det^(ℓ−2), confirmed on the codes of GL₂ by kernel), the ℓ-specific facts are
-assembled by `FieldFacts.of` from four decided/kernel-checked statements, and the certified pairs
+The same for ℓ = 11 (13 200 elements), ℓ = 13 (26 208), ℓ = 17 (78 336) and ℓ = 19 (123 120): the matrix inverse is
+PROVED (`adj_left_inverse`: u·adj(z)·z = 1 when u·det z = 1, a ring identity; `inv_of_invTable`) over the
+scalar inverse table (`invTable`, ℓ² operations), so `FieldFacts.of` assembles the ℓ-specific facts from
+three ℓ²-sized decided statements and nothing of size ℓ⁴ is enumerated outside the pair certificates, and the certified pairs
 are found lazily (most-covering candidate pair first; a pair is certified exactly when the words the
 kernel will check exist, found by breadth-first search with early exit; no multiplication table above
 2016 elements).  Kernel: `pairsℓ_ok` (all witnesses and words), `curvesℓ_ok` (for each
@@ -515,7 +516,7 @@ Python mirror: `test_word_certificates_are_valid` checks exactly what Lean check
 conjugators, words) for ℓ = 5, 7, 11, 13, 17, 19 and the full pair closures for ℓ ≤ 7.  The instances
 (one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 11 min wall (ℓ = 19 alone; 20 min of kernel
 time in all) under 5 GB per process (ℓ = 19: a pair ≈ 56 s and
-4.6 GB, the inverse check 64 s and 4.2 GB, `S_generates` under a second; the 660 KB data file, words packed
+4.6 GB, the field facts and `S_generates` under a second; the 660 KB data file, words packed
 as naturals, elaborates in 55 s).  Kernel bookkeeping that made
 this feasible (`Generation.lean`, `ImageModL.lean`): the kernel caches the normal form of every closed
 term it meets until the declaration is checked, so memory is the number of distinct terms evaluated, not
@@ -538,6 +539,7 @@ the closure does two products per element; (viii) one declaration per certified 
 is freed between declarations (ℓ = 13: 7.5 GB for the eight pairs together, 1.5 GB each alone).
 Before (i)–(iii) the ℓ = 13 checks were killed at 13.6 GB; before (vii) the ℓ = 17 closure took 11.3 GB.  (ix) Finally the closure is gone: `gl2_generated` proves once that
 E₁₂(1), E₂₁(1), diag(1, ζ) generate GL₂(𝔽_ℓ), so the only enumeration left per ℓ is the class-pair
-certificates (each ≈ ℓ⁴ code scans plus ℓ² words), and ℓ = 19 costs no more than a pair does.
+certificates (each ≈ ℓ⁴ code scans plus ℓ² words), and ℓ = 19 costs no more than a pair does; (x) likewise the inverse check (ℓ⁴ codes, 64 s and 4.2 GB
+at ℓ = 19) is replaced by the adjugate identity over an ℓ² table of scalar inverses.
 `forced_full_classes` (Python) now prunes the first set to conjugacy representatives only when every
 set is conjugation-invariant (review fix; counterexample test in GL₂(𝔽₂)).

@@ -9,7 +9,6 @@ namespace Mat2
 
 theorem traceSq19 : ∀ a b c d : Fin 19, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by trace_sq_tac
 theorem negFacts19 : NegFacts 19 := ⟨by decide, by decide, by decide, by decide⟩
-set_option maxHeartbeats 0 in
 theorem ff19 : FieldFacts 19 := FieldFacts.of traceSq19 negFacts19 (by decide +kernel)
 theorem S19_generates : S_generates 19 mod19Cert.zeta mod19Cert.S = true := by decide +kernel
 set_option maxHeartbeats 0 in
