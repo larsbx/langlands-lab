@@ -83,7 +83,7 @@ def _invariants(m, ell):
 def test_mod3_image_of_37a1_is_full():
     """rho_3(Frob_5) has order 8 and rho_3(Frob_7) is a non-scalar unipotent; every pair of elements of
     GL_2(F_3) with these invariants generates the whole group, so the image of rho_3 (a subgroup meeting
-    both conjugacy classes) is GL_2(F_3).  Mirrors lean/LanglandsOracles/ImageMod3.lean."""
+    both conjugacy classes) is GL_2(F_3).  Mirrors proof/langlands/LanglandsOracles/ImageMod3.lean."""
     F5 = frobenius_matrix(E37.reduction(5), 3).matrix
     F7 = frobenius_matrix(E37.reduction(7), 3).matrix
     assert _invariants(F5, 3) in {(1, 2, False), (2, 2, False)}, F5   # order 8
