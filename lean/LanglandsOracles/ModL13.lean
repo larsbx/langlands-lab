@@ -8,7 +8,7 @@ namespace Oracles
 namespace Mat2
 
 theorem traceSq13 : ∀ a b c d : Fin 13, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by trace_sq_tac
-theorem negFacts13 : NegFacts 13 := ⟨by decide, by decide, by decide, by decide⟩
+theorem negFacts13 : NegFacts 13 := ⟨by decide, by decide, by decide, by decide, by decide⟩
 theorem ff13 : FieldFacts 13 := FieldFacts.of traceSq13 negFacts13 (by decide +kernel)
 theorem S13_generates : S_generates 13 mod13Cert.zeta mod13Cert.S = true := by decide +kernel
 set_option maxHeartbeats 0 in

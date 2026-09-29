@@ -8,7 +8,7 @@ namespace Oracles
 namespace Mat2
 
 theorem traceSq7 : ∀ a b c d : Fin 7, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by trace_sq_tac
-theorem negFacts7 : NegFacts 7 := ⟨by decide, by decide, by decide, by decide⟩
+theorem negFacts7 : NegFacts 7 := ⟨by decide, by decide, by decide, by decide, by decide⟩
 theorem ff7 : FieldFacts 7 := FieldFacts.of traceSq7 negFacts7 (by decide +kernel)
 theorem S7_generates : S_generates 7 mod7Cert.zeta mod7Cert.S = true := by decide +kernel
 theorem pair7_0 : pairOk 7 mod7Cert.S mod7Pair0 = true := by decide +kernel

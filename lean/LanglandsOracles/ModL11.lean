@@ -8,7 +8,7 @@ namespace Oracles
 namespace Mat2
 
 theorem traceSq11 : ∀ a b c d : Fin 11, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by trace_sq_tac
-theorem negFacts11 : NegFacts 11 := ⟨by decide, by decide, by decide, by decide⟩
+theorem negFacts11 : NegFacts 11 := ⟨by decide, by decide, by decide, by decide, by decide⟩
 theorem ff11 : FieldFacts 11 := FieldFacts.of traceSq11 negFacts11 (by decide +kernel)
 theorem S11_generates : S_generates 11 mod11Cert.zeta mod11Cert.S = true := by decide +kernel
 set_option maxHeartbeats 0 in

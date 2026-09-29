@@ -23,11 +23,10 @@ matrix kills no nonzero vector, `det_ne_zero_of_left_inverse`).  Everything spec
 Arithmetic input: for each curve, Lean's own point counts give a_{p₁}, a_{p₂} mod ℓ (`curves_ok`),
 so ρ̄_ℓ(Frob_{p₁}) ∈ A and ρ̄_ℓ(Frob_{p₂}) ∈ B by Eichler–Shimura, the only imported step.  Results:
 mod 5 for the 14 curves other than 11a1 (rational 5-torsion); mod 7, 11 and 13 for all 15.
-Kernel bookkeeping that made this feasible: every arithmetic step is a `Nat.*` call on literals (an
+Kernel bookkeeping that made this feasible: every arithmetic step on codes is a `Nat.*` call on literals (an
 operator's instance chain is unfolded and cached link by link at every call, and that triples the kernel's
-work), the closure keeps its frontier as a list of codes and never scans the code range, class membership
-is tested on codes rather than on filtered lists of matrices, and the ℓ ≥ 11 checks lift the default
-heartbeat limit.  The per-ℓ instances and the headlines are in `ModLImages`.
+work); a class is enumerated in ℓ² + ℓ elements (`classMats`, PROVED complete) rather than found by scanning
+ℓ⁴ codes, so nothing of size ℓ⁴ is evaluated; and the ℓ ≥ 11 checks lift the default heartbeat limit.  The per-ℓ instances and the headlines are in `ModLImages`.
 -/
 namespace Oracles
 
@@ -138,6 +137,10 @@ theorem apply_zero (w : Mat2 n) : applyV w (0, 0) = (0, 0) := by
 theorem mul_zero_mat (w : Mat2 n) : M2.mul w ⟨0, 0, 0, 0⟩ = ⟨0, 0, 0, 0⟩ := by
   simp only [M2.mul, (R).mul_zero, (R).add_zero]
 
+/-- A scalar inverse by search (kernel-evaluable; `invOf_spec` from the inverse table). -/
+def invOf (n : Nat) [NeZero n] (b : Fin n) : Fin n :=
+  finN (((List.range n).find? fun u => b.val * u % n == 1).getD 0)
+
 /-- The facts about ℤ/n that the certificate needs, decided or kernel-checked per n. -/
 structure FieldFacts (n : Nat) [NeZero n] : Prop where
   trace_sq : ∀ x : Mat2 n, (M2.mul x x).trace = x.trace * x.trace - 2 * x.det
@@ -145,7 +148,9 @@ structure FieldFacts (n : Nat) [NeZero n] : Prop where
     applyV ⟨a, b, c, d⟩ (d, 0 - c) = (0, 0) ∧ applyV ⟨a, b, c, d⟩ (0 - b, a) = (0, 0)
   neg_eq_zero : ∀ c : Fin n, 0 - c = 0 → c = 0
   one_ne_zero : (1 : Fin n) ≠ 0
+  two_ne_zero : (2 : Fin n) ≠ 0
   sub_eq : ∀ x y : Fin n, x - y = x + (0 - y)
+  invOf_spec : ∀ b : Fin n, b ≠ 0 → b * invOf n b = 1
   inv : ∀ z ∈ gl n, ∃ z' : Mat2 n, M2.mul z' z = M2.one
 
 section withFieldFacts
@@ -181,95 +186,6 @@ theorem conj_mem_gl {C C' : Mat2 n} (hCC' : M2.mul C C' = M2.one) (hC'C : M2.mul
   rw [conj_mul' hCC', hz', M2.mul_one R, hC'C]
 
 end withFieldFacts
-
-/-- Class B through traces: tr h = t_B and tr h² = t_B² − 2 d_B (Cayley–Hamilton); conjugation-invariant. -/
-def ClassB (pr : PairCert) (x : Mat2 n) : Prop :=
-  x.trace = finN pr.tB ∧ (M2.mul x x).trace = finN pr.tB * finN pr.tB - 2 * finN pr.dB
-
-theorem ClassB_conj {C C' : Mat2 n} (h : M2.mul C C' = M2.one) {pr : PairCert} {x : Mat2 n}
-    (hx : ClassB pr x) : ClassB pr (M2.mul (M2.mul C' x) C) := by
-  unfold ClassB at hx ⊢
-  rw [conj_mul' h, trace_conj' h, trace_conj' h]
-  exact hx
-
-theorem ClassB_of_charpoly (ff : FieldFacts n) {pr : PairCert} {h : Mat2 n} (ht : h.trace = finN pr.tB) (hd : h.det = finN pr.dB) :
-    ClassB pr h := by
-  unfold ClassB
-  rw [ff.trace_sq, ht, hd]
-  exact ⟨rfl, rfl⟩
-
--- ---------------------------------------------------------------- codes: digits, trace, determinant --
-
-theorem digit_a (x : Mat2 n) : Nat.mod (encode x) n = x.a.val := congrArg (fun m : Mat2 n => m.a.val) (decode_encode x)
-theorem digit_b (x : Mat2 n) : Nat.mod (Nat.div (encode x) n) n = x.b.val := congrArg (fun m : Mat2 n => m.b.val) (decode_encode x)
-theorem digit_c (x : Mat2 n) : Nat.mod (Nat.div (Nat.div (encode x) n) n) n = x.c.val :=
-  congrArg (fun m : Mat2 n => m.c.val) (decode_encode x)
-theorem digit_d (x : Mat2 n) : Nat.mod (Nat.div (Nat.div (Nat.div (encode x) n) n) n) n = x.d.val :=
-  congrArg (fun m : Mat2 n => m.d.val) (decode_encode x)
-
-/-- Trace and determinant on codes. -/
-def trCode (n i : Nat) : Nat := Nat.mod (Nat.add (Nat.mod i n) (Nat.mod (Nat.div (Nat.div (Nat.div i n) n) n) n)) n
-def detCode (n i : Nat) : Nat :=
-  let a := Nat.mod i n; let i1 := Nat.div i n; let b := Nat.mod i1 n; let i2 := Nat.div i1 n
-  let c := Nat.mod i2 n; let d := Nat.mod (Nat.div i2 n) n
-  Nat.mod (Nat.add (Nat.sub n (Nat.mod (Nat.mul b c) n)) (Nat.mod (Nat.mul a d) n)) n
-
-theorem trCode_encode (x : Mat2 n) : trCode n (encode x) = x.trace.val := by
-  unfold trCode; rw [digit_a, digit_d]; rfl
-
-theorem detCode_encode (x : Mat2 n) : detCode n (encode x) = x.det.val := by
-  unfold detCode; dsimp only; rw [digit_a, digit_b, digit_c, digit_d]; rfl
-
-/-- `p` holds at every code i < k of nonzero determinant, scanning downwards. -/
-def allCodes (n : Nat) (p : Nat → Bool) : Nat → Bool
-  | 0 => true
-  | i + 1 => (Nat.beq (detCode n i) 0 || p i) && allCodes n p i
-
-omit [NeZero n] in
-theorem allCodes_lt {p : Nat → Bool} : ∀ k, allCodes n p k = true → ∀ i, i < k → Nat.beq (detCode n i) 0 = false → p i = true
-  | 0, _, i, hi, _ => absurd hi (Nat.not_lt_zero i)
-  | k + 1, h, i, hi, hd => by
-    unfold allCodes at h
-    have h1 := (Bool.and_eq_true _ _ |>.mp h).1
-    have h2 := (Bool.and_eq_true _ _ |>.mp h).2
-    rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hi) with hlt | rfl
-    · exact allCodes_lt k h2 i hlt hd
-    · rw [hd, Bool.false_or] at h1; exact h1
-
-theorem allCodes_sound {p : Nat → Bool} (h : allCodes n p (n ^ 4) = true) : ∀ z ∈ gl n, p (encode z) = true := by
-  intro z hz
-  have hdet : z.det.val ≠ 0 := bne_iff_ne.mp (List.mem_filter.mp hz).2
-  refine allCodes_lt _ h _ (encode_lt z) ?_
-  cases hb : Nat.beq (detCode n (encode z)) 0
-  · rfl
-  · exact absurd (detCode_encode z ▸ Nat.eq_of_beq_eq_true hb) hdet
-
-omit [NeZero n] in
-theorem beq_val {a : Nat} {u : Fin n} (e : a = u.val) (v : Fin n) : Nat.beq a v.val = true ↔ u = v := by
-  rw [Nat.beq_eq, e]; exact Fin.val_inj
-
-omit [NeZero n] in
-theorem or_of_not {b c : Bool} (h : (!b || c) = true) (hb : b = true) : c = true := by
-  cases b
-  · exact absurd hb Bool.false_ne_true
-  · exact h
-
-/-- Class A on codes: trace t_A, determinant d_A. -/
-def classA (n : Nat) [NeZero n] (pr : PairCert) (i : Nat) : Bool :=
-  Nat.beq (trCode n i) (finN pr.tA : Fin n).val && Nat.beq (detCode n i) (finN pr.dA : Fin n).val
-
-/-- Class B on codes. -/
-def classB (n : Nat) [NeZero n] (pr : PairCert) (i : Nat) : Bool :=
-  Nat.beq (trCode n i) (finN pr.tB : Fin n).val &&
-    Nat.beq (trCode n (mulNat n i i)) (finN pr.tB * finN pr.tB - 2 * finN pr.dB : Fin n).val
-
-theorem classA_iff (pr : PairCert) (g : Mat2 n) : classA n pr (encode g) = true ↔ g.trace = finN pr.tA ∧ g.det = finN pr.dA := by
-  unfold classA
-  rw [Bool.and_eq_true, beq_val (trCode_encode g), beq_val (detCode_encode g)]
-
-theorem classB_iff (pr : PairCert) (x : Mat2 n) : classB n pr (encode x) = true ↔ ClassB pr x := by
-  unfold classB ClassB
-  rw [Bool.and_eq_true, beq_val (trCode_encode x), mulNat_codes, beq_val (trCode_encode (M2.mul x x))]
 
 -- ---------------------------------------------------------------- the certificate --
 
@@ -358,6 +274,19 @@ theorem add_sub_cancel' (a b : Fin n) : a + (b - a) = b := by
 theorem sub_zero' (x : Fin n) : x - 0 = x := by
   rw [hs, Fin.sub_self, (R).add_zero]
 
+theorem neg_unique {u v : Fin n} (h : u + v = 0) : u = 0 - v :=
+  calc u = u + (v + (0 - v)) := by rw [add_neg_cancel hs, (R).add_zero]
+    _ = (u + v) + (0 - v) := by rw [(R).add_assoc]
+    _ = 0 - v := by rw [h, (R).zero_add]
+
+theorem sub_sub_cancel (x y : Fin n) : x - (x - y) = y := by
+  have h1 : ((0 - x) + y) + (x + (0 - y)) = 0 := by
+    rw [(R).add_assoc, ← (R).add_assoc y, (R).add_comm y x, (R).add_assoc x, add_neg_cancel hs, (R).add_zero, neg_add_cancel hs]
+  rw [hs x (x - y), hs x y, ← neg_unique hs h1, ← (R).add_assoc, add_neg_cancel hs, (R).zero_add]
+
+theorem add_sub_cancel_left (a d : Fin n) : (a + d) - a = d := by
+  rw [hs, (R).add_comm a d, (R).add_assoc, add_neg_cancel hs, (R).add_zero]
+
 end cancel
 
 section generation
@@ -388,18 +317,6 @@ theorem E12_mem_gl (u : Fin n) : E12 u ∈ gl n :=
 
 theorem E21_mem_gl (u : Fin n) : E21 u ∈ gl n :=
   mem_gl _ (det_ne_zero_of_left_inverse ff _ (E21 (0 - u)) (E21_neg_mul ff u))
-
-/-- A nonzero scalar is invertible: the left inverse of diag(c, 1) in GL₂ gives it. -/
-theorem scalar_inv {c : Fin n} (hc : c ≠ 0) : ∃ ci : Fin n, c * ci = 1 := by
-  have hgl : (⟨c, 0, 0, 1⟩ : Mat2 n) ∈ gl n := mem_gl _ (by
-    show (c * 1 - 0 * 0).val ≠ 0
-    rw [(R).mul_one, (R).zero_mul, sub_zero' ff.sub_eq]
-    exact fun h => hc (Fin.ext h))
-  obtain ⟨z', hz'⟩ := ff.inv _ hgl
-  have := congrArg M2.a hz'
-  simp only [M2.mul, M2.one] at this
-  rw [(R).mul_zero, (R).add_zero, (R).mul_comm] at this
-  exact ⟨z'.a, this⟩
 
 variable (H : List (Mat2 n)) (hmul : ∀ x ∈ H, ∀ y ∈ H, M2.mul x y ∈ H)
 include hmul
@@ -456,7 +373,7 @@ product of elements of H, each step undone by the inverse elementary matrix. -/
 theorem generated_of_c_ne (g : Mat2 n) (hg : g ∈ gl n) (hc : g.c ≠ 0) : g ∈ H := by
   obtain ⟨a, b, c, d⟩ := g
   simp only at hc
-  obtain ⟨ci, hci⟩ := scalar_inv ff hc
+  obtain ⟨ci, hci⟩ : ∃ ci, c * ci = 1 := ⟨_, ff.invOf_spec c hc⟩
   have h1 : M2.mul (E12 ((1 - a) * ci)) ⟨a, b, c, d⟩ = ⟨1, b + (1 - a) * ci * d, c, d⟩ := by
     have ha : a + (1 - a) * ci * c = 1 := by
       rw [(R).mul_assoc, (R).mul_comm ci c, hci, (R).mul_one, add_sub_cancel' ff.sub_eq a 1]
@@ -503,17 +420,63 @@ theorem gl2_generated : ∀ g ∈ gl n, g ∈ H := by
 
 end generation
 
+-- ---------------------------------------------------------------- the classes --
+
+/-- The matrices with trace t and determinant d, enumerated in at most n² + n elements: the (2,2) entry is
+t − a, and for b ≠ 0 the entry c = (a(t − a) − d)·b⁻¹ is determined, while for b = 0 the entry c is free and
+a(t − a) = d. -/
+def classMats (n : Nat) [NeZero n] (t d : Fin n) : List (Mat2 n) :=
+  (fins n).flatMap fun a => (fins n).flatMap fun b =>
+    if b = 0 then (if a * (t - a) = d then (fins n).map fun c => ⟨a, 0, c, t - a⟩ else [])
+    else [⟨a, b, (a * (t - a) - d) * invOf n b, t - a⟩]
+
+/-- **The enumeration is complete.** -/
+theorem mem_classMats (ff : FieldFacts n) {t d : Fin n} (g : Mat2 n) (ht : g.trace = t) (hd : g.det = d) :
+    g ∈ classMats n t d := by
+  obtain ⟨a, b, c, d'⟩ := g
+  have ht : a + d' = t := ht
+  have hd : a * d' - b * c = d := hd
+  have hd' : d' = t - a := by rw [← ht, add_sub_cancel_left ff.sub_eq]
+  subst hd'
+  unfold classMats
+  refine List.mem_flatMap.mpr ⟨a, mem_fins a, List.mem_flatMap.mpr ⟨b, mem_fins b, ?_⟩⟩
+  by_cases hb : b = 0
+  · subst hb
+    rw [ite_eq_left rfl]
+    have : a * (t - a) = d := by rw [← hd, (R).zero_mul, sub_zero' ff.sub_eq]
+    rw [ite_eq_left this]
+    exact List.mem_map.mpr ⟨c, mem_fins c, rfl⟩
+  · rw [ite_eq_right hb]
+    have hbc : b * c = a * (t - a) - d := by rw [← hd, sub_sub_cancel ff.sub_eq]
+    have hc : c = (a * (t - a) - d) * invOf n b := by
+      rw [← hbc, (R).mul_comm b c, (R).mul_assoc, ff.invOf_spec b hb, (R).mul_one]
+    rw [hc]
+    exact List.mem_cons_self ..
+
+/-- 2·det x = tr(x)² − tr(x²) (Cayley–Hamilton), so the determinant is conjugation-invariant when 2 is
+invertible — without determinant multiplicativity. -/
+theorem two_mul_det (ff : FieldFacts n) (x : Mat2 n) : 2 * x.det = x.trace * x.trace - (M2.mul x x).trace := by
+  rw [ff.trace_sq, sub_sub_cancel ff.sub_eq]
+
+theorem det_conj (ff : FieldFacts n) {C C' : Mat2 n} (h : M2.mul C C' = M2.one) (x : Mat2 n) :
+    Mat2.det (M2.mul (M2.mul C' x) C) = x.det := by
+  have e : 2 * Mat2.det (M2.mul (M2.mul C' x) C) = 2 * x.det := by
+    rw [two_mul_det ff, two_mul_det ff, conj_mul' h, trace_conj' h, trace_conj' h]
+  have h2 := ff.invOf_spec 2 ff.two_ne_zero
+  rw [← (R).one_mul (Mat2.det (M2.mul (M2.mul C' x) C)), ← (R).one_mul x.det, ← h2, (R).mul_comm 2, (R).mul_assoc,
+    (R).mul_assoc, e]
+
 /-- S is [E₁₂(1), E₂₁(1), diag(1, ζ)] and ζ generates (ℤ/n)^×: with `gl2_generated`, S generates GL₂. -/
 def S_generates (n : Nat) [NeZero n] (z : Nat) (S : List Nat) : Bool :=
   S == [encode (E12 (1 : Fin n)), encode (E21 (1 : Fin n)), encode (diag (finN z) : Mat2 n)] && zetaGen n z
 
 def pairOk (n : Nat) [NeZero n] (S : List Nat) (pr : PairCert) : Bool :=
-  pr.dA % n != 0 && pr.dB % n != 0 && encode (decode n pr.gRep) == pr.gRep &&
-  allCodes n (fun i => !classA n pr i || pr.witnessesA.any fun w =>
-    Nat.beq w.1 i && Nat.beq (mulNat n (mulNat n w.2.1 pr.gRep) w.2.2) i
-      && Nat.beq (mulNat n w.2.1 w.2.2) (encode (M2.one : Mat2 n)) && Nat.beq (mulNat n w.2.2 w.2.1) (encode (M2.one : Mat2 n))) (n ^ 4) &&
-  allCodes n (fun i => !classB n pr i || pr.wordsB.any fun e =>
-    Nat.beq e.1 i && S.all fun s => e.2.any fun sw => Nat.beq sw.1 s && Nat.beq (evalWord n pr.gRep e.1 sw.2) s) (n ^ 4)
+  encode (decode n pr.gRep) == pr.gRep &&
+  (classMats n (finN pr.tA) (finN pr.dA)).all (fun g => pr.witnessesA.any fun w =>
+    Nat.beq w.1 (encode g) && Nat.beq (mulNat n (mulNat n w.2.1 pr.gRep) w.2.2) (encode g)
+      && Nat.beq (mulNat n w.2.1 w.2.2) (encode (M2.one : Mat2 n)) && Nat.beq (mulNat n w.2.2 w.2.1) (encode (M2.one : Mat2 n))) &&
+  (classMats n (finN pr.tB) (finN pr.dB)).all (fun h => pr.wordsB.any fun e =>
+    Nat.beq e.1 (encode h) && S.all fun s => e.2.any fun sw => Nat.beq sw.1 s && Nat.beq (evalWord n pr.gRep e.1 sw.2) s)
 
 /-- A matrix with (1,1) entry 1 has a nonzero code (1 ≠ 0 in ℤ/n). -/
 theorem encode_ne_zero (ff : FieldFacts n) {x : Mat2 n} (hx : x.a = 1) : encode x ≠ 0 := by
@@ -537,13 +500,9 @@ theorem pair_sound (ff : FieldFacts n) (z : Nat) (S : List Nat) (hS : S_generate
   unfold pairOk at hok
   have h4 := (Bool.and_eq_true _ _ |>.mp hok).2
   have h3 := (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp hok).1).2
-  have h123 := (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp hok).1).1
-  have hgRep : encode (decode n pr.gRep) = pr.gRep := beq_iff_eq.mp (Bool.and_eq_true _ _ |>.mp h123).2
-  have hdA := bne_iff_ne.mp (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp h123).1).1
-  have hdB := bne_iff_ne.mp (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp h123).1).2
-  -- g ∈ GL₂ and its conjugator
-  have hgl : g ∈ gl n := mem_gl g (by rw [hA.2]; exact hdA)
-  obtain ⟨w, _, hw⟩ := List.any_eq_true.mp (or_of_not (allCodes_sound h3 g hgl) ((classA_iff pr g).mpr hA))
+  have hgRep : encode (decode n pr.gRep) = pr.gRep := beq_iff_eq.mp (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp hok).1).1
+  -- the conjugator of g
+  obtain ⟨w, _, hw⟩ := List.any_eq_true.mp (List.all_eq_true.mp h3 g (mem_classMats ff g hA.1 hA.2))
   have hw4 := (Bool.and_eq_true _ _ |>.mp hw).2
   have hw3 := (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp hw).1).2
   have hw2 := (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp hw).1).1).2
@@ -565,10 +524,10 @@ theorem pair_sound (ff : FieldFacts n) (z : Nat) (S : List Nat) (hS : S_generate
     exact List.mem_map.mpr ⟨M2.mul x0 y0, hmul x0 hx0 y0 hy0, (conj_mul' hCC' x0 y0).symm⟩
   have hgRep' : decode n pr.gRep ∈ H' := List.mem_map.mpr ⟨g, hg, by rw [← hCg, conj_conj' hC'C]⟩
   have hh' : M2.mul (M2.mul C' h) C ∈ H' := List.mem_map.mpr ⟨h, hh, rfl⟩
-  have hB' : ClassB pr (M2.mul (M2.mul C' h) C) := ClassB_conj hCC' (ClassB_of_charpoly ff hB.1 hB.2)
-  have hhgl : M2.mul (M2.mul C' h) C ∈ gl n := conj_mem_gl ff hCC' hC'C (mem_gl h (by rw [hB.2]; exact hdB))
+  have hB' : (M2.mul (M2.mul C' h) C).trace = finN pr.tB ∧ Mat2.det (M2.mul (M2.mul C' h) C) = finN pr.dB :=
+    ⟨by rw [trace_conj' hCC', hB.1], by rw [det_conj ff hCC', hB.2]⟩
   -- the words put S inside H′
-  obtain ⟨e, _, he⟩ := List.any_eq_true.mp (or_of_not (allCodes_sound h4 _ hhgl) ((classB_iff pr _).mpr hB'))
+  obtain ⟨e, _, he⟩ := List.any_eq_true.mp (List.all_eq_true.mp h4 _ (mem_classMats ff _ hB'.1 hB'.2))
   have he1 : e.1 = encode (M2.mul (M2.mul C' h) C) := Nat.eq_of_beq_eq_true (Bool.and_eq_true _ _ |>.mp he).1
   have hwords := (Bool.and_eq_true _ _ |>.mp he).2
   unfold S_generates at hS
@@ -649,6 +608,7 @@ structure NegFacts (n : Nat) [NeZero n] : Prop where
   sub_eq : ∀ x y : Fin n, x - y = x + (0 - y)
   neg_eq_zero : ∀ c : Fin n, 0 - c = 0 → c = 0
   one_ne_zero : (1 : Fin n) ≠ 0
+  two_ne_zero : (2 : Fin n) ≠ 0
 
 /-- A singular matrix kills (d, −c) and (−b, a): from `NegFacts` and the semiring laws, no n⁴-case decide. -/
 theorem kernel_vectors_of (nf : NegFacts n) : ∀ a b c d : Fin n, a * d - b * c = 0 →
@@ -697,6 +657,28 @@ theorem adj_left_inverse (nf : NegFacts n) (z : Mat2 n) {u : Fin n} (hu : u * z.
     = ⟨1, 0, 0, 1⟩
   rw [e11, e12, e21, e22]
 
+/-- The searched inverse is one, from the table. -/
+theorem invOf_spec_of (h : invTable n = true) (b : Fin n) (hb : b ≠ 0) : b * invOf n b = 1 := by
+  obtain ⟨u, hu⟩ := invTable_sound h b hb
+  have hn : 1 < n := Nat.lt_of_le_of_lt (Nat.pos_of_ne_zero fun e => hb (Fin.ext e)) b.isLt
+  have hex : ∃ v, (List.range n).find? (fun u => b.val * u % n == 1) = some v := by
+    cases hf : (List.range n).find? (fun u => b.val * u % n == 1) with
+    | some v => exact ⟨v, rfl⟩
+    | none =>
+      have e := congrArg Fin.val hu
+      rw [Fin.val_mul] at e
+      exact absurd (show (b.val * u.val % n == 1) = true by rw [e]; exact beq_iff_eq.mpr (Nat.mod_eq_of_lt hn))
+        (List.find?_eq_none.mp hf u.val (List.mem_range.mpr u.isLt))
+  obtain ⟨v, hv⟩ := hex
+  have hpv := List.find?_some hv
+  have hvn : v < n := List.mem_range.mp (List.mem_of_find?_eq_some hv)
+  show b * finN (((List.range n).find? fun u => b.val * u % n == 1).getD 0) = 1
+  rw [hv]
+  exact Fin.ext (by
+    show b.val * (v % n) % n = 1 % n
+    rw [Nat.mod_eq_of_lt hvn, Nat.mod_eq_of_lt hn]
+    exact beq_iff_eq.mp hpv)
+
 /-- Every invertible matrix has a left inverse: the adjugate over the scalar inverse of its determinant. -/
 theorem inv_of_invTable (nf : NegFacts n) (h : invTable n = true) : ∀ z ∈ gl n, ∃ z' : Mat2 n, M2.mul z' z = M2.one := by
   intro z hz
@@ -711,7 +693,9 @@ theorem FieldFacts.of (hsq : ∀ a b c d : Fin n, (a * a + b * c) + (c * b + d *
   kernel_vectors := kernel_vectors_of nf
   neg_eq_zero := nf.neg_eq_zero
   one_ne_zero := nf.one_ne_zero
+  two_ne_zero := nf.two_ne_zero
   sub_eq := nf.sub_eq
+  invOf_spec := invOf_spec_of hinv
   inv := inv_of_invTable nf hinv
 
 /-- Cayley–Hamilton for the trace of the square, over ℤ/n for a literal n: expand with the semiring laws,

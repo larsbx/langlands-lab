@@ -490,8 +490,8 @@ conjugacy classes without scalars — a fixed representative gRep of A, and for 
 in {gRep, h} (length ≤ 27, each packed as one natural) whose values are the elements of S, verified by a few dozen products each;
 (3) for every g ∈ A a conjugator C with C·gRep·C⁻¹ = g.  Soundness (`pair_sound`, PROVED): a
 multiplicatively closed H ∋ g ∈ A, h ∈ B is conjugated by C⁻¹ to H′ ∋ gRep, C⁻¹hC; C⁻¹hC is again in
-B because B is cut out by tr and tr² (Cayley–Hamilton `trace_sq`, decided per ℓ), both invariant by
-`trace_mul_comm`; the words put S in H′, so H′ ⊇ GL₂(𝔽_ℓ) by `gl2_generated`, and conjugating back uses that conjugation
+B because tr is invariant by `trace_mul_comm` and det by Cayley–Hamilton (`det_conj`: 2·det = tr² − tr(x²),
+2 invertible), so no determinant multiplicativity is needed; the words put S in H′, so H′ ⊇ GL₂(𝔽_ℓ) by `gl2_generated`, and conjugating back uses that conjugation
 by a unit preserves the enumerated GL₂(𝔽_ℓ), PROVED without determinant multiplicativity: a
 left-invertible matrix kills no nonzero vector, while a singular 2×2 matrix kills (d, −c) or (−b, a)
 (`kernel_vectors`, decided per ℓ; `det_ne_zero_of_left_inverse`).  Everything specific to ℓ is a
@@ -514,9 +514,8 @@ the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, �
 are certified for every ℓ ≤ 19 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
 Python mirror: `test_word_certificates_are_valid` checks exactly what Lean checks (S generates,
 conjugators, words) for ℓ = 5, 7, 11, 13, 17, 19 and the full pair closures for ℓ ≤ 7.  The instances
-(one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 11 min wall (ℓ = 19 alone; 20 min of kernel
-time in all) under 5 GB per process (ℓ = 19: a pair ≈ 56 s and
-4.6 GB, the field facts and `S_generates` under a second; the 660 KB data file, words packed
+(one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 3.5 min wall (ℓ = 19 alone; 8 min of kernel
+time in all) under 2.3 GB per process (ℓ = 19: a pair ≈ 22 s, the field facts and `S_generates` under a second; the 660 KB data file, words packed
 as naturals, elaborates in 55 s).  Kernel bookkeeping that made
 this feasible (`Generation.lean`, `ImageModL.lean`): the kernel caches the normal form of every closed
 term it meets until the declaration is checked, so memory is the number of distinct terms evaluated, not
@@ -539,7 +538,11 @@ the closure does two products per element; (viii) one declaration per certified 
 is freed between declarations (ℓ = 13: 7.5 GB for the eight pairs together, 1.5 GB each alone).
 Before (i)–(iii) the ℓ = 13 checks were killed at 13.6 GB; before (vii) the ℓ = 17 closure took 11.3 GB.  (ix) Finally the closure is gone: `gl2_generated` proves once that
 E₁₂(1), E₂₁(1), diag(1, ζ) generate GL₂(𝔽_ℓ), so the only enumeration left per ℓ is the class-pair
-certificates (each ≈ ℓ⁴ code scans plus ℓ² words), and ℓ = 19 costs no more than a pair does; (x) likewise the inverse check (ℓ⁴ codes, 64 s and 4.2 GB
-at ℓ = 19) is replaced by the adjugate identity over an ℓ² table of scalar inverses.
+certificates, and ℓ = 19 costs no more than a pair does; (x) likewise the inverse check (ℓ⁴ codes, 64 s and 4.2 GB
+at ℓ = 19) is replaced by the adjugate identity over an ℓ² table of scalar inverses; (xi) and the classes are
+enumerated rather than found by scanning ℓ⁴ codes: a class {tr = t, det = d} has at most ℓ² + ℓ elements
+(`classMats`: the (2,2) entry is t − a, and c = (a(t − a) − d)·b⁻¹ when b ≠ 0), PROVED complete
+(`mem_classMats`), so a pair certificate is ℓ² conjugators and ℓ² × 3 words and nothing of size ℓ⁴ is
+evaluated anywhere.
 `forced_full_classes` (Python) now prunes the first set to conjugacy representatives only when every
 set is conjugation-invariant (review fix; counterexample test in GL₂(𝔽₂)).

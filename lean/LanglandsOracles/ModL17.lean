@@ -8,7 +8,7 @@ namespace Oracles
 namespace Mat2
 
 theorem traceSq17 : ∀ a b c d : Fin 17, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by trace_sq_tac
-theorem negFacts17 : NegFacts 17 := ⟨by decide, by decide, by decide, by decide⟩
+theorem negFacts17 : NegFacts 17 := ⟨by decide, by decide, by decide, by decide, by decide⟩
 theorem ff17 : FieldFacts 17 := FieldFacts.of traceSq17 negFacts17 (by decide +kernel)
 theorem S17_generates : S_generates 17 mod17Cert.zeta mod17Cert.S = true := by decide +kernel
 set_option maxHeartbeats 0 in

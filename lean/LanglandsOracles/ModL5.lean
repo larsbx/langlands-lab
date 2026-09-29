@@ -8,7 +8,7 @@ namespace Oracles
 namespace Mat2
 
 theorem traceSq5 : ∀ a b c d : Fin 5, (a * a + b * c) + (c * b + d * d) = (a + d) * (a + d) - 2 * (a * d - b * c) := by trace_sq_tac
-theorem negFacts5 : NegFacts 5 := ⟨by decide, by decide, by decide, by decide⟩
+theorem negFacts5 : NegFacts 5 := ⟨by decide, by decide, by decide, by decide, by decide⟩
 theorem ff5 : FieldFacts 5 := FieldFacts.of traceSq5 negFacts5 (by decide +kernel)
 theorem S5_generates : S_generates 5 mod5Cert.zeta mod5Cert.S = true := by decide +kernel
 theorem pair5_0 : pairOk 5 mod5Cert.S mod5Pair0 = true := by decide +kernel
