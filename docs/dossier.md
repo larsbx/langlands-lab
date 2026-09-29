@@ -498,7 +498,7 @@ left-invertible matrix kills no nonzero vector, while a singular 2×2 matrix kil
 `FieldFacts ℓ` record (decided per ℓ in ℓ² operations: Cayley–Hamilton for tr², the negation facts, the scalar
 inverse table).  The data (`mod5Cert`, `mod7Cert`, exported) are chosen by a greedy cover: mod 5, three
 pairs cover the 14 curves other than 11a1 (rational 5-torsion); mod 7, four pairs cover all 15.
-The same for ℓ = 11 (13 200 elements), ℓ = 13 (26 208), ℓ = 17 (78 336) and ℓ = 19 (123 120): the matrix inverse is
+The same for ℓ = 11 (13 200 elements), ℓ = 13 (26 208), ℓ = 17 (78 336), ℓ = 19 (123 120) and ℓ = 23 (267 168): the matrix inverse is
 PROVED (`adj_left_inverse`: u·adj(z)·z = 1 when u·det z = 1, a ring identity; `inv_of_invTable`) over the
 scalar inverse table (`invTable`, ℓ² operations), so `FieldFacts.of` assembles the ℓ-specific facts from
 three ℓ²-sized decided statements and nothing of size ℓ⁴ is enumerated outside the pair certificates, and the certified pairs
@@ -506,16 +506,16 @@ are found lazily (most-covering candidate pair first; a pair is certified exactl
 kernel will check exist, found by breadth-first search with early exit; no multiplication table above
 2016 elements).  Kernel: `pairsℓ_ok` (all witnesses and words), `curvesℓ_ok` (for each
 curve, a_{p₁}, a_{p₂} mod ℓ from Lean's point counts of the Weierstrass model match the pair), for
-ℓ ∈ {5, 7, 11, 13, 17, 19}, one declaration per certified pair so the kernel frees its cache between them.  Headlines
-`mod5_images_full`, …, `mod19_images_full` (`data_sound`): for every listed curve, any multiplicatively closed subset of
+ℓ ∈ {5, 7, 11, 13, 17, 19, 23}, one declaration per certified pair so the kernel frees its cache between them.  Headlines
+`mod5_images_full`, …, `mod23_images_full` (`data_sound`): for every listed curve, any multiplicatively closed subset of
 GL₂(𝔽_ℓ) containing elements with the characteristic polynomials of ρ̄_ℓ(Frob_{p₁}), ρ̄_ℓ(Frob_{p₂})
 is all of GL₂(𝔽_ℓ); with Eichler–Shimura mod ℓ as the only imported input, ρ̄₅ is surjective for
-the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉ for all 15 — the mod-ℓ images of all fifteen curves
-are certified for every ℓ ≤ 19 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
+the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉, ρ̄₂₃ for all 15 — the mod-ℓ images of all fifteen curves
+are certified for every ℓ ≤ 23 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
 Python mirror: `test_word_certificates_are_valid` checks exactly what Lean checks (S generates,
-conjugators, words) for ℓ = 5, 7, 11, 13, 17, 19 and the full pair closures for ℓ ≤ 7.  The instances
-(one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 3.5 min wall (ℓ = 19 alone; 8 min of kernel
-time in all) under 2.3 GB per process (ℓ = 19: a pair ≈ 22 s, the field facts and `S_generates` under a second; the 660 KB data file, words packed
+conjugators, words) for ℓ = 5, 7, 11, 13, 17, 19, 23 and the full pair closures for ℓ ≤ 7.  The instances
+(one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 12 min wall (ℓ = 23 alone) under 4.1 GB per process (ℓ = 19: a pair ≈ 22 s, ℓ = 23:
+a pair ≈ 53 s; the field facts and `S_generates` under a second; the 660 KB data file, words packed
 as naturals, elaborates in 55 s).  Kernel bookkeeping that made
 this feasible (`Generation.lean`, `ImageModL.lean`): the kernel caches the normal form of every closed
 term it meets until the declaration is checked, so memory is the number of distinct terms evaluated, not

@@ -159,16 +159,16 @@ class GL2:
         frontier = np.unique(roots)
         want = np.array(targets, dtype=np.int64)
         while frontier.size and not seen[want].all():
-            new = []
+            layer = np.zeros(self.n, dtype=bool)
             for i, col in enumerate(cols):
-                cand = col[frontier]
-                fresh = ~seen[cand]
-                u, first = np.unique(cand[fresh], return_index=True)
-                seen[u] = True
-                parent[u] = frontier[fresh][first]
-                letter[u] = i
-                new.append(u)
-            frontier = np.unique(np.concatenate(new)) if new else frontier[:0]
+                cand = col[frontier]  # right multiplication is a bijection: no duplicates within one generator
+                fresh = ~seen[cand] & ~layer[cand]
+                idx = cand[fresh]
+                parent[idx] = frontier[fresh]
+                letter[idx] = i
+                layer[idx] = True
+            frontier = np.flatnonzero(layer)
+            seen[frontier] = True
         out = {}
         for t in targets:
             if not seen[t]:
