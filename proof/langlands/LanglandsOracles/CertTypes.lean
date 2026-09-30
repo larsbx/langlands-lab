@@ -6,7 +6,8 @@ namespace Oracles
 /-- A certified pair of conjugacy classes of GL₂(𝔽_ℓ), given by characteristic polynomials
 x² − t_A x + d_A and x² − t_B x + d_B: a representative gRep of A (as a base-ℓ code), for every g in A
 a conjugator (g, C, C⁻¹) with C·gRep·C⁻¹ = g, and for every h in B, for each element s of the fixed generating set S, a word in {gRep, h}
-(false ↦ gRep, true ↦ h, evaluated left to right) with value s, stored as (s, word). -/
+with value s, stored as (s, word); the word b₀ … b_{k−1} (0 ↦ gRep, 1 ↦ h, evaluated left to right) is
+packed as the natural 1 b₀ … b_{k−1} in binary, the leading 1 marking its length. -/
 structure PairCert where
   tA : Nat
   dA : Nat
@@ -14,7 +15,7 @@ structure PairCert where
   dB : Nat
   gRep : Nat
   witnessesA : List (Nat × Nat × Nat)
-  wordsB : List (Nat × List (Nat × List Bool))
+  wordsB : List (Nat × List (Nat × Nat))
 
 /-- A curve with the index of the pair it uses and the primes p₁, p₂ whose Frobenius classes are A and B. -/
 structure CurveCert where
