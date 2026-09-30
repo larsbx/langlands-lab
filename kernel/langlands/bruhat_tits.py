@@ -23,6 +23,7 @@ from functools import cache, cached_property
 from itertools import product
 
 from . import local_field as lf
+from .ec_function_field import _ppow
 from .gf import poly_divmod, poly_mod, poly_mul, poly_sub, poly_add, _trim
 
 Vertex = tuple[int, tuple[tuple[int, int], ...]]  # (k, sorted nonzero (exponent, coeff) with exponent < k)
@@ -230,6 +231,17 @@ def _polys_of_degree_below(p: int, d: int):
     return (_trim(tuple(x)) for x in product(range(p), repeat=d))
 
 
+def hecke_representatives(q: int, prime: APoly, power: int = 1) -> tuple[Mat, ...]:
+    """Coset representatives of T(p^power): [[p^a, b], [0, p^(power-a)]] for 0 <= a <= power, b mod p^(power-a)
+    (every ad = p^power, non-primitive ones included).  For power = 1: [[1, b], [0, p]] and [[p, 0], [0, 1]]."""
+    d = len(prime) - 1
+    pw = lambda e: _ppow(prime, e, q)  # noqa: E731
+    return tuple(
+        mat_from_polys(pw(a), b, (), pw(power - a), q)
+        for a in range(power + 1) for b in _polys_of_degree_below(q, d * (power - a))
+    )
+
+
 @dataclass(frozen=True)
 class Gamma0Quotient:
     """Gamma_0(n)\\T truncated at `depth` (cusp rays beyond), with harmonic cochains and Hecke operators."""
@@ -364,21 +376,17 @@ class Gamma0Quotient:
         return self.cusp_forms.cols
 
     # -- Hecke --
-    def hecke_representatives(self, prime: APoly) -> tuple[Mat, ...]:
-        p = self.q
-        d = len(prime) - 1
-        reps = [mat_from_polys((1,), b, (), prime, p) for b in _polys_of_degree_below(p, d)]
-        reps.append(mat_from_polys(prime, (), (), (1,), p))
-        return tuple(reps)
+    def hecke_representatives(self, prime: APoly, power: int = 1) -> tuple[Mat, ...]:
+        return hecke_representatives(self.q, prime, power)
 
     def _evaluate(self, F, label) -> Fraction:
         co = self._coordinate(label)
         return 0 if co is None else co[1] * F[co[0]]
 
-    def hecke_matrix(self, prime: APoly):
-        """T_p on the cusp-form space (matrix in the basis `cusp_forms`); asserts stability."""
+    def hecke_matrix(self, prime: APoly, power: int = 1):
+        """T(p^power) on the cusp-form space (matrix in the basis `cusp_forms`); asserts stability."""
         import sympy as sp
-        reps = self.hecke_representatives(prime)
+        reps = self.hecke_representatives(prime, power)
         basis = self.cusp_forms
         images = []
         rep_edges = {}

@@ -548,3 +548,58 @@ the two lists pointwise (`pointwise`, `pointwise_sound`) instead of searching th
 (ℓ⁴/2 comparisons: an ℓ = 23 pair went from 53 s to 18 s).
 `forced_full_classes` (Python) now prunes the first set to conjugacy representatives only when every
 set is conjugation-invariant (review fix; counterexample test in GL₂(𝔽₂)).
+
+## Branch 3, fourth act — the Satake isomorphism for PGL₂ (`proof/langlands/LanglandsOracles/Satake.lean`, `satake.py`)
+
+### 3.11 The algebra, for every q (PROVED)
+G = PGL₂(F), K = PGL₂(𝒪), residue field of size q, 𝒯 = G/K.  A_n = 1_{K diag(πⁿ,1) K} (sum over the
+sphere of radius n) spans the spherical Hecke algebra.  With an end ω fixed, the horocycles (N-orbits)
+are indexed by the height, and the unnormalised Satake transform is the horocycle profile of the sphere,
+𝒮(A_n) = Σ_h #{d(o,v) = n, ht v = h} Xʰ ∈ ℤ[q][X^{±1}], on which W = S₂ acts by X ↦ qX⁻¹ (the δ^{1/2}
+twist).  Degree-n elements are coefficient functions j ↦ [X^{n−2j}]; q is an arbitrary integer, so each
+theorem is the identity in ℤ[q]:
+- `sphere_eq_sat`: the walk from o (up the ray to ω, then down: q − 1 choices off the ray, q afterwards,
+  q from o itself) gives 𝒮(A_n) = Xⁿ + Σ_{0<j<n} (q−1)q^{j−1} X^{n−2j} + qⁿX⁻ⁿ;
+- `sat_weyl`: [X^{−k}] = q^k [X^k] (twisted W-invariance); `sat_hecke`, `sat_hecke_one`: 𝒮 carries
+  A₁A_n = A_{n+1} + qA_{n−1}, A₁² = A₂ + (q+1)A₀ to multiplication by χ₁ = X + qX⁻¹, so 𝒮 is the ring
+  homomorphism ℤ[A₁] → ℤ[q][X^{±1}], A₁ ↦ X + qX⁻¹;
+- `sat_eq_chi_sub`: 𝒮(A_n) = χ_n − χ_{n−2}, χ_n = Σ_j q^j X^{n−2j} = q^{n/2} tr Sym^n of Ĝ = SL₂ at
+  diag(q^{−1/2}X, q^{1/2}X⁻¹): root-datum duality in its smallest case, K\G/K ↔ dominant weights of Ĝ;
+- `chi_clebsch_gordan`: χ₁χ_{n+1} = χ_{n+2} + qχ_n (Clebsch–Gordan for SL₂ after the twist);
+- `ball_eq_chi`: χ_n = 𝒮(A_n + A_{n−2} + ⋯): the Hecke operator of Sym^n is the ball of the parity of n,
+  classically T(𝔭ⁿ);
+- `invariant_decomposes` (+ `sat_zero`, `lift_zero`): every twisted-invariant element of degree n is a
+  ℤ[q]-combination of χ_n, χ_{n−2}, …, and 𝒮(A_n) is unitriangular in them — 𝒮 is an isomorphism
+  H(G, K) ≅ ℤ[q][X^{±1}]^W;
+- `hecke_seq_eq_h`, `power_sum_eq`: at a Satake parameter {α, β} (α + β = a, αβ = q) the T(𝔭ⁿ)-eigenvalues
+  e_{n+1} = a e_n − q e_{n−1} are h_n(α, β), i.e. Σ e_n Yⁿ = 1/(1 − aY + qY²), and αⁿ + βⁿ = h_n − q h_{n−2}.
+Core Lean, no Mathlib, no `decide`, no `grind` (its ring solver pulls in `Classical.choice`): a small
+`satake_arith` macro splits the `if`s, distributes and AC-normalises with `simp`, and closes with
+`omega` on monomial atoms; four default simp lemmas proved classically (`Nat.add_eq_right` and its
+mirrors) are erased in the file.  Axioms: propext, Quot.sound — now enforced by the audit gate, which
+also rejects `Classical.choice`.
+IMPORTED in Lean (COMPUTED below): that the walk model is the tree seen from an end, and the Hecke
+relation A₁A_n = A_{n+1} + qA_{n−1}.
+
+### 3.12 The inputs on the tree of PGL₂(𝔽_q((1/t))) (COMPUTED)
+In the Iwasawa chart (k, u) of `bruhat_tits.Tree` (π = 1/t) the unique neighbour with smaller k points
+to the end of the ray (k, 0), k → −∞, so the height is −k:
+- the sphere of radius n about v₀, sorted by k, has profile 𝒮(A_n) for q ∈ {2, 3, 5}, n ≤ 4 (q = 2:
+  (1,1,2,4,16); q = 3: (1,2,6,18,81));
+- the structure constants #{w ~ o : d(w, u) = n} depend only on d(o, u) and are 1 at n+1, q at n−1
+  (q + 1 when n = 1), 0 otherwise (q ∈ {2, 3}, n ≤ 3);
+- K diag(π^a, π^{n−a}) K / K, 0 ≤ a ≤ n (column Hermite form, b ∈ 𝒪/π^a) is each vertex at distance
+  n, n − 2, … exactly once (q ∈ {2, 3}, n ≤ 4): T(πⁿ) = A_n + A_{n−2} + ⋯.
+
+### 3.13 The output on Drinfeld eigenforms (COMPUTED)
+Here the place is finite (𝔭 ∤ 𝔫, residue field of size |𝔭|), which is why the Lean statements are for
+every q.  T(𝔭ⁿ) acts on Γ₀(𝔫)\𝒯 cochains through [[𝔭^a, b], [0, 𝔭^{n−a}]], b mod 𝔭^{n−a}
+(`hecke_representatives(q, prime, power)`, which for power 1 is the old T_𝔭):
+- level t³ over 𝔽₂(t), 𝔭 = t + 1 (n ≤ 4) and t² + t + 1 (n ≤ 2): T(𝔭ⁿ) = e_n(a_𝔭) = h_n(α, β), and
+  e_n − |𝔭| e_{n−2} = |𝔭|ⁿ + 1 − #E_{t³}(𝔽_{𝔭,n}) by point counts over the degree-n extension
+  (a_{t+1} = −1: αⁿ + βⁿ = −1, −3, 5, 1);
+- level t³ over 𝔽₃(t) (genus 2), 𝔭 = t + 1: T(𝔭²) = T(𝔭)² − 3, T(𝔭³) = T(𝔭)T(𝔭²) − 3T(𝔭) as matrices,
+  and both curves' eigensystems satisfy the power-sum identity against their own point counts over 𝔽_{3ⁿ}.
+The Galois side (Frobenius powers on H¹ of the curve) and the automorphic side (the ball operators on
+the quotient graph) meet exactly through the Satake parameter: Drinfeld's dictionary at every 𝔭ⁿ, not
+only at 𝔭.

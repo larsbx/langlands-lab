@@ -15,6 +15,7 @@ computed and which theorem the match instantiates.
 | 1 | E = 37a1 mod p, modulus 2P₀ | generalized Jacobian J_𝔪(𝔽_p) as pairs with its 2-cocycle; ray class characters; L_𝔪(χ, T) as Euler products | ramified geometric CFT for GL₁ (Rosenlicht–Serre): conductor-2 Artin–Schreier characters have L of degree 2 satisfying the Riemann hypothesis |
 | 3 | Carlitz module over 𝔽_p[t] | C_P ≡ x^{|P|} (mod P); Frob_P = C_P on C[M]; splitting degrees = ord of P in (A/ann λ)^× | function-field CFT for GL₁ (Carlitz–Hayes) |
 | 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity proved over every commutative semiring (kernel cross-checks on GL₂(𝔽₂), GL₂(𝔽₃)); mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p; images certified in the kernel: ρ̄₂ (all 15 curves: S₃ or C₂), ρ̄₃ (37a1), ρ̄₅ (14 curves) and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉, ρ̄₂₃ (all 15) full, by word certificates against a fixed generating set; pseudocharacter ⇒ representation found by kernel search on GL₂(𝔽₃), unique up to conjugacy; mod-5, mod-7 images of all 15 curves forced from point counts | the shape "Galois side = commutative algebra of operators on automorphic functions"; the converse proved for GL₁ and, up to "pseudocharacter ⇒ parameter", for GL₂ |
+| 3 | Satake for PGL₂ (Lean) | 𝒮(A_n) = horocycle profile of the sphere, closed form, twisted W-invariance, Hecke relation ↦ χ₁ = X + qX⁻¹, 𝒮(A_n) = χ_n − χ_{n−2}, q-Clebsch–Gordan, ball = χ_n, surjectivity onto the invariants — all PROVED for every q; the inputs computed on the lattice tree; T(𝔭ⁿ) on Drinfeld eigenforms vs point counts over 𝔽_{qⁿ} | Satake isomorphism H(G, K) ≅ ℤ[q][X^{±1}]^W with Ĝ = SL₂; unramified local L-factor 1/(1 − aY + qY²) |
 | 3 | Bruhat–Tits tree of PGL₂(𝔽_q((1/t))) | GL₂(𝔽_q[t]) reduction (Serre's half-line computed), Γ₀(𝔫)\𝒯 via ℙ¹(A/𝔫), cuspidal harmonic cochains, Hecke operators T_𝔭; elliptic curves over 𝔽₂(t) with a_𝔭 by point counts and L(E,T) by Euler product | Gekeler's genus, Drinfeld's Ramanujan bound, Drinfeld's dictionary for GL₂: the level-t³ and level-t⁴ eigenforms over 𝔽₂(t) are y² + txy = x³ + x and y² + txy + t²y = x³ + x + t³ + t² + t |
 
 **Lean 4 in the oracle loop** (`proof/langlands/`): core Lean, no Mathlib, no `native_decide`,
@@ -54,6 +55,7 @@ kernel/langlands/
   local_field.py        F_q((1/t)) as exact Laurent polynomials with truncated division
   bruhat_tits.py        branch 3: tree, reduction, Gamma_0(n)\T, harmonic cochains, Hecke operators
   ec_function_field.py  elliptic curves over F_q(t): reduction types, a_p by point count, L(E,T)
+  satake.py             Satake for PGL_2: horocycle profiles of spheres, Hecke structure constants, T(pi^n) = ball, Frobenius power traces
   excursion.py          third act: GL_2 pseudocharacter identity, mod-ell excursion checks, finite excursion data
   mod2_image.py         image of rho_2 exactly (S_3 / C_2) from the 2-division cubic; Frobenius witnesses
   pseudochar.py         pseudocharacters of finite groups; search for a representation with given trace
@@ -110,3 +112,6 @@ pytest tests/test_branch3_carlitz.py
   pseudocharacter ⇒ parameter, is imported, and the
   finite instances certify the mod-ℓ parameters at Frobenius elements (as matrices up to
   conjugacy, with trace a_p and determinant p), not the ℓ-adic parameter itself.
+- Satake (`Satake.lean`) is proved for every q from two inputs stated as definitions: the tree seen
+  from an end (the up-then-down walk) and the Hecke relation A₁A_n = A_{n+1} + qA_{n−1}; both are
+  computed on the lattice tree for small q, not proved for the abstract tree.

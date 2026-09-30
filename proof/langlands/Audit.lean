@@ -42,3 +42,13 @@ open Oracles
 #print axioms mod17_images_full
 #print axioms mod19_images_full
 #print axioms mod23_images_full
+#print axioms Satake.sphere_eq_sat
+#print axioms Satake.sat_weyl
+#print axioms Satake.sat_hecke
+#print axioms Satake.sat_hecke_one
+#print axioms Satake.sat_eq_chi_sub
+#print axioms Satake.chi_clebsch_gordan
+#print axioms Satake.ball_eq_chi
+#print axioms Satake.invariant_decomposes
+#print axioms Satake.hecke_seq_eq_h
+#print axioms Satake.power_sum_eq
