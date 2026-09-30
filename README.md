@@ -13,6 +13,7 @@ computed and which theorem the match instantiates.
 | 2 | S_k(SL₂(ℤ)) and S₂(Γ₀(N)) | Zagier's form of Eichler–Selberg from Hurwitz class numbers; τ(n) from Δ's q-expansion; the level-N formula (class numbers, local factors) against modular-symbol traces for N ≤ 40 at weight 2 and N ≤ 12 at weights 4 to 12 | the simplest fully explicit Arthur–Selberg instances, geometric side = class numbers |
 | 1 | E = 37a1 mod p, p ∈ {5, 7} | Lang-isogeny fibers; χ∘N on Pic⁰(𝔽_{pᵏ}); Abel sums of lines; tame symbols from Laurent expansions; L(χ, T) as an Euler product in ℤ[ζ][[T]] | unramified geometric CFT for GL₁: L_χ ↔ character sheaf A_χ, L(E, L_χ) = 1 ≠ Z(E, T), Weil reciprocity with the Deligne sign |
 | 1 | E = 37a1 mod p, modulus 2P₀ | generalized Jacobian J_𝔪(𝔽_p) as pairs with its 2-cocycle; ray class characters; L_𝔪(χ, T) as Euler products | ramified geometric CFT for GL₁ (Rosenlicht–Serre): conductor-2 Artin–Schreier characters have L of degree 2 satisfying the Riemann hypothesis |
+| 1 | Poincaré biextension of 37a1 over ℚ (minimal model) | monic Miller frame (t = x/y at O), both partial laws as factor systems, exchange ratio on all nine ord_O strata; the strict second law β₂ = (−1)^{u(a)δu(c)}·g_{c₁,c₂}(a) | Law B = Deligne tame-symbol sign, proved stratum-uniformly (sign algebra in Lean for any group); exchange holds strictly for the corrected β₂ |
 | 3 | Carlitz module over 𝔽_p[t] | C_P ≡ x^{|P|} (mod P); Frob_P = C_P on C[M]; splitting degrees = ord of P in (A/ann λ)^× | function-field CFT for GL₁ (Carlitz–Hayes) |
 | 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity proved over every commutative semiring (kernel cross-checks on GL₂(𝔽₂), GL₂(𝔽₃)); mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p; images certified in the kernel: ρ̄₂ (all 15 curves: S₃ or C₂), ρ̄₃ (37a1), ρ̄₅ (14 curves) and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉, ρ̄₂₃ (all 15) full, by word certificates against a fixed generating set; pseudocharacter ⇒ representation found by kernel search on GL₂(𝔽₃), unique up to conjugacy; mod-5, mod-7 images of all 15 curves forced from point counts | the shape "Galois side = commutative algebra of operators on automorphic functions"; the converse proved for GL₁ and, up to "pseudocharacter ⇒ parameter", for GL₂ |
 | 3 | Satake for PGL₂ (Lean) | 𝒮(A_n) = horocycle profile of the sphere, closed form, twisted W-invariance, Hecke relation ↦ χ₁ = X + qX⁻¹, 𝒮(A_n) = χ_n − χ_{n−2}, q-Clebsch–Gordan, ball = χ_n, surjectivity onto the invariants — all PROVED for every q; the inputs computed on the lattice tree; T(𝔭ⁿ) on Drinfeld eigenforms vs point counts over 𝔽_{qⁿ} | Satake isomorphism H(G, K) ≅ ℤ[q][X^{±1}]^W with Ĝ = SL₂; unramified local L-factor 1/(1 − aY + qY²) |
@@ -49,6 +50,7 @@ kernel/langlands/
   cyclotomic.py         ℤ[ℤ/N] → ℤ[ζ_N] zero test via Φ_N
   laurent.py            Laurent series; local expansions at every point incl. O; tame symbols
   gl1.py                branch 1: Lang fibers, characters, closed points, L(χ,T), Abel, Weil reciprocity
+  biextension.py        branch 1: Poincaré biextension of 37a1 over Q: monic Miller functions, both laws, exchange, the strict beta_2
   ramified_cft.py       branch 1, ramified: generalized Jacobian with modulus 2P_0, ray class characters, L_m(chi, T)
   abelian.py            invariant-factor decomposition of a small finite abelian group (recursive, no complement search)
   carlitz.py            branch 3: Carlitz module, Fermat–Carlitz, reciprocity, annihilators
@@ -73,7 +75,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 622 tests (~40 s with a warm lake cache; first Lean build ~3 min, 4 cores)
+pytest                      # all branches + Lean gate, 628 tests (~40 s with a warm lake cache; first Lean build ~3 min, 4 cores)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py

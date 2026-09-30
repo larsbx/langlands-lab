@@ -178,6 +178,27 @@ L_𝔪(χ, T) = ∏_{x ≠ P₀}(1 − χ(x)T^{deg x})⁻¹ in ℤ[ℤ/N][[T]] t
 - trivial χ: Z(E, T)(1 − T).
 This is the Artin–Schreier layer of geometric class field theory for GL₁ on E, executed.
 
+### 1.7 The Poincaré biextension over ℚ: Law B stratum-uniformly and the strict second law (COMPUTED + PROVED; `biextension.py`, `BiextensionSign.lean`)
+Continues the H10/ℚ biextension thread ("Novel Contributions" ledger; Dossiers I, II), whose next increment
+fixed its acceptance test in advance.  E = 37a1 in the minimal model y² + y = x³ − x, P₀ = (0, 0), exact ℚ
+arithmetic; uniformiser t = x/y at O, so chords (ord −3), verticals (ord −2) and Miller functions
+g_{A,B} = chord/vertical (ord −1) are tame-monic and regularise to 1 at O (C6).  Factor systems in the
+frame s: β₁ = κ(c; a₁, a₂) = g_{a₁,a₂}(c), naive β₂ = κ'_a(c₁, c₂) = g_{c₁,c₂}(a).
+- Rebuilt independently of the original harness: T1 (nP₀, hand values to 5P₀ = (1/4, −5/8)), T3
+  (rigidification), T4 and T6 (both laws symmetric 2-cocycles, exact equality).
+- T8/T8v (Law B): for every (a₁, a₂, c₁, c₂) ∈ {nP₀ : |n| ≤ 4}⁴ off the supports, the naive exchange ratio
+  equals (−1)^{ord_O g_{a₁,a₂} · ord_O g_{c₁,c₂}} — −1 on chord/chord, +1 on all eight other strata, all nine
+  populated (a support hit is skipped and never counted).
+- Stratum-uniform proof (PROVED for any commutative group, `ordO_odd_iff`, `deligne_uniform`,
+  `generic_eq_du`): ord_O g_{a,b} ∈ {0, −2, −1} is odd exactly on the generic stratum, whose indicator is
+  the coboundary δu of u(a) = [a ≠ O] mod 2; so the Deligne sign is (−1)^{δu(a)·δu(c)} on every stratum at once.
+- The strict second law: β₂ = (−1)^{u(a)·δu(c₁,c₂)} · g_{c₁,c₂}(a).  PROVED: it cancels the sign
+  (`exchange_strict`), the twist is a symmetric rigidified 2-cocycle (`twist_cocycle`, `twist_symm`,
+  `twist_rigid_left`, `twist_rigid_base`), and no frame change could have done it, the exchange ratio
+  being frame-invariant (`no_frame_fix`).  COMPUTED: the acceptance test — exchange ratio +1 on every
+  sample of every stratum.
+IMPORTED: tame Weil reciprocity (Deligne, *Le symbole modéré*), which produces the sign; measured, not proved.
+
 ## Lean 4 in the oracle loop (`proof/langlands/`, core Lean 4.34, no Mathlib)
 
 Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by

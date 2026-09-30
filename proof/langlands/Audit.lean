@@ -52,3 +52,12 @@ open Oracles
 #print axioms Satake.invariant_decomposes
 #print axioms Satake.hecke_seq_eq_h
 #print axioms Satake.power_sum_eq
+#print axioms Biext.ordO_odd_iff
+#print axioms Biext.deligne_uniform
+#print axioms Biext.generic_eq_du
+#print axioms Biext.exchange_strict
+#print axioms Biext.twist_symm
+#print axioms Biext.twist_cocycle
+#print axioms Biext.twist_rigid_left
+#print axioms Biext.twist_rigid_base
+#print axioms Biext.no_frame_fix
