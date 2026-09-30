@@ -243,3 +243,38 @@ def dual_character(E: Weierstrass, ell: int, c: Point, fibre: tuple[Point, ...])
     the [ell]-cover local system with character e_ell(., c) at the rational point x.  Returns the set of
     values over the fibre (a singleton iff chi_c(x) is well defined)."""
     return {weil(E, ell, E.add(frobenius(y), E.neg(y)), c) for y in fibre}
+
+
+# ------------------------------------------------------------ elliptic nets --
+def ward_eds(E: Weierstrass, P: Point, n_max: int) -> dict[int, Fraction]:
+    """W_n = psi_n(P) for |n| <= n_max (W_{-n} = -W_n): division polynomials at P for n <= 4, then
+    W_{2m+1} = W_{m+2} W_m^3 - W_{m-1} W_{m+1}^3 and W_{2m} = (W_{m+2} W_{m-1}^2 - W_{m-2} W_{m+1}^2) W_m / W_2."""
+    a1, a2, a3, a4, a6 = E.a1, E.a2, E.a3, E.a4, E.a6
+    x, y = P
+    b2, b4, b6 = a1 * a1 + 4 * a2, 2 * a4 + a1 * a3, a3 * a3 + 4 * a6
+    b8 = a1 * a1 * a6 + 4 * a2 * a6 - a1 * a3 * a4 + a2 * a3 * a3 - a4 * a4
+    W = {0: 0 * x, 1: x**0, 2: 2 * y + a1 * x + a3, 3: 3 * x**4 + b2 * x**3 + 3 * b4 * x**2 + 3 * b6 * x + b8}
+    W[4] = W[2] * (2 * x**6 + b2 * x**5 + 5 * b4 * x**4 + 10 * b6 * x**3 + 10 * b8 * x**2
+                   + (b2 * b8 - b4 * b6) * x + (b4 * b8 - b6 * b6))
+    for n in range(5, n_max + 1):
+        m = n // 2
+        W[n] = (W[m + 2] * W[m] ** 3 - W[m - 1] * W[m + 1] ** 3 if n % 2
+                else (W[m + 2] * W[m - 1] ** 2 - W[m - 2] * W[m + 1] ** 2) * W[m] / W[2])
+    return {**W, **{-n: -W[n] for n in range(1, n_max + 1)}}
+
+
+def kappa_eds(W: dict[int, Fraction], k: int, m: int, n: int) -> Fraction:
+    """Closed form of kappa_tame(kP; mP, nP) = g_{mP,nP}(kP) on the rank-1 net of P:
+    generic stratum (m, n, m+n != 0): -W_{k-m} W_{k-n} W_{m+n} / (W_{k-m-n} W_k W_m W_n);
+    vertical (m + n = 0 != m): x(kP) - x(mP) = -W_{k+m} W_{k-m} / (W_k^2 W_m^2).
+    The sigma-function factorisation g_{u,v}(z) = sigma(z-u) sigma(z-v) sigma(u+v) / (sigma(z-u-v) sigma(z)
+    sigma(u) sigma(v)) with W_j = sigma(ju)/sigma(u)^{j^2} (the sigma(u)-exponents cancel), and the sign
+    -1 = (t/z)^{ord_O} with t = x/y ~ -z at O, is the derivation (IMPORTED); the identity is measured."""
+    if m + n == 0:
+        return -W[k + m] * W[k - m] / (W[k] ** 2 * W[m] ** 2)
+    return -W[k - m] * W[k - n] * W[m + n] / (W[k - m - n] * W[k] * W[m] * W[n])
+
+
+def miller_chain_eds(W: dict[int, Fraction], N: int, k: int) -> Fraction:
+    """f_{N,P}(kP) = prod_{i<N} g_{iP,P}(kP), telescoped: (-1)^{N-1} W_N W_{k-1}^N / (W_{k-N} W_k^{N-1})."""
+    return (-1) ** (N - 1) * W[N] * W[k - 1] ** N / (W[k - N] * W[k] ** (N - 1))

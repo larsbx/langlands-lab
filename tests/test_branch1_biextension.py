@@ -15,7 +15,7 @@ import pytest
 
 from langlands.biextension import (
     E37A, FF, P0, commutator_pairing, deligne_sign, du, dual_character, exchange_ratio, first_law, frobenius,
-    from_short, over, points, second_law, second_law_naive, to_short, weil,
+    from_short, kappa_eds, miller_chain_eds, over, points, second_law, second_law_naive, to_short, ward_eds, weil,
 )
 from langlands.galois_rep import torsion_points, weil_pairing
 from langlands.gf import GF
@@ -185,3 +185,43 @@ def test_isogeny_local_system_is_the_lang_local_system_at_degree_two():
             y0 = fibre[N][0]
             predicted = weil(Ek, 3, Ek.add(frobenius(y0), Ek.neg(y0)), c)
             assert {weil(Ek, 3, Ek.add(frobenius(y, 2), Ek.neg(y)), c) for y in fibre[x]} == {predicted}
+
+
+# ------------------------------------------------------- elliptic nets (§8 item 2) --
+W37 = ward_eds(E, P0, 40)
+
+
+def test_T2_ward_eds_of_37a1():
+    """W_n = psi_n(P0): 0, 1, 1, -1, 1, 2, -1, -3, -5, 7, -4, -23, 29 (W_12^2 = 841, Dossier II's appendix);
+    den x(nP0) = W_n^2 and den y(nP0) = |W_n|^3."""
+    assert [W37[n] for n in range(13)] == [0, 1, 1, -1, 1, 2, -1, -3, -5, 7, -4, -23, 29]
+    for n in range(1, 20):
+        x, y = E.mul(n, P0)
+        assert x.denominator == W37[n] ** 2 and y.denominator == abs(W37[n]) ** 3
+
+
+def test_kappa_tame_is_an_elliptic_net_quotient():
+    """The closed form of kappa_tame on 37a1 asked for in Dossier II §8 (item 2), measured on every
+    (k, m, n) in [-8, 8]^3 off the supports, generic and vertical strata, exactly."""
+    PTS8 = {j: E.mul(j, P0) for j in range(-8, 9)}
+    counts = Counter()
+    for k, m, n in product(range(-8, 9), repeat=3):
+        if 0 in (k, m, n):
+            continue
+        try:
+            value = E.miller(PTS8[m], PTS8[n], PTS8[k])
+        except ZeroDivisionError:
+            continue
+        assert value == kappa_eds(W37, k, m, n), (k, m, n)
+        counts[E.ord_O(PTS8[m], PTS8[n])] += 1
+    assert counts[-1] > 2000 and counts[-2] > 100
+
+
+def test_miller_chain_telescopes_to_eds():
+    """f_{N,P0}(kP0) = prod_{i<N} g_{iP0,P0}(kP0) = (-1)^(N-1) W_N W_{k-1}^N / (W_{k-N} W_k^(N-1))."""
+    for N in range(2, 9):
+        for k in range(N + 1, N + 12):
+            f, A = F(1), P0
+            for _ in range(1, N):
+                f, A = f * E.miller(A, P0, E.mul(k, P0)), E.add(A, P0)
+            assert f == miller_chain_eds(W37, N, k), (N, k)

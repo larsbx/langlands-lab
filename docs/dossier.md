@@ -222,6 +222,23 @@ model by (x, y) ↦ (36x, 108(2y + 1))):
 IMPORTED: Weil reciprocity (the sign's origin) and the identification of Frobenius on the fibre of a
 torsor with the translation Frob y − y (the sheaf–function dictionary, as in §1.1).
 
+### 1.9 κ_tame on 37a1 is an elliptic-net quotient (COMPUTED; σ-derivation IMPORTED)
+Dossier II §8, open item 2: "whether the elliptic-net structure visible in the appendix data yields a closed
+form for κ_tame on 37a1 — tabulated, not conjectured".  The candidate came from the σ-factorisation
+g_{u,v}(z) = σ(z−u)σ(z−v)σ(u+v)/(σ(z−u−v)σ(z)σ(u)σ(v)) and W_j = σ(ju)/σ(u)^{j²} (the σ(u)-exponents cancel
+identically), with the sign left free; the oracle fixed it, then every sample was checked exactly:
+- Ward EDS of (37a1, P₀) from ψ₂, ψ₃, ψ₄ at P₀ and the duplication recurrences: 0, 1, 1, −1, 1, 2, −1, −3,
+  −5, 7, −4, −23, 29 (W₁₂² = 841, the appendix numerator); den x(nP₀) = W_n², den y(nP₀) = |W_n|³ (T2).
+- Generic stratum: κ_tame(kP₀; mP₀, nP₀) = −W_{k−m} W_{k−n} W_{m+n} / (W_{k−m−n} W_k W_m W_n);
+  vertical stratum: x(kP₀) − x(mP₀) = −W_{k+m} W_{k−m} / (W_k² W_m²) — on every (k, m, n) ∈ [−8, 8]³ off the
+  supports.  The sign −1 is (t/z)^{ord_O} with t = x/y ~ −z: the monic-in-t frame of C6 against the
+  σ-normalised one; it is +1 on the vertical stratum (ord −2) — the parity of §1.7 again.
+- The Miller chain telescopes: f_{N,P₀}(kP₀) = Π_{i<N} g_{iP₀,P₀}(kP₀) = (−1)^{N−1} W_N W_{k−1}^N / (W_{k−N} W_k^{N−1})
+  (N ≤ 8, k ≤ N + 11).
+So on the rank-1 lattice ℤP₀ both partial laws are Laurent monomials in the EDS, and every value the harness
+tabulates is a ratio of W's.  IMPORTED: the σ-function derivation (a proof over ℚ̄ via the elliptic net
+axioms of Ward/Stange is the algebraic route, not done).
+
 ## Lean 4 in the oracle loop (`proof/langlands/`, core Lean 4.34, no Mathlib)
 
 Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by
@@ -647,3 +664,35 @@ every q.  T(𝔭ⁿ) acts on Γ₀(𝔫)\𝒯 cochains through [[𝔭^a, b], [0,
 The Galois side (Frobenius powers on H¹ of the curve) and the automorphic side (the ball operators on
 the quotient graph) meet exactly through the Satake parameter: Drinfeld's dictionary at every 𝔭ⁿ, not
 only at 𝔭.
+
+## Open items and next steps (recorded, not started)
+
+### The H10/ℚ biextension thread (Dossier II §8)
+| item | status |
+|---|---|
+| strict presentation of β₂ and Law B stratum-uniformly (the fixed next increment) | done: §1.7 (PROVED sign algebra + acceptance test +1 everywhere) |
+| 1. stratum-uniform proof of Law B | done modulo tame Weil reciprocity (IMPORTED, measured) |
+| 2. elliptic-net closed form for κ_tame on 37a1 | done: §1.9 (measured exactly; σ-derivation IMPORTED) |
+| 3. a finite-type V with existential projection onto the ρ-graph of C2 | open — this is the actual problem; nothing here constrains it |
+| 4. sufficiency → equivalence without Mazur's conjecture | open, not attempted |
+| selection of a candidate (V, α), soundness and completeness separately | deferred by design until the harness is complete |
+
+### Next steps, by branch
+- **Branch 1 (GL₁ on E).**
+  - The full duality E^∨(𝔽_p) ≅ Hom(E(𝔽_p), ℚ̄^×) beyond level ℓ (e.g. ℓ = 9 on E(𝔽₇) ≅ ℤ/9): [ℓ]-preimages by
+    division polynomials and root finding instead of point enumeration.
+  - Lean kernel certificates for the Lang fibres, Abel descent and tame reciprocity of §1.1, §1.3, §1.4
+    (currently Python only), and for the §1.7 acceptance table on exported samples.
+  - An algebraic proof of the §1.9 closed form from the elliptic-net recurrences (no σ-function).
+  - Port Law A (C7) and the Miller-ladder test T9, and cross-check against the original
+    `biextension_oracle_37a1.py` if it becomes available.
+- **Branch 2 (Brandt / trace formula).**
+  - Quantify the LH-floor remark of §2.6: what a Frobenius-trace floor can hide given |a_ℓ| ≤ 2√ℓ.
+  - Connect the supersingular isogeny graphs to the expander and PQC threads (none yet).
+- **Branch 3 (function fields).**
+  - Satake inputs as theorems: the walk model of a tree seen from an end, and A₁A_n = A_{n+1} + qA_{n−1},
+    proved for the abstract (q+1)-regular tree rather than computed on the lattice tree.
+  - Satake for GL₂ (central character) and PGL_n / root-datum duality beyond SL₂.
+  - Drinfeld modular forms ↔ Carlitz module (the Carlitz side stops at GL₁ CFT).
+  - Rank-2 ℓ-adic local systems on ℙ¹ constructed directly, not only through elliptic curves.
+  - Excursion: the remaining step pseudocharacter ⇒ parameter beyond finite instances.
