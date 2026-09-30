@@ -17,13 +17,58 @@ u(a) = [a != O]; the second law in the frame s is therefore
 a rigidified symmetric-coboundary twist that cancels the sign on every stratum (`BiextensionSign.lean`
 proves the sign algebra for any group).  No frame change can do this: the exchange defect is
 frame-invariant.
+
+Over F_q (`FF`, `over`): the m-fold first law against the m-fold strict second law along a Miller chain
+is the Weil pairing e_m on the nose (the naive swap is off by (-1)^m, `chain_order`), and through it
+E^v(F_q)[ell] parametrises the order-ell characters of Pic^0(F_q): chi_c(x) = e_ell(Frob y - y, c) with
+ell y = x, the Frobenius eigenvalue of the [ell]-cover local system with character e_ell(., c).
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from fractions import Fraction
 
-Point = tuple[Fraction, Fraction] | None  # None = O
+from .gf import GF, Poly
+
+Point = tuple | None  # (x, y) over Q (Fraction) or F_{p^k} (FF); None = O
+
+
+@dataclass(frozen=True)
+class FF:
+    """An element of F_{p^k} = GF(p, k) with arithmetic operators, so that `Weierstrass` runs unchanged
+    over finite fields (integers coerce through the prime field)."""
+
+    K: GF
+    v: Poly
+
+    def _c(self, o) -> "FF":
+        return o if isinstance(o, FF) else FF(self.K, self.K.from_int(o))
+
+    def __add__(self, o): return FF(self.K, self.K.add(self.v, self._c(o).v))  # noqa: E704
+    __radd__ = __add__
+    def __sub__(self, o): return FF(self.K, self.K.sub(self.v, self._c(o).v))  # noqa: E704
+    def __rsub__(self, o): return self._c(o) - self  # noqa: E704
+    def __neg__(self): return FF(self.K, self.K.neg(self.v))  # noqa: E704
+    def __mul__(self, o): return FF(self.K, self.K.mul(self.v, self._c(o).v))  # noqa: E704
+    __rmul__ = __mul__
+
+    def __truediv__(self, o):
+        o = self._c(o)
+        if o.v == self.K.zero:
+            raise ZeroDivisionError("division by zero in F_q")
+        return FF(self.K, self.K.div(self.v, o.v))
+
+    def __pow__(self, e: int):
+        return FF(self.K, self.K.pow(self.v, e)) if e >= 0 else FF(self.K, self.K.one) / FF(self.K, self.K.pow(self.v, -e))
+
+    def __eq__(self, o):
+        return isinstance(o, (FF, int)) and self.v == self._c(o).v
+
+    def __hash__(self):
+        return hash(self.v)
+
+    def frobenius(self, power: int = 1) -> "FF":
+        return FF(self.K, self.K.frobenius(self.v, power))
 
 
 @dataclass(frozen=True)
@@ -81,11 +126,15 @@ class Weierstrass:
             return 0
         return -2 if self.add(A, B) is None else -1
 
-    def miller(self, A: Point, B: Point, c: Point) -> Fraction:
+    @property
+    def one(self):
+        return self.a1**0
+
+    def miller(self, A: Point, B: Point, c: Point):
         """g_{A,B}(c), div g = (A) + (B) - (A+B) - (O), tame-monic at O; g(O) = 1 (regularised).
         Raises ZeroDivisionError when c lies on the support (the value is 0 or oo there)."""
         if A is None or B is None or c is None:
-            return Fraction(1)
+            return self.one
         x, y = c
         line = self.slope(A, B)
         if line is None:  # A + B = O: g = x - x_A
@@ -138,3 +187,59 @@ def exchange_ratio(E: Weierstrass, a1: Point, a2: Point, c1: Point, c2: Point, s
 def deligne_sign(E: Weierstrass, a1: Point, a2: Point, c1: Point, c2: Point) -> int:
     """(-1)^{ord_O g_{a1,a2} * ord_O g_{c1,c2}}: the tame symbol at O of two monic functions."""
     return (-1) ** (E.ord_O(a1, a2) * E.ord_O(c1, c2))
+
+
+# ------------------------------------------------------------- over F_q --
+def over(E: Weierstrass, K: GF) -> Weierstrass:
+    """The reduction of an integral model to K (coefficients through the prime field)."""
+    return Weierstrass(*(FF(K, K.from_int(int(a))) for a in (E.a1, E.a2, E.a3, E.a4, E.a6)))
+
+
+def points(E: Weierstrass) -> tuple[Point, ...]:
+    """E(K) for odd characteristic: y^2 + (a1 x + a3) y = rhs(x) solved by completing the square."""
+    K = E.a1.K
+    out: list[Point] = [None]
+    for xv in K.elements():
+        x = FF(K, xv)
+        b = E.a1 * x + E.a3
+        disc = b * b + 4 * (x**3 + E.a2 * x * x + E.a4 * x + E.a6)
+        out += [(x, (FF(K, r) - b) / 2) for r in K.sqrts(disc.v)]
+    return tuple(out)
+
+
+def frobenius(P: Point, power: int = 1) -> Point:
+    return None if P is None else (P[0].frobenius(power), P[1].frobenius(power))
+
+
+def to_short(P: Point) -> Point:
+    """37a1: (x, y) -> (36 x, 108 (2y + 1)), the isomorphism onto y^2 = x^3 - 1296 x + 11664 (p > 3)."""
+    return None if P is None else (36 * P[0], 108 * (2 * P[1] + 1))
+
+
+def from_short(P: Point) -> Point:
+    return None if P is None else (P[0] / 36, (P[1] / 108 - 1) / 2)
+
+
+def commutator_pairing(E: Weierstrass, m: int, P: Point, Q: Point, second=second_law):
+    """prod_{i<m} beta_1(Q; iP, P) / prod_{i<m} beta_2(P; iQ, Q): the m-fold first law against the m-fold
+    second law, i.e. f_{m,P}(Q) / (+-f_{m,Q}(P)) with monic Miller functions.  For the strict beta_2 this
+    is the Weil pairing e_m(P, Q); the naive swap is off by (-1)^m (Law B over the m - 2 generic steps).
+    P, Q in E[m] with Q off the supports (Q not in <P>)."""
+    num, den, A, B = E.one, E.one, P, Q
+    for _ in range(1, m):
+        num, A = num * first_law(E, Q, A, P), E.add(A, P)
+        den, B = den * second(E, P, B, Q), E.add(B, Q)
+    return num / den
+
+
+def weil(E: Weierstrass, m: int, P: Point, Q: Point):
+    """e_m(P, Q) as the strict commutator, extended by e = 1 on dependent pairs (alternating)."""
+    span = {E.mul(i, P) for i in range(m)}
+    return E.one if Q in span else commutator_pairing(E, m, P, Q)
+
+
+def dual_character(E: Weierstrass, ell: int, c: Point, fibre: tuple[Point, ...]):
+    """chi_c(x) = e_ell(Frob(y) - y, c) for y in the fibre {y : ell y = x}: the Frobenius eigenvalue of
+    the [ell]-cover local system with character e_ell(., c) at the rational point x.  Returns the set of
+    values over the fibre (a singleton iff chi_c(x) is well defined)."""
+    return {weil(E, ell, E.add(frobenius(y), E.neg(y)), c) for y in fibre}

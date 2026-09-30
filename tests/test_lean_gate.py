@@ -42,4 +42,4 @@ def test_lean_axiom_audit():
     assert r.returncode == 0, r.stdout + r.stderr
     assert "sorryAx" not in r.stdout and "ofReduceBool" not in r.stdout, r.stdout
     assert "Classical.choice" not in r.stdout, r.stdout
-    assert r.stdout.count("depends on axioms") + r.stdout.count("does not depend on any axioms") == 61
+    assert r.stdout.count("depends on axioms") + r.stdout.count("does not depend on any axioms") == 62

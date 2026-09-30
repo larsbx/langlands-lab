@@ -199,6 +199,29 @@ frame s: β₁ = κ(c; a₁, a₂) = g_{a₁,a₂}(c), naive β₂ = κ'_a(c₁,
   sample of every stratum.
 IMPORTED: tame Weil reciprocity (Deligne, *Le symbole modéré*), which produces the sign; measured, not proved.
 
+### 1.8 Over 𝔽_q: the Weil pairing is the commutator of the strict biextension, and E^∨ parametrises the characters of Pic⁰ (COMPUTED + PROVED)
+The same factor systems over 𝔽_{p^k} (`FF`, `over`; 37a1 minimal model, transported to the lab's short
+model by (x, y) ↦ (36x, 108(2y + 1))):
+- **Commutator = Weil pairing.** For P, Q ∈ E[m] independent, Π_{i<m} β₁(Q; iP, P) / Π_{i<m} β₂(P; iQ, Q)
+  — the m-fold first law against the m-fold strict second law along the Miller chain — equals e_m(P, Q) as
+  computed independently by `galois_rep.weil_pairing` (divisor-based Miller, short model), on every
+  independent pair, p ∈ {5, 7, 11, 13}, ℓ ∈ {2, 3}; the naive swap gives (−1)^ℓ e_ℓ.  PROVED
+  (`chain_order`): for Q of exact order m ≥ 2 the twists along the chain multiply to (−1)^m when P ≠ O
+  (m − 2 generic steps), which is the classical (−1)^m of e_m = (−1)^m f_{m,P}(Q)/f_{m,Q}(P) for normalised
+  Miller functions: Law B, summed.  The strict presentation carries it with no extra convention.
+- **Duality (geometric CFT at level ℓ).** For c ∈ E(𝔽_p)[ℓ] and x ∈ E(𝔽_p), χ_c(x) = e_ℓ(Frob y − y, c)
+  with ℓy = x is the Frobenius eigenvalue at x of the [ℓ]-cover local system with character e_ℓ(·, c).
+  At (p, ℓ) = (5, 2) over 𝔽₆₂₅ and (7, 3) over 𝔽₃₄₃: independent of y, a character of Pic⁰(𝔽_p) = E(𝔽_p),
+  multiplicative in c, and c ↦ χ_c is a bijection onto the characters of order dividing ℓ — exactly the
+  ones in `gl1.all_characters` (short model) with ℓχ = 0.  So E^∨(𝔽_p)[ℓ] ≅ Hom(E(𝔽_p), μ_ℓ): the dual
+  curve parametrises the unramified GL₁ automorphic forms of order ℓ, through the biextension.
+- **Sheaf level beyond rational points.** p = 7, ℓ = 3, over 𝔽_{7⁶}: at all 54 closed points of degree 2 and
+  all three c, Frob² acts on the [3]-cover local system by χ_c(x + Frob x) — the trace function of the Lang
+  local system L_{χ_c} of §1.1.  The two covers ([3] and Lang) give the same rank-1 local system at every
+  closed point of degree ≤ 2; that they are isomorphic (Chebotarev) is IMPORTED.
+IMPORTED: Weil reciprocity (the sign's origin) and the identification of Frobenius on the fibre of a
+torsor with the translation Frob y − y (the sheaf–function dictionary, as in §1.1).
+
 ## Lean 4 in the oracle loop (`proof/langlands/`, core Lean 4.34, no Mathlib)
 
 Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by

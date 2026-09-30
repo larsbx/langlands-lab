@@ -119,4 +119,56 @@ theorem no_frame_fix (σ : A → A → Bool) (a₁ a₂ c₁ c₂ : A) :
     cases σ (a₁ + a₂) c₂ <;> cases σ a₁ (c₁ + c₂) <;> cases σ a₂ (c₁ + c₂) <;>
     cases σ (a₁ + a₂) (c₁ + c₂) <;> rfl
 
+/-! ## The Miller chain: the twists along e_m multiply to (−1)^m -/
+
+/-- n • Q, by repeated addition. -/
+def smul : Nat → A → A
+  | 0, _ => 0
+  | n + 1, Q => smul n Q + Q
+
+/-- ⊕_{i < n} ε_P(i Q, Q): the twists met by the n-fold second law along the chain Q, 2Q, …. -/
+def chain (P Q : A) : Nat → Bool
+  | 0 => false
+  | n + 1 => xor (chain P Q n) (twist P (smul n Q) Q)
+
+/-- For Q of exact order m ≥ 2 the chain has m − 2 generic steps (i = 1, …, m − 2; i = 0 and
+i = m − 1 meet O), so the strict and the naive m-fold second laws differ by (−1)^m whenever P ≠ O:
+the commutator of (β₁, strict β₂) is f_{m,P}(Q)/((−1)^m f_{m,Q}(P)) = e_m(P, Q), the Weil pairing. -/
+theorem chain_order (P Q : A) (m : Nat) (hm : 2 ≤ m)
+    (hord : ∀ i, 1 ≤ i → i < m → smul i Q ≠ 0) (hm0 : smul m Q = 0) :
+    chain P Q m = (u P && m % 2 == 1) := by
+  -- explicit rewrites and Bool case splits only: simp's default set would bring in Classical.choice
+  have hQ : Q ≠ 0 := by
+    have h := hord 1 (by omega) (by omega)
+    rwa [show smul 1 Q = Q from L.zero_add Q] at h
+  have step : ∀ k, 1 ≤ k → k + 1 < m → twist P (smul k Q) Q = u P := by
+    intro k hk hkm
+    have h2 : smul k Q + Q ≠ 0 := hord (k + 1) (by omega) hkm
+    unfold twist generic u
+    rw [decide_eq_false (hord k hk (by omega)), decide_eq_false hQ, decide_eq_false h2]
+    cases decide (P = 0) <;> rfl
+  have key : ∀ k, 1 ≤ k → k < m → chain P Q k = (u P && (k - 1) % 2 == 1) := by
+    intro k hk hkm
+    induction k with
+    | zero => omega
+    | succ k ih =>
+      rcases Nat.eq_zero_or_pos k with h0 | hpos
+      · subst h0
+        show xor false (twist P 0 Q) = _
+        rw [twist_rigid_left]; cases u P <;> rfl
+      · rw [chain, ih hpos (by omega), step k hpos (by omega)]
+        rcases Nat.mod_two_eq_zero_or_one (k - 1) with h | h
+        · rw [h, show (k + 1 - 1) % 2 = 1 by omega]; cases u P <;> rfl
+        · rw [h, show (k + 1 - 1) % 2 = 0 by omega]; cases u P <;> rfl
+  obtain ⟨n, rfl⟩ : ∃ n, m = n + 1 := ⟨m - 1, by omega⟩
+  have hlast : twist P (smul n Q) Q = false := by
+    have h0 : smul n Q + Q = 0 := hm0
+    unfold twist generic u
+    rw [h0, decide_eq_true rfl]
+    cases decide (P = 0) <;> cases decide (smul n Q = 0) <;> cases decide (Q = 0) <;> rfl
+  rw [chain, key n (by omega) (by omega), hlast]
+  rcases Nat.mod_two_eq_zero_or_one (n - 1) with h | h
+  · rw [h, show (n + 1) % 2 = 0 by omega]; cases u P <;> rfl
+  · rw [h, show (n + 1) % 2 = 1 by omega]; cases u P <;> rfl
+
 end Oracles.Biext

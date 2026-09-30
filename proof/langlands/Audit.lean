@@ -61,3 +61,4 @@ open Oracles
 #print axioms Biext.twist_rigid_left
 #print axioms Biext.twist_rigid_base
 #print axioms Biext.no_frame_fix
+#print axioms Biext.chain_order
