@@ -225,3 +225,21 @@ def test_miller_chain_telescopes_to_eds():
             for _ in range(1, N):
                 f, A = f * E.miller(A, P0, E.mul(k, P0)), E.add(A, P0)
             assert f == miller_chain_eds(W37, N, k), (N, k)
+
+
+def test_third_chord_point_is_a_removable_zero_not_support():
+    """g_{A,B} at c = -(A+B) (chord and vertical both vanish, c not in div g) is regularised through the
+    conjugate chord and agrees with the elliptic-net closed form on every such sample (review fix)."""
+    for m, n in product(range(-6, 7), repeat=2):
+        if 0 in (m, n, m + n) or 2 * (m + n) == 0:
+            continue
+        c = E.mul(-(m + n), P0)
+        assert E.miller(PTS[m], PTS[n], c) == kappa_eds(W37, -(m + n), m, n), (m, n)
+
+
+def test_ff_equality_and_arithmetic_respect_the_field():
+    """1 in F_5 and 1 in F_7 are different elements; mixing fields is rejected (review fix)."""
+    one5, one7 = FF(GF.of_order(5, 1), (1,)), FF(GF.of_order(7, 1), (1,))
+    assert one5 != one7 and len({one5, one7}) == 2 and one5 == 1
+    with pytest.raises(ValueError):
+        one5 + one7

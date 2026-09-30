@@ -42,7 +42,11 @@ class FF:
     v: Poly
 
     def _c(self, o) -> "FF":
-        return o if isinstance(o, FF) else FF(self.K, self.K.from_int(o))
+        if isinstance(o, FF):
+            if o.K != self.K:
+                raise ValueError("operands from different finite fields")
+            return o
+        return FF(self.K, self.K.from_int(o))
 
     def __add__(self, o): return FF(self.K, self.K.add(self.v, self._c(o).v))  # noqa: E704
     __radd__ = __add__
@@ -62,10 +66,12 @@ class FF:
         return FF(self.K, self.K.pow(self.v, e)) if e >= 0 else FF(self.K, self.K.one) / FF(self.K, self.K.pow(self.v, -e))
 
     def __eq__(self, o):
-        return isinstance(o, (FF, int)) and self.v == self._c(o).v
+        if isinstance(o, FF):
+            return self.K == o.K and self.v == o.v
+        return isinstance(o, int) and self.v == self._c(o).v
 
     def __hash__(self):
-        return hash(self.v)
+        return hash((self.K.p, self.K.k, self.v))
 
     def frobenius(self, power: int = 1) -> "FF":
         return FF(self.K, self.K.frobenius(self.v, power))
@@ -145,6 +151,12 @@ class Weierstrass:
         lam, nu = line
         num = y - lam * x - nu
         den = x - self.add(A, B)[0]
+        if num == 0 and den == 0 and c != self.add(A, B):
+            # c = -(A+B), the third point of the chord: a common simple zero, not in div g.  On E,
+            # chord * conjugate chord = -(x - x_A)(x - x_B)(x - x_{A+B}), so g = -(x - x_A)(x - x_B) / chord^sigma
+            # with chord^sigma(x, y) = chord(x, -y - a1 x - a3), nonzero at c.
+            conj = -y - self.a1 * x - self.a3 - lam * x - nu
+            return -(x - A[0]) * (x - B[0]) / conj
         if num == 0 or den == 0:
             raise ZeroDivisionError("c on the support of the chord or vertical")
         return num / den
