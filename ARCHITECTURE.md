@@ -6,9 +6,11 @@ whose canonical source is `larsbx/estate-governance`.
 The machine-readable source of repository structure and authority is
 [`ESTATE.toml`](ESTATE.toml): this repository's estate position (SPEC_estate v0.1)
 and its layout. The contract, `estate-repository-template-v2`, and the audit live
-only in `larsbx/estate-governance`; nothing from it is vendored here. CI checks
-governance out at the commit the `estate-governance` `[[dep]]` pins and runs the
-audit from there, and the audit verifies its own sha256 against that pin.
+in `larsbx/estate-governance`; nothing from it is vendored here. CI downloads
+the audit for the pinned `estate-governance` `[[dep]]` revision from a public
+mirror at an immutable commit, verifies its SHA-256 against the dependency
+pin before execution, and runs it against this repository. Fork and Dependabot
+pull requests use the same fail-closed path without repository secrets.
 The ordering rule is:
 
 ```text
