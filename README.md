@@ -35,7 +35,7 @@ See `docs/dossier.md` for the numbers and the PROVED / IMPORTED ledger, and its 
 ## Layout
 
 ```
-estate.toml             estate manifest (canonical layout; audit: tools/audit_estate_layout.py)
+ESTATE.toml             estate manifest (audited from a pinned larsbx/estate-governance)
 kernel/langlands/
   gf.py                 F_{p^k}: irreducible search (Rabin), log/exp tables, roots with multiplicity
   qforms.py             h(d) by reduced forms, w(d), Hurwitz H(N)
