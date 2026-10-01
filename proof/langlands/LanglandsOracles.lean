@@ -23,3 +23,5 @@ import LanglandsOracles.PseudocharSearch
 import LanglandsOracles.CertTypes
 import LanglandsOracles.ImageModL
 import LanglandsOracles.ModLImages
+import LanglandsOracles.Satake
+import LanglandsOracles.BiextensionSign

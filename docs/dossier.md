@@ -178,6 +178,67 @@ L_𝔪(χ, T) = ∏_{x ≠ P₀}(1 − χ(x)T^{deg x})⁻¹ in ℤ[ℤ/N][[T]] t
 - trivial χ: Z(E, T)(1 − T).
 This is the Artin–Schreier layer of geometric class field theory for GL₁ on E, executed.
 
+### 1.7 The Poincaré biextension over ℚ: Law B stratum-uniformly and the strict second law (COMPUTED + PROVED; `biextension.py`, `BiextensionSign.lean`)
+Continues the H10/ℚ biextension thread ("Novel Contributions" ledger; Dossiers I, II), whose next increment
+fixed its acceptance test in advance.  E = 37a1 in the minimal model y² + y = x³ − x, P₀ = (0, 0), exact ℚ
+arithmetic; uniformiser t = x/y at O, so chords (ord −3), verticals (ord −2) and Miller functions
+g_{A,B} = chord/vertical (ord −1) are tame-monic and regularise to 1 at O (C6).  Factor systems in the
+frame s: β₁ = κ(c; a₁, a₂) = g_{a₁,a₂}(c), naive β₂ = κ'_a(c₁, c₂) = g_{c₁,c₂}(a).
+- Rebuilt independently of the original harness: T1 (nP₀, hand values to 5P₀ = (1/4, −5/8)), T3
+  (rigidification), T4 and T6 (both laws symmetric 2-cocycles, exact equality).
+- T8/T8v (Law B): for every (a₁, a₂, c₁, c₂) ∈ {nP₀ : |n| ≤ 4}⁴ off the supports, the naive exchange ratio
+  equals (−1)^{ord_O g_{a₁,a₂} · ord_O g_{c₁,c₂}} — −1 on chord/chord, +1 on all eight other strata, all nine
+  populated (a support hit is skipped and never counted).
+- Stratum-uniform proof (PROVED for any commutative group, `ordO_odd_iff`, `deligne_uniform`,
+  `generic_eq_du`): ord_O g_{a,b} ∈ {0, −2, −1} is odd exactly on the generic stratum, whose indicator is
+  the coboundary δu of u(a) = [a ≠ O] mod 2; so the Deligne sign is (−1)^{δu(a)·δu(c)} on every stratum at once.
+- The strict second law: β₂ = (−1)^{u(a)·δu(c₁,c₂)} · g_{c₁,c₂}(a).  PROVED: it cancels the sign
+  (`exchange_strict`), the twist is a symmetric rigidified 2-cocycle (`twist_cocycle`, `twist_symm`,
+  `twist_rigid_left`, `twist_rigid_base`), and no frame change could have done it, the exchange ratio
+  being frame-invariant (`no_frame_fix`).  COMPUTED: the acceptance test — exchange ratio +1 on every
+  sample of every stratum.
+IMPORTED: tame Weil reciprocity (Deligne, *Le symbole modéré*), which produces the sign; measured, not proved.
+
+### 1.8 Over 𝔽_q: the Weil pairing is the commutator of the strict biextension, and E^∨ parametrises the characters of Pic⁰ (COMPUTED + PROVED)
+The same factor systems over 𝔽_{p^k} (`FF`, `over`; 37a1 minimal model, transported to the lab's short
+model by (x, y) ↦ (36x, 108(2y + 1))):
+- **Commutator = Weil pairing.** For P, Q ∈ E[m] independent, Π_{i<m} β₁(Q; iP, P) / Π_{i<m} β₂(P; iQ, Q)
+  — the m-fold first law against the m-fold strict second law along the Miller chain — equals e_m(P, Q) as
+  computed independently by `galois_rep.weil_pairing` (divisor-based Miller, short model), on every
+  independent pair, p ∈ {5, 7, 11, 13}, ℓ ∈ {2, 3}; the naive swap gives (−1)^ℓ e_ℓ.  PROVED
+  (`chain_order`): for Q of exact order m ≥ 2 the twists along the chain multiply to (−1)^m when P ≠ O
+  (m − 2 generic steps), which is the classical (−1)^m of e_m = (−1)^m f_{m,P}(Q)/f_{m,Q}(P) for normalised
+  Miller functions: Law B, summed.  The strict presentation carries it with no extra convention.
+- **Duality (geometric CFT at level ℓ).** For c ∈ E(𝔽_p)[ℓ] and x ∈ E(𝔽_p), χ_c(x) = e_ℓ(Frob y − y, c)
+  with ℓy = x is the Frobenius eigenvalue at x of the [ℓ]-cover local system with character e_ℓ(·, c).
+  At (p, ℓ) = (5, 2) over 𝔽₆₂₅ and (7, 3) over 𝔽₃₄₃: independent of y, a character of Pic⁰(𝔽_p) = E(𝔽_p),
+  multiplicative in c, and c ↦ χ_c is a bijection onto the characters of order dividing ℓ — exactly the
+  ones in `gl1.all_characters` (short model) with ℓχ = 0.  So E^∨(𝔽_p)[ℓ] ≅ Hom(E(𝔽_p), μ_ℓ): the dual
+  curve parametrises the unramified GL₁ automorphic forms of order ℓ, through the biextension.
+- **Sheaf level beyond rational points.** p = 7, ℓ = 3, over 𝔽_{7⁶}: at all 54 closed points of degree 2 and
+  all three c, Frob² acts on the [3]-cover local system by χ_c(x + Frob x) — the trace function of the Lang
+  local system L_{χ_c} of §1.1.  The two covers ([3] and Lang) give the same rank-1 local system at every
+  closed point of degree ≤ 2; that they are isomorphic (Chebotarev) is IMPORTED.
+IMPORTED: Weil reciprocity (the sign's origin) and the identification of Frobenius on the fibre of a
+torsor with the translation Frob y − y (the sheaf–function dictionary, as in §1.1).
+
+### 1.9 κ_tame on 37a1 is an elliptic-net quotient (COMPUTED; σ-derivation IMPORTED)
+Dossier II §8, open item 2: "whether the elliptic-net structure visible in the appendix data yields a closed
+form for κ_tame on 37a1 — tabulated, not conjectured".  The candidate came from the σ-factorisation
+g_{u,v}(z) = σ(z−u)σ(z−v)σ(u+v)/(σ(z−u−v)σ(z)σ(u)σ(v)) and W_j = σ(ju)/σ(u)^{j²} (the σ(u)-exponents cancel
+identically), with the sign left free; the oracle fixed it, then every sample was checked exactly:
+- Ward EDS of (37a1, P₀) from ψ₂, ψ₃, ψ₄ at P₀ and the duplication recurrences: 0, 1, 1, −1, 1, 2, −1, −3,
+  −5, 7, −4, −23, 29 (W₁₂² = 841, the appendix numerator); den x(nP₀) = W_n², den y(nP₀) = |W_n|³ (T2).
+- Generic stratum: κ_tame(kP₀; mP₀, nP₀) = −W_{k−m} W_{k−n} W_{m+n} / (W_{k−m−n} W_k W_m W_n);
+  vertical stratum: x(kP₀) − x(mP₀) = −W_{k+m} W_{k−m} / (W_k² W_m²) — on every (k, m, n) ∈ [−8, 8]³ off the
+  supports.  The sign −1 is (t/z)^{ord_O} with t = x/y ~ −z: the monic-in-t frame of C6 against the
+  σ-normalised one; it is +1 on the vertical stratum (ord −2) — the parity of §1.7 again.
+- The Miller chain telescopes: f_{N,P₀}(kP₀) = Π_{i<N} g_{iP₀,P₀}(kP₀) = (−1)^{N−1} W_N W_{k−1}^N / (W_{k−N} W_k^{N−1})
+  (N ≤ 8, k ≤ N + 11).
+So on the rank-1 lattice ℤP₀ both partial laws are Laurent monomials in the EDS, and every value the harness
+tabulates is a ratio of W's.  IMPORTED: the σ-function derivation (a proof over ℚ̄ via the elliptic net
+axioms of Ward/Stange is the algebraic route, not done).
+
 ## Lean 4 in the oracle loop (`proof/langlands/`, core Lean 4.34, no Mathlib)
 
 Status vocabulary extension: **KERNEL** = the statement is a `theorem` closed by
@@ -548,3 +609,90 @@ the two lists pointwise (`pointwise`, `pointwise_sound`) instead of searching th
 (ℓ⁴/2 comparisons: an ℓ = 23 pair went from 53 s to 18 s).
 `forced_full_classes` (Python) now prunes the first set to conjugacy representatives only when every
 set is conjugation-invariant (review fix; counterexample test in GL₂(𝔽₂)).
+
+## Branch 3, fourth act — the Satake isomorphism for PGL₂ (`proof/langlands/LanglandsOracles/Satake.lean`, `satake.py`)
+
+### 3.11 The algebra, for every q (PROVED)
+G = PGL₂(F), K = PGL₂(𝒪), residue field of size q, 𝒯 = G/K.  A_n = 1_{K diag(πⁿ,1) K} (sum over the
+sphere of radius n) spans the spherical Hecke algebra.  With an end ω fixed, the horocycles (N-orbits)
+are indexed by the height, and the unnormalised Satake transform is the horocycle profile of the sphere,
+𝒮(A_n) = Σ_h #{d(o,v) = n, ht v = h} Xʰ ∈ ℤ[q][X^{±1}], on which W = S₂ acts by X ↦ qX⁻¹ (the δ^{1/2}
+twist).  Degree-n elements are coefficient functions j ↦ [X^{n−2j}]; q is an arbitrary integer, so each
+theorem is the identity in ℤ[q]:
+- `sphere_eq_sat`: the walk from o (up the ray to ω, then down: q − 1 choices off the ray, q afterwards,
+  q from o itself) gives 𝒮(A_n) = Xⁿ + Σ_{0<j<n} (q−1)q^{j−1} X^{n−2j} + qⁿX⁻ⁿ;
+- `sat_weyl`: [X^{−k}] = q^k [X^k] (twisted W-invariance); `sat_hecke`, `sat_hecke_one`: 𝒮 carries
+  A₁A_n = A_{n+1} + qA_{n−1}, A₁² = A₂ + (q+1)A₀ to multiplication by χ₁ = X + qX⁻¹, so 𝒮 is the ring
+  homomorphism ℤ[A₁] → ℤ[q][X^{±1}], A₁ ↦ X + qX⁻¹;
+- `sat_eq_chi_sub`: 𝒮(A_n) = χ_n − χ_{n−2}, χ_n = Σ_j q^j X^{n−2j} = q^{n/2} tr Sym^n of Ĝ = SL₂ at
+  diag(q^{−1/2}X, q^{1/2}X⁻¹): root-datum duality in its smallest case, K\G/K ↔ dominant weights of Ĝ;
+- `chi_clebsch_gordan`: χ₁χ_{n+1} = χ_{n+2} + qχ_n (Clebsch–Gordan for SL₂ after the twist);
+- `ball_eq_chi`: χ_n = 𝒮(A_n + A_{n−2} + ⋯): the Hecke operator of Sym^n is the ball of the parity of n,
+  classically T(𝔭ⁿ);
+- `invariant_decomposes` (+ `sat_zero`, `lift_zero`): every twisted-invariant element of degree n is a
+  ℤ[q]-combination of χ_n, χ_{n−2}, …, and 𝒮(A_n) is unitriangular in them — 𝒮 is an isomorphism
+  H(G, K) ≅ ℤ[q][X^{±1}]^W;
+- `hecke_seq_eq_h`, `power_sum_eq`: at a Satake parameter {α, β} (α + β = a, αβ = q) the T(𝔭ⁿ)-eigenvalues
+  e_{n+1} = a e_n − q e_{n−1} are h_n(α, β), i.e. Σ e_n Yⁿ = 1/(1 − aY + qY²), and αⁿ + βⁿ = h_n − q h_{n−2}.
+Core Lean, no Mathlib, no `decide`, no `grind` (its ring solver pulls in `Classical.choice`): a small
+`satake_arith` macro splits the `if`s, distributes and AC-normalises with `simp`, and closes with
+`omega` on monomial atoms; four default simp lemmas proved classically (`Nat.add_eq_right` and its
+mirrors) are erased in the file.  Axioms: propext, Quot.sound — now enforced by the audit gate, which
+also rejects `Classical.choice`.
+IMPORTED in Lean (COMPUTED below): that the walk model is the tree seen from an end, and the Hecke
+relation A₁A_n = A_{n+1} + qA_{n−1}.
+
+### 3.12 The inputs on the tree of PGL₂(𝔽_q((1/t))) (COMPUTED)
+In the Iwasawa chart (k, u) of `bruhat_tits.Tree` (π = 1/t) the unique neighbour with smaller k points
+to the end of the ray (k, 0), k → −∞, so the height is −k:
+- the sphere of radius n about v₀, sorted by k, has profile 𝒮(A_n) for q ∈ {2, 3, 5}, n ≤ 4 (q = 2:
+  (1,1,2,4,16); q = 3: (1,2,6,18,81));
+- the structure constants #{w ~ o : d(w, u) = n} depend only on d(o, u) and are 1 at n+1, q at n−1
+  (q + 1 when n = 1), 0 otherwise (q ∈ {2, 3}, n ≤ 3);
+- K diag(π^a, π^{n−a}) K / K, 0 ≤ a ≤ n (column Hermite form, b ∈ 𝒪/π^a) is each vertex at distance
+  n, n − 2, … exactly once (q ∈ {2, 3}, n ≤ 4): T(πⁿ) = A_n + A_{n−2} + ⋯.
+
+### 3.13 The output on Drinfeld eigenforms (COMPUTED)
+Here the place is finite (𝔭 ∤ 𝔫, residue field of size |𝔭|), which is why the Lean statements are for
+every q.  T(𝔭ⁿ) acts on Γ₀(𝔫)\𝒯 cochains through [[𝔭^a, b], [0, 𝔭^{n−a}]], b mod 𝔭^{n−a}
+(`hecke_representatives(q, prime, power)`, which for power 1 is the old T_𝔭):
+- level t³ over 𝔽₂(t), 𝔭 = t + 1 (n ≤ 4) and t² + t + 1 (n ≤ 2): T(𝔭ⁿ) = e_n(a_𝔭) = h_n(α, β), and
+  e_n − |𝔭| e_{n−2} = |𝔭|ⁿ + 1 − #E_{t³}(𝔽_{𝔭,n}) by point counts over the degree-n extension
+  (a_{t+1} = −1: αⁿ + βⁿ = −1, −3, 5, 1);
+- level t³ over 𝔽₃(t) (genus 2), 𝔭 = t + 1: T(𝔭²) = T(𝔭)² − 3, T(𝔭³) = T(𝔭)T(𝔭²) − 3T(𝔭) as matrices,
+  and both curves' eigensystems satisfy the power-sum identity against their own point counts over 𝔽_{3ⁿ}.
+The Galois side (Frobenius powers on H¹ of the curve) and the automorphic side (the ball operators on
+the quotient graph) meet exactly through the Satake parameter: Drinfeld's dictionary at every 𝔭ⁿ, not
+only at 𝔭.
+
+## Open items and next steps (recorded, not started)
+
+### The H10/ℚ biextension thread (Dossier II §8)
+| item | status |
+|---|---|
+| strict presentation of β₂ and Law B stratum-uniformly (the fixed next increment) | done: §1.7 (PROVED sign algebra + acceptance test +1 everywhere) |
+| 1. stratum-uniform proof of Law B | done modulo tame Weil reciprocity (IMPORTED, measured) |
+| 2. elliptic-net closed form for κ_tame on 37a1 | done: §1.9 (measured exactly; σ-derivation IMPORTED) |
+| 3. a finite-type V with existential projection onto the ρ-graph of C2 | open — this is the actual problem; nothing here constrains it |
+| 4. sufficiency → equivalence without Mazur's conjecture | open, not attempted |
+| selection of a candidate (V, α), soundness and completeness separately | deferred by design until the harness is complete |
+
+### Next steps, by branch
+- **Branch 1 (GL₁ on E).**
+  - The full duality E^∨(𝔽_p) ≅ Hom(E(𝔽_p), ℚ̄^×) beyond level ℓ (e.g. ℓ = 9 on E(𝔽₇) ≅ ℤ/9): [ℓ]-preimages by
+    division polynomials and root finding instead of point enumeration.
+  - Lean kernel certificates for the Lang fibres, Abel descent and tame reciprocity of §1.1, §1.3, §1.4
+    (currently Python only), and for the §1.7 acceptance table on exported samples.
+  - An algebraic proof of the §1.9 closed form from the elliptic-net recurrences (no σ-function).
+  - Port Law A (C7) and the Miller-ladder test T9, and cross-check against the original
+    `biextension_oracle_37a1.py` if it becomes available.
+- **Branch 2 (Brandt / trace formula).**
+  - Quantify the LH-floor remark of §2.6: what a Frobenius-trace floor can hide given |a_ℓ| ≤ 2√ℓ.
+  - Connect the supersingular isogeny graphs to the expander and PQC threads (none yet).
+- **Branch 3 (function fields).**
+  - Satake inputs as theorems: the walk model of a tree seen from an end, and A₁A_n = A_{n+1} + qA_{n−1},
+    proved for the abstract (q+1)-regular tree rather than computed on the lattice tree.
+  - Satake for GL₂ (central character) and PGL_n / root-datum duality beyond SL₂.
+  - Drinfeld modular forms ↔ Carlitz module (the Carlitz side stops at GL₁ CFT).
+  - Rank-2 ℓ-adic local systems on ℙ¹ constructed directly, not only through elliptic curves.
+  - Excursion: the remaining step pseudocharacter ⇒ parameter beyond finite instances.
