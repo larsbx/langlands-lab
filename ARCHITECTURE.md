@@ -1,6 +1,6 @@
 # Repository architecture
 
-This repository adopts the estate repository template `estate-repository-v1`,
+This repository adopts the estate repository template `estate-repository-v2`,
 whose canonical source is `larsbx/estate-governance`.
 
 The machine-readable source of repository structure and authority is
