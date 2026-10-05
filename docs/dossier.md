@@ -548,7 +548,7 @@ E₂₁(1); the scalar inverse c⁻¹ comes from the GL₂ inverse of diag(c, 1)
 in the enumerated GL₂ (`mul_mem_gl`); the only kernel input is that ζ generates 𝔽_ℓ^× (`zetaGen`, ℓ²
 operations), so nothing about S is enumerated; (2) for a class pair (A, B) — characteristic polynomials with distinct roots, hence single
 conjugacy classes without scalars — a fixed representative gRep of A, and for every h ∈ B three words
-in {gRep, h} (length ≤ 27, each packed as one natural) whose values are the elements of S, verified by a few dozen products each;
+in {gRep, h} (length ≤ 29 in the committed data through ℓ = 29, each packed as one natural) whose values are the elements of S, verified by a few dozen products each;
 (3) for every g ∈ A a conjugator C with C·gRep·C⁻¹ = g.  Soundness (`pair_sound`, PROVED): a
 multiplicatively closed H ∋ g ∈ A, h ∈ B is conjugated by C⁻¹ to H′ ∋ gRep, C⁻¹hC; C⁻¹hC is again in
 B because tr is invariant by `trace_mul_comm` and det by Cayley–Hamilton (`det_conj`: 2·det = tr² − tr(x²),
@@ -559,7 +559,7 @@ left-invertible matrix kills no nonzero vector, while a singular 2×2 matrix kil
 `FieldFacts ℓ` record (decided per ℓ in ℓ² operations: Cayley–Hamilton for tr², the negation facts, the scalar
 inverse table).  The data (`mod5Cert`, `mod7Cert`, exported) are chosen by a greedy cover: mod 5, three
 pairs cover the 14 curves other than 11a1 (rational 5-torsion); mod 7, four pairs cover all 15.
-The same for ℓ = 11 (13 200 elements), ℓ = 13 (26 208), ℓ = 17 (78 336), ℓ = 19 (123 120) and ℓ = 23 (267 168): the matrix inverse is
+The same for ℓ = 11 (13 200 elements), ℓ = 13 (26 208), ℓ = 17 (78 336), ℓ = 19 (123 120), ℓ = 23 (267 168) and ℓ = 29 (682 080): the matrix inverse is
 PROVED (`adj_left_inverse`: u·adj(z)·z = 1 when u·det z = 1, a ring identity; `inv_of_invTable`) over the
 scalar inverse table (`invTable`, ℓ² operations), so `FieldFacts.of` assembles the ℓ-specific facts from
 three ℓ²-sized decided statements and nothing of size ℓ⁴ is enumerated outside the pair certificates, and the certified pairs
@@ -567,17 +567,29 @@ are found lazily (most-covering candidate pair first; a pair is certified exactl
 kernel will check exist, found by breadth-first search with early exit; no multiplication table above
 2016 elements).  Kernel: `pairsℓ_ok` (all witnesses and words), `curvesℓ_ok` (for each
 curve, a_{p₁}, a_{p₂} mod ℓ from Lean's point counts of the Weierstrass model match the pair), for
-ℓ ∈ {5, 7, 11, 13, 17, 19, 23}, one declaration per certified pair so the kernel frees its cache between them.  Headlines
-`mod5_images_full`, …, `mod23_images_full` (`data_sound`): for every listed curve, any multiplicatively closed subset of
+ℓ ∈ {5, 7, 11, 13, 17, 19, 23, 29}, one declaration per certified pair so the kernel frees its cache between them.  Headlines
+`mod5_images_full`, …, `mod29_images_full` (`data_sound`): for every listed curve, any multiplicatively closed subset of
 GL₂(𝔽_ℓ) containing elements with the characteristic polynomials of ρ̄_ℓ(Frob_{p₁}), ρ̄_ℓ(Frob_{p₂})
 is all of GL₂(𝔽_ℓ); with Eichler–Shimura mod ℓ as the only imported input, ρ̄₅ is surjective for
-the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉, ρ̄₂₃ for all 15 — the mod-ℓ images of all fifteen curves
-are certified for every ℓ ≤ 23 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
+the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉, ρ̄₂₃, ρ̄₂₉ for all 15.  Together with §3.8,
+the exact certified scope is:
+
+| ℓ | curves and conclusion |
+|---|---|
+| 2 | the stated 15 curves: S₃ or C₂ as listed in §3.8 |
+| 3 | 37a1: full GL₂(𝔽₃) |
+| 5 | the stated 14 curves other than 11a1: full GL₂(𝔽₅) |
+| 7, 11, 13, 17, 19, 23, 29 | the stated 15 curves: full GL₂(𝔽_ℓ) |
+
+No claim is made for ℓ > 29 or for curves outside the stated set.  The surjectivity interpretation
+imports Eichler–Shimura mod ℓ; the Lean headline proves the finite closed-set criterion above,
+with the Frobenius trace and determinant equalities as hypotheses.  Axioms propext, Quot.sound.
 Python mirror: `test_word_certificates_are_valid` checks exactly what Lean checks (S generates,
-conjugators, words) for ℓ = 5, 7, 11, 13, 17, 19, 23 and the full pair closures for ℓ ≤ 7.  The instances
-(one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 3 min wall (ℓ = 23 alone) under 2.3 GB per process (ℓ = 19: a pair ≈ 13 s, ℓ = 23:
-a pair ≈ 18 s; the field facts and `S_generates` under a second; the 660 KB data file, words packed
-as naturals, elaborates in 55 s).  Kernel bookkeeping that made
+conjugators, words) for ℓ = 5, 7, 11, 13, 17, 19, 23, 29 and the full pair closures for ℓ ≤ 7.  The instances
+(one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 8 min wall (ℓ = 29 alone) under 4.1 GB per process (ℓ = 23: a pair ≈ 18 s,
+ℓ = 29: a pair ≈ 42 s; the field facts and `S_generates` under a second; the certificates live in one data module
+`DataModLℓ` per ℓ, words packed as naturals: elaborating a single 1.7 MB `Data.lean` took 10.6 GB and 254 s; the
+ℓ = 29 module alone elaborates in 96 s under 4.1 GB, and the modules elaborate in parallel).  Kernel bookkeeping that made
 this feasible (`Generation.lean`, `ImageModL.lean`): the kernel caches the normal form of every closed
 term it meets until the declaration is checked, so memory is the number of distinct terms evaluated, not
 the size of the data.  Hence (i) every arithmetic step is a `Nat.*` call on literals — an operator's
@@ -606,7 +618,17 @@ enumerated rather than found by scanning ℓ⁴ codes: a class {tr = t, det = d}
 (`mem_classMats`), so a pair certificate is ℓ² conjugators and ℓ² × 3 words and nothing of size ℓ⁴ is
 evaluated anywhere; (xii) and the certificate lists them in the class's enumeration order, so the kernel walks
 the two lists pointwise (`pointwise`, `pointwise_sound`) instead of searching the list for every element
-(ℓ⁴/2 comparisons: an ℓ = 23 pair went from 53 s to 18 s).
+(ℓ⁴/2 comparisons: an ℓ = 23 pair went from 53 s to 18 s).  (xiii) On the Python side the word search is bidirectional (forward from the
+generators, backward from each target through the inverse generators, always expanding the smaller frontier,
+each layer costing its own size): 7.5 ms instead of 86 ms per search at ℓ = 23, so the export of all eight ℓ,
+which the gate re-runs as its bridge check, takes ≈ 6.5 min with ℓ = 29 included (11 min before, without it).
+The search reconstructs positive words: a backward edge is x·g = parent(x), so its letter is appended
+in that order after the reversed forward path.  Each frontier contains a whole BFS layer and only
+unseen vertices enter it; reuse across targets preserves that invariant, and finite exhaustion
+returns an unreachable result.  An empty generator list has no nonempty words, including at the
+identity target.  Plain-BFS comparisons check minimal length on GL₂(𝔽₅) and GL₂(𝔽₇), with target-order,
+duplicate-generator and unreachable controls on GL₂(𝔽₂) and GL₂(𝔽₃).  For larger ℓ, the certificate
+checks establish word validity; no experimental minimality claim is made.
 `forced_full_classes` (Python) now prunes the first set to conjugacy representatives only when every
 set is conjugation-invariant (review fix; counterexample test in GL₂(𝔽₂)).
 

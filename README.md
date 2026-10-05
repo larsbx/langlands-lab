@@ -15,7 +15,7 @@ computed and which theorem the match instantiates.
 | 1 | E = 37a1 mod p, modulus 2P₀ | generalized Jacobian J_𝔪(𝔽_p) as pairs with its 2-cocycle; ray class characters; L_𝔪(χ, T) as Euler products | ramified geometric CFT for GL₁ (Rosenlicht–Serre): conductor-2 Artin–Schreier characters have L of degree 2 satisfying the Riemann hypothesis |
 | 1 | Poincaré biextension of 37a1 over ℚ (minimal model) | monic Miller frame (t = x/y at O), both partial laws as factor systems, exchange ratio on all nine ord_O strata; the strict second law β₂ = (−1)^{u(a)δu(c)}·g_{c₁,c₂}(a) | Law B = Deligne tame-symbol sign, proved stratum-uniformly (sign algebra in Lean for any group); exchange holds strictly for the corrected β₂; over 𝔽_q the m-fold commutator is the Weil pairing on the nose, and E^∨(𝔽_p)[ℓ] parametrises the order-ℓ characters of Pic⁰ (geometric CFT duality); κ_tame and the Miller chain are elliptic-net (EDS) quotients |
 | 3 | Carlitz module over 𝔽_p[t] | C_P ≡ x^{|P|} (mod P); Frob_P = C_P on C[M]; splitting degrees = ord of P in (A/ann λ)^× | function-field CFT for GL₁ (Carlitz–Hayes) |
-| 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity proved over every commutative semiring (kernel cross-checks on GL₂(𝔽₂), GL₂(𝔽₃)); mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p; images certified in the kernel: ρ̄₂ (all 15 curves: S₃ or C₂), ρ̄₃ (37a1), ρ̄₅ (14 curves) and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉, ρ̄₂₃ (all 15) full, by word certificates against a fixed generating set; pseudocharacter ⇒ representation found by kernel search on GL₂(𝔽₃), unique up to conjugacy; mod-5, mod-7 images of all 15 curves forced from point counts | the shape "Galois side = commutative algebra of operators on automorphic functions"; the converse proved for GL₁ and, up to "pseudocharacter ⇒ parameter", for GL₂ |
+| 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity proved over every commutative semiring (kernel cross-checks on GL₂(𝔽₂), GL₂(𝔽₃)); mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p; images certified in the kernel: ρ̄₂ (all 15 curves: S₃ or C₂), ρ̄₃ (37a1), ρ̄₅ (14 curves) and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉, ρ̄₂₃, ρ̄₂₉ (all 15) full, by word certificates against a fixed generating set; pseudocharacter ⇒ representation found by kernel search on GL₂(𝔽₃), unique up to conjugacy; mod-5, mod-7 images of all 15 curves forced from point counts | the shape "Galois side = commutative algebra of operators on automorphic functions"; the converse proved for GL₁ and, up to "pseudocharacter ⇒ parameter", for GL₂ |
 | 3 | Satake for PGL₂ (Lean) | 𝒮(A_n) = horocycle profile of the sphere, closed form, twisted W-invariance, Hecke relation ↦ χ₁ = X + qX⁻¹, 𝒮(A_n) = χ_n − χ_{n−2}, q-Clebsch–Gordan, ball = χ_n, surjectivity onto the invariants — all PROVED for every q; the inputs computed on the lattice tree; T(𝔭ⁿ) on Drinfeld eigenforms vs point counts over 𝔽_{qⁿ} | Satake isomorphism H(G, K) ≅ ℤ[q][X^{±1}]^W with Ĝ = SL₂; unramified local L-factor 1/(1 − aY + qY²) |
 | 3 | Bruhat–Tits tree of PGL₂(𝔽_q((1/t))) | GL₂(𝔽_q[t]) reduction (Serre's half-line computed), Γ₀(𝔫)\𝒯 via ℙ¹(A/𝔫), cuspidal harmonic cochains, Hecke operators T_𝔭; elliptic curves over 𝔽₂(t) with a_𝔭 by point counts and L(E,T) by Euler product | Gekeler's genus, Drinfeld's Ramanujan bound, Drinfeld's dictionary for GL₂: the level-t³ and level-t⁴ eigenforms over 𝔽₂(t) are y² + txy = x³ + x and y² + txy + t²y = x³ + x + t³ + t² + t |
 
@@ -24,7 +24,7 @@ no `sorry`.  Lean independently recomputes the arithmetic side (reduced forms an
 class numbers, Hurwitz numbers, Eichler–Selberg at level 1, τ(n) from Δ, Eichler's
 Brandt trace formula, Φ_N, Z(E, T), the Carlitz module) and the kernel certifies by
 `decide` the identities on data exported from Python (`tools/export_lean_data.py`
-→ `proof/langlands/LanglandsOracles/Data.lean`): Brandt row sums, commutation, Aut-weighted
+→ `proof/langlands/LanglandsOracles/Data.lean` and, one module per ℓ, `DataModLℓ.lean`): Brandt row sums, commutation, Aut-weighted
 symmetry, 12·tr B(n) = Eichler's formula for n ∈ {1, ℓ, ℓ², ℓℓ'}, and the
 branch-1 L-series vanishing in ℤ[ζ_N] versus Z(E, T), and the level-N Eichler–Selberg
 formula against modular-symbol traces.  `pytest` runs `lake build`
@@ -75,7 +75,7 @@ docs/dossier.md         results ledger
 ```
 pip install -e '.[test]'
 curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 644 tests (~40 s with a warm lake cache; first Lean build ~3 min, 4 cores)
+pytest                      # all branches + Lean gate, 649 tests (~40 s with a warm lake cache; first Lean build ~8 min, 4 cores)
 pytest tests/test_branch2_trace_formula.py
 pytest tests/test_branch1_gl1.py
 pytest tests/test_branch3_carlitz.py
