@@ -548,7 +548,7 @@ E₂₁(1); the scalar inverse c⁻¹ comes from the GL₂ inverse of diag(c, 1)
 in the enumerated GL₂ (`mul_mem_gl`); the only kernel input is that ζ generates 𝔽_ℓ^× (`zetaGen`, ℓ²
 operations), so nothing about S is enumerated; (2) for a class pair (A, B) — characteristic polynomials with distinct roots, hence single
 conjugacy classes without scalars — a fixed representative gRep of A, and for every h ∈ B three words
-in {gRep, h} (length ≤ 27, each packed as one natural) whose values are the elements of S, verified by a few dozen products each;
+in {gRep, h} (length ≤ 29 in the committed data through ℓ = 29, each packed as one natural) whose values are the elements of S, verified by a few dozen products each;
 (3) for every g ∈ A a conjugator C with C·gRep·C⁻¹ = g.  Soundness (`pair_sound`, PROVED): a
 multiplicatively closed H ∋ g ∈ A, h ∈ B is conjugated by C⁻¹ to H′ ∋ gRep, C⁻¹hC; C⁻¹hC is again in
 B because tr is invariant by `trace_mul_comm` and det by Cayley–Hamilton (`det_conj`: 2·det = tr² − tr(x²),
