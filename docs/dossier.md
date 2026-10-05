@@ -571,8 +571,19 @@ curve, a_{p₁}, a_{p₂} mod ℓ from Lean's point counts of the Weierstrass mo
 `mod5_images_full`, …, `mod29_images_full` (`data_sound`): for every listed curve, any multiplicatively closed subset of
 GL₂(𝔽_ℓ) containing elements with the characteristic polynomials of ρ̄_ℓ(Frob_{p₁}), ρ̄_ℓ(Frob_{p₂})
 is all of GL₂(𝔽_ℓ); with Eichler–Shimura mod ℓ as the only imported input, ρ̄₅ is surjective for
-the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉, ρ̄₂₃, ρ̄₂₉ for all 15 — the mod-ℓ images of all fifteen curves
-are certified for every ℓ ≤ 29 (ρ̄₂: §3.8, ρ̄₃: 37a1 in §3.8, the rest here).  Axioms propext, Quot.sound.
+the 14 curves other than 11a1 and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉, ρ̄₂₃, ρ̄₂₉ for all 15.  Together with §3.8,
+the exact certified scope is:
+
+| ℓ | curves and conclusion |
+|---|---|
+| 2 | the stated 15 curves: S₃ or C₂ as listed in §3.8 |
+| 3 | 37a1: full GL₂(𝔽₃) |
+| 5 | the stated 14 curves other than 11a1: full GL₂(𝔽₅) |
+| 7, 11, 13, 17, 19, 23, 29 | the stated 15 curves: full GL₂(𝔽_ℓ) |
+
+No claim is made for ℓ > 29 or for curves outside the stated set.  The surjectivity interpretation
+imports Eichler–Shimura mod ℓ; the Lean headline proves the finite closed-set criterion above,
+with the Frobenius trace and determinant equalities as hypotheses.  Axioms propext, Quot.sound.
 Python mirror: `test_word_certificates_are_valid` checks exactly what Lean checks (S generates,
 conjugators, words) for ℓ = 5, 7, 11, 13, 17, 19, 23, 29 and the full pair closures for ℓ ≤ 7.  The instances
 (one module `ModLℓ` per ℓ, checked in parallel by `lake`) build in ≈ 8 min wall (ℓ = 29 alone) under 4.1 GB per process (ℓ = 23: a pair ≈ 18 s,
@@ -611,6 +622,13 @@ the two lists pointwise (`pointwise`, `pointwise_sound`) instead of searching th
 generators, backward from each target through the inverse generators, always expanding the smaller frontier,
 each layer costing its own size): 7.5 ms instead of 86 ms per search at ℓ = 23, so the export of all eight ℓ,
 which the gate re-runs as its bridge check, takes ≈ 6.5 min with ℓ = 29 included (11 min before, without it).
+The search reconstructs positive words: a backward edge is x·g = parent(x), so its letter is appended
+in that order after the reversed forward path.  Each frontier contains a whole BFS layer and only
+unseen vertices enter it; reuse across targets preserves that invariant, and finite exhaustion
+returns an unreachable result.  An empty generator list has no nonempty words, including at the
+identity target.  Plain-BFS comparisons check minimal length on GL₂(𝔽₅) and GL₂(𝔽₇), with target-order,
+duplicate-generator and unreachable controls on GL₂(𝔽₂) and GL₂(𝔽₃).  For larger ℓ, the certificate
+checks establish word validity; no experimental minimality claim is made.
 `forced_full_classes` (Python) now prunes the first set to conjugacy representatives only when every
 set is conjugation-invariant (review fix; counterexample test in GL₂(𝔽₂)).
 

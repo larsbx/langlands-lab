@@ -83,7 +83,7 @@ def test_words_to_are_shortest_words():
         S = [G.index[(1, 1, 0, 1)], G.index[(1, 0, 1, 1)], G.index[(1, 0, 0, zeta)]]
         A, B = G.with_charpoly((1, 1)), G.with_charpoly((0, 1))
         gens = [A[0], B[0]]
-        for h in B[:12]:
+        for h in B:
             gens = [A[0], h]
             # reference: breadth-first over words, lengths only
             dist = {g: 1 for g in gens}
@@ -106,6 +106,51 @@ def test_words_to_are_shortest_words():
                     for b in w[1:]:
                         val = G.mul(val, gens[b])
                     assert val == s
+
+
+@pytest.mark.parametrize("ell", [2, 3])
+def test_words_to_handles_target_order_and_unreachable_components(ell):
+    """COMPUTED: whole-layer reuse preserves shortest nonempty words in either target order; searches
+    outside the generated subgroup terminate. Covers duplicate generators and the identity target."""
+    from collections import deque
+    from itertools import product
+
+    G = GL2(ell)
+    u, v = G.index[(1, 1, 0, 1)], G.index[(1, 0, 1, 1)]
+    generator_lists = (list(product(range(G.n), repeat=2)) if ell == 2 else
+                       [(G.one,), (u,), (u, u), (u, v)])
+    for gens in generator_lists:
+        dist = {g: 1 for g in gens}
+        todo = deque(dist)
+        while todo:
+            x = todo.popleft()
+            for g in gens:
+                y = G.table[x][g]
+                if y not in dist:
+                    dist[y] = dist[x] + 1
+                    todo.append(y)
+        # Unreachable / deepest targets first can exhaust or grow the shared forward search;
+        # reversing that order also covers targets already reached during an earlier search.
+        targets = sorted(range(G.n), key=lambda t: dist.get(t, G.n), reverse=True)
+        for order in (targets, targets[::-1]):
+            ws = G.words_to(list(gens), order)
+            assert set(ws) == set(order)
+            for target, word in ws.items():
+                assert len(word) == dist.get(target, 0)
+                if word:
+                    value = gens[word[0]]
+                    for letter in word[1:]:
+                        value = G.table[value][gens[letter]]
+                    assert value == target
+
+
+def test_words_to_without_generators_are_unreachable():
+    """COMPUTED: with no generators no nonempty word exists, including for the identity target;
+    words_to uses [] as unreachable, rather than an empty-word identity certificate."""
+    G = GL2(3)
+    targets = [G.one, 0, G.one]
+    assert G.words_to([], targets) == {t: [] for t in targets}
+    assert G.words_to([], []) == {}
 
 
 def test_generated_by_nothing_is_trivial():

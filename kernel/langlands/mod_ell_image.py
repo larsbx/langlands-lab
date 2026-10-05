@@ -146,11 +146,13 @@ class GL2:
         return bool(self.closure_mask(cols, start).all())
 
     def words_to(self, gens: list[int], targets: list[int]) -> dict[int, list[int]]:
-        """Shortest words (letters = generator positions, read left to right) in the given generators reaching
-        each target, or an empty dict entry if unreachable; the kernel evaluates them with `evalWord`.
+        """Shortest nonempty words (letters = generator positions, read left to right) in the given generators
+        reaching each target, or an empty list if unreachable; the kernel evaluates them with `evalWord`.
         Bidirectional breadth-first search: forward from the generators (the words of length 1), backward from
         each target through the inverse generators, always expanding the smaller frontier, so a word of length
         L costs about 2·2^(L/2) visits instead of 2^L ≈ |G|, and every layer costs its own size, not |G|."""
+        if not gens:
+            return {t: [] for t in targets}
         n = self.n
         gs = [np.int64(g) for g in gens]
         igs = [np.int64(self.inv_all[g]) for g in gens]
@@ -174,6 +176,8 @@ class GL2:
             fletter[g] = i
         out = {}
         for t in targets:
+            # The shared forward search is a complete BFS ball. Expanding whole layers until
+            # the first intersection preserves shortest length even when that ball is reused.
             bparent, bletter = np.full(n, -1, dtype=np.int64), np.full(n, -1, dtype=np.int64)
             bseen = np.zeros(n, dtype=bool)
             bseen[t] = True
