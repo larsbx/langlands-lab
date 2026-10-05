@@ -1,0 +1,9 @@
+{"plugins": [],
+ "package": "LanglandsOracles",
+ "options": {},
+ "name": "LanglandsOracles.TraceFormula",
+ "isModule": false,
+ "importArts":
+ {"LanglandsOracles.QForms":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/QForms.olean"]]},
+ "dynlibs": []}

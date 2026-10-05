@@ -23,7 +23,7 @@ def lake() -> str:
 @pytest.mark.slow
 def test_exported_data_is_deterministic_and_current():
     r = subprocess.run(["python3", str(ROOT / "tools" / "export_lean_data.py"), "--check"], cwd=ROOT)
-    assert r.returncode == 0, "proof/langlands/LanglandsOracles/Data.lean is stale: run tools/export_lean_data.py"
+    assert r.returncode == 0, "proof/langlands/LanglandsOracles/Data*.lean is stale: run tools/export_lean_data.py"
 
 
 @pytest.mark.slow
@@ -42,4 +42,4 @@ def test_lean_axiom_audit():
     assert r.returncode == 0, r.stdout + r.stderr
     assert "sorryAx" not in r.stdout and "ofReduceBool" not in r.stdout, r.stdout
     assert "Classical.choice" not in r.stdout, r.stdout
-    assert r.stdout.count("depends on axioms") + r.stdout.count("does not depend on any axioms") == 62
+    assert r.stdout.count("depends on axioms") + r.stdout.count("does not depend on any axioms") == 63

@@ -74,6 +74,40 @@ def test_mod5_certificate_classes_of_37a1():
     assert code(G.elements[A[0]]) == 455
 
 
+def test_words_to_are_shortest_words():
+    """COMPUTED: the bidirectional search returns valid words of minimal length, checked against a plain
+    breadth-first search over the multiplication table on GL_2(F_5) and GL_2(F_7) for every element of a class
+    B against a class-A representative (the exporter's use)."""
+    for ell, zeta in [(5, 2), (7, 3)]:
+        G = GL2(ell)
+        S = [G.index[(1, 1, 0, 1)], G.index[(1, 0, 1, 1)], G.index[(1, 0, 0, zeta)]]
+        A, B = G.with_charpoly((1, 1)), G.with_charpoly((0, 1))
+        gens = [A[0], B[0]]
+        for h in B[:12]:
+            gens = [A[0], h]
+            # reference: breadth-first over words, lengths only
+            dist = {g: 1 for g in gens}
+            frontier = list(dict.fromkeys(gens))
+            while frontier:
+                nxt = []
+                for x in frontier:
+                    for g in gens:
+                        y = G.table[x][g]
+                        if y not in dist:
+                            dist[y] = dist[x] + 1
+                            nxt.append(y)
+                frontier = nxt
+            ws = G.words_to(gens, S)
+            for s in S:
+                w = ws[s]
+                assert (len(w) == dist[s]) if s in dist else (w == [])
+                if w:
+                    val = gens[w[0]]
+                    for b in w[1:]:
+                        val = G.mul(val, gens[b])
+                    assert val == s
+
+
 def test_generated_by_nothing_is_trivial():
     """The empty generating set generates {1}, with or without the multiplication table (review fix: the
     vectorised closure concatenated an empty list of product columns)."""
@@ -98,10 +132,10 @@ def test_conjugacy_pruning_only_for_invariant_sets():
 
 
 def _parse_cert(ell):
-    """The exported mod-ell certificate from Data.lean: S, pairs (tA, dA, tB, dB, gRep, witnesses, words), curves."""
+    """The exported mod-ell certificate from DataModL{ell}.lean: S, pairs (tA, dA, tB, dB, gRep, witnesses, words), curves."""
     import re
-    text = (Path(__file__).resolve().parents[1] / "proof" / "langlands" / "LanglandsOracles" / "Data.lean").read_text()
-    block = text[text.index(f"def mod{ell}Pair0"):text.index("\n/--", text.index(f"def mod{ell}Cert"))]
+    text = (Path(__file__).resolve().parents[1] / "proof" / "langlands" / "LanglandsOracles" / f"DataModL{ell}.lean").read_text()
+    block = text[text.index(f"def mod{ell}Pair0"):text.index("\nend Oracles", text.index(f"def mod{ell}Cert"))]
     S = [int(v) for v in re.search(r"S := \[([^\]]*)\]", block).group(1).split(",")]
     pairs = []
     for m in re.finditer(r"tA := (\d+), dA := (\d+), tB := (\d+), dB := (\d+), gRep := (\d+),\s*witnessesA := \[(.*?)\],\s*wordsB := \[(.*?)\] \}", block, re.S):
@@ -115,7 +149,7 @@ def _parse_cert(ell):
     return S, pairs, curves
 
 
-@pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3), (11, 2), (13, 2), (17, 3), (19, 2), (23, 5)])
+@pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3), (11, 2), (13, 2), (17, 3), (19, 2), (23, 5), (29, 2)])
 def test_word_certificates_are_valid(ell, zeta):
     """Mirror of proof/langlands/LanglandsOracles/ImageModL.lean: S = {E12(1), E21(1), diag(1, zeta)} generates GL_2(F_ell);
     for every certified pair, the conjugators send gRep onto every element of class A, the words in {gRep, h}
@@ -157,5 +191,5 @@ ALL_LABELS = [f.label for f in CREMONA_PRIME_LEVEL]
 
 def block_pair_count(ell):
     import re
-    text = (Path(__file__).resolve().parents[1] / "proof" / "langlands" / "LanglandsOracles" / "Data.lean").read_text()
+    text = (Path(__file__).resolve().parents[1] / "proof" / "langlands" / "LanglandsOracles" / f"DataModL{ell}.lean").read_text()
     return int(re.search(rf"Mod-{ell} image certificates: S, (\d+) certified class pairs", text).group(1))

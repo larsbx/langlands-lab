@@ -1,0 +1,11 @@
+{"plugins": [],
+ "package": "LanglandsOracles",
+ "options": {},
+ "name": "LanglandsOracles.Data",
+ "isModule": false,
+ "importArts":
+ {"LanglandsOracles.Matrix":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/Matrix.olean"]],
+  "LanglandsOracles.CertTypes":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/CertTypes.olean"]]},
+ "dynlibs": []}

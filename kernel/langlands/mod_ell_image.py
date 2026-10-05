@@ -146,39 +146,60 @@ class GL2:
         return bool(self.closure_mask(cols, start).all())
 
     def words_to(self, gens: list[int], targets: list[int]) -> dict[int, list[int]]:
-        """Breadth-first words (letters = generator positions, read left to right) in the given generators
-        reaching each target, or an empty dict entry if unreachable; the kernel evaluates them with `evalWord`."""
-        cols = [self.column(g) for g in gens]
-        parent = np.full(self.n, -1, dtype=np.int64)
-        letter = np.full(self.n, -1, dtype=np.int64)
-        seen = np.zeros(self.n, dtype=bool)
-        roots = np.array(gens, dtype=np.int64)
-        seen[roots] = True
+        """Shortest words (letters = generator positions, read left to right) in the given generators reaching
+        each target, or an empty dict entry if unreachable; the kernel evaluates them with `evalWord`.
+        Bidirectional breadth-first search: forward from the generators (the words of length 1), backward from
+        each target through the inverse generators, always expanding the smaller frontier, so a word of length
+        L costs about 2·2^(L/2) visits instead of 2^L ≈ |G|, and every layer costs its own size, not |G|."""
+        n = self.n
+        gs = [np.int64(g) for g in gens]
+        igs = [np.int64(self.inv_all[g]) for g in gens]
+
+        def expand(front, cs, seen, parent, letter):  # work proportional to the frontier, never to |G|
+            cand = np.concatenate([self.mul_vec(front, g) for g in cs])
+            src = np.concatenate([front] * len(cs))
+            let = np.repeat(np.arange(len(cs)), front.size)
+            fresh = ~seen[cand]
+            new, first = np.unique(cand[fresh], return_index=True)
+            parent[new] = src[fresh][first]
+            letter[new] = let[fresh][first]
+            seen[new] = True
+            return new
+
+        fparent, fletter = np.full(n, -1, dtype=np.int64), np.full(n, -1, dtype=np.int64)
+        fseen = np.zeros(n, dtype=bool)
+        ffront = np.unique(np.array(gens, dtype=np.int64))
+        fseen[ffront] = True
         for i, g in enumerate(gens):
-            letter[g] = i
-        frontier = np.unique(roots)
-        want = np.array(targets, dtype=np.int64)
-        while frontier.size and not seen[want].all():
-            layer = np.zeros(self.n, dtype=bool)
-            for i, col in enumerate(cols):
-                cand = col[frontier]  # right multiplication is a bijection: no duplicates within one generator
-                fresh = ~seen[cand] & ~layer[cand]
-                idx = cand[fresh]
-                parent[idx] = frontier[fresh]
-                letter[idx] = i
-                layer[idx] = True
-            frontier = np.flatnonzero(layer)
-            seen[frontier] = True
+            fletter[g] = i
         out = {}
         for t in targets:
-            if not seen[t]:
+            bparent, bletter = np.full(n, -1, dtype=np.int64), np.full(n, -1, dtype=np.int64)
+            bseen = np.zeros(n, dtype=bool)
+            bseen[t] = True
+            bfront = np.array([t], dtype=np.int64)
+            meet = t if fseen[t] else -1
+            while meet < 0 and (ffront.size or bfront.size):
+                if bfront.size == 0 or (ffront.size and ffront.size <= bfront.size):
+                    ffront = expand(ffront, gs, fseen, fparent, fletter)
+                    hits = ffront[bseen[ffront]]
+                else:
+                    bfront = expand(bfront, igs, bseen, bparent, bletter)
+                    hits = bfront[fseen[bfront]]
+                if hits.size:
+                    meet = int(hits[0])
+            if meet < 0:
                 out[t] = []
                 continue
-            w, x = [], t
-            while x != -1:
-                w.append(int(letter[x]))
-                x = int(parent[x])
-            out[t] = w[::-1]
+            head, x = [], meet
+            while x != -1:  # back to a generator: the forward half, reversed
+                head.append(int(fletter[x]))
+                x = int(fparent[x])
+            tail, x = [], meet
+            while x != t:  # x · g_letter = bparent[x]: the backward half, in reading order
+                tail.append(int(bletter[x]))
+                x = int(bparent[x])
+            out[t] = head[::-1] + tail
         return out
 
 

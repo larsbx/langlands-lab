@@ -1,0 +1,13 @@
+{"plugins": [],
+ "package": "LanglandsOracles",
+ "options": {},
+ "name": "LanglandsOracles.Certificates",
+ "isModule": false,
+ "importArts":
+ {"LanglandsOracles.TraceFormula":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/TraceFormula.olean"]],
+  "LanglandsOracles.QForms":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/QForms.olean"]],
+  "LanglandsOracles.Carlitz":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/Carlitz.olean"]]},
+ "dynlibs": []}

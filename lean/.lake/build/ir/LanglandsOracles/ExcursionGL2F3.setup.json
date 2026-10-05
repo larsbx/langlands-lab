@@ -1,0 +1,13 @@
+{"plugins": [],
+ "package": "LanglandsOracles",
+ "options": {},
+ "name": "LanglandsOracles.ExcursionGL2F3",
+ "isModule": false,
+ "importArts":
+ {"LanglandsOracles.Pseudocharacter":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/Pseudocharacter.olean"]],
+  "LanglandsOracles.ExcursionGL2":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/ExcursionGL2.olean"]],
+  "LanglandsOracles.Excursion":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/Excursion.olean"]]},
+ "dynlibs": []}

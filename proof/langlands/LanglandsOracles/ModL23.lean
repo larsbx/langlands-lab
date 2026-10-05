@@ -1,4 +1,5 @@
 import LanglandsOracles.ImageModL
+import LanglandsOracles.DataModL23
 
 /-!
 # ρ̄₂₃ for the Cremona curves of prime level: the mod-23 instance of `ImageModL`.

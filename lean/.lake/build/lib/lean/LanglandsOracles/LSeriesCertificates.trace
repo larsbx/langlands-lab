@@ -1,0 +1,33 @@
+{"synthetic": false,
+ "schemaVersion": "2025-09-10",
+ "outputs":
+ {"o": ["63a8d3e9d80e0cb1.olean"],
+  "m": false,
+  "i": "d0bbe31782926937.ilean",
+  "c": "34c4f613db24e94e.c"},
+ "log":
+ [{"message":
+   ".> LEAN_PATH=/home/user/langlands-lab/lean/.lake/build/lib/lean /root/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean /home/user/langlands-lab/lean/LanglandsOracles/LSeriesCertificates.lean -o /home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/LSeriesCertificates.olean -i /home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/LSeriesCertificates.ilean -c /home/user/langlands-lab/lean/.lake/build/ir/LanglandsOracles/LSeriesCertificates.c --setup /home/user/langlands-lab/lean/.lake/build/ir/LanglandsOracles/LSeriesCertificates.setup.json --json",
+   "level": "trace"}],
+ "inputs":
+ [["deps",
+   [["LanglandsOracles/LanglandsOracles:extraDep",
+     [["@LanglandsOracles:extraDep", "00000000000006bb"]]],
+    ["imports",
+     [["LanglandsOracles.Data transitive imports (legacy)", "bf648f0e61fff538"],
+      ["LanglandsOracles.Data:importAllArts", "2462a84a622a4702"]]]]],
+  ["libs",
+   [["import dynlibs", "00000000000006bb"],
+    ["package external libraries", "00000000000006bb"],
+    ["module dynlibs", "00000000000006bb"],
+    ["module plugins", "00000000000006bb"]]],
+  ["Lean 4.34.1, commit 5045d0056413266e57c625dcd7c365b10e377c52",
+   "e9f3658beb070375"],
+  ["/home/user/langlands-lab/lean/LanglandsOracles/LSeriesCertificates.lean",
+   "a66926085cfa9b06"],
+  ["options", "00000000000006bb"],
+  ["isModule: false", "feefd2a0d3a1847e"],
+  ["Module.name: LanglandsOracles.LSeriesCertificates", "797d4c1fe5decc5b"],
+  ["Package.id?: (some LanglandsOracles)", "d2b2d041fe5f1586"],
+  ["Module.leanArgs: #[]", "00000000000006bb"]],
+ "depHash": "306e70d43e0fcd06"}

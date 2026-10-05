@@ -1,0 +1,37 @@
+{"plugins": [],
+ "package": "LanglandsOracles",
+ "options": {},
+ "name": "LanglandsOracles.ModLImages",
+ "isModule": false,
+ "importArts":
+ {"LanglandsOracles.Pseudocharacter":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/Pseudocharacter.olean"]],
+  "LanglandsOracles.ModL7":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/ModL7.olean"]],
+  "LanglandsOracles.ModL5":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/ModL5.olean"]],
+  "LanglandsOracles.ModL23":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/ModL23.olean"]],
+  "LanglandsOracles.ModL19":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/ModL19.olean"]],
+  "LanglandsOracles.ModL17":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/ModL17.olean"]],
+  "LanglandsOracles.ModL13":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/ModL13.olean"]],
+  "LanglandsOracles.ModL11":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/ModL11.olean"]],
+  "LanglandsOracles.Matrix":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/Matrix.olean"]],
+  "LanglandsOracles.ImageModL":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/ImageModL.olean"]],
+  "LanglandsOracles.ImageMod2":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/ImageMod2.olean"]],
+  "LanglandsOracles.Generation":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/Generation.olean"]],
+  "LanglandsOracles.Data":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/Data.olean"]],
+  "LanglandsOracles.CommSemiring":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/CommSemiring.olean"]],
+  "LanglandsOracles.CertTypes":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/CertTypes.olean"]]},
+ "dynlibs": []}

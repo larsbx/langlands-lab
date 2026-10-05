@@ -42,6 +42,7 @@ open Oracles
 #print axioms mod17_images_full
 #print axioms mod19_images_full
 #print axioms mod23_images_full
+#print axioms mod29_images_full
 #print axioms Satake.sphere_eq_sat
 #print axioms Satake.sat_weyl
 #print axioms Satake.sat_hecke

@@ -1,0 +1,11 @@
+{"plugins": [],
+ "package": "LanglandsOracles",
+ "options": {},
+ "name": "LanglandsOracles.Generation",
+ "isModule": false,
+ "importArts":
+ {"LanglandsOracles.Pseudocharacter":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/Pseudocharacter.olean"]],
+  "LanglandsOracles.CommSemiring":
+  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/CommSemiring.olean"]]},
+ "dynlibs": []}
