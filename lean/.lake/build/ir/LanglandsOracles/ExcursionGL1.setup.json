@@ -1,9 +1,0 @@
-{"plugins": [],
- "package": "LanglandsOracles",
- "options": {},
- "name": "LanglandsOracles.ExcursionGL1",
- "isModule": false,
- "importArts":
- {"LanglandsOracles.Excursion":
-  [["/home/user/langlands-lab/lean/.lake/build/lib/lean/LanglandsOracles/Excursion.olean"]]},
- "dynlibs": []}
