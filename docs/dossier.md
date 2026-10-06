@@ -419,12 +419,20 @@ IMPORTED (not formalised): the remaining step for non-abelian Ĝ, pseudocharacte
 parameter (Taylor for GL₂, Lafforgue's Ĝ-pseudocharacters and geometric invariant theory in general),
 and the excursion relations for GL_n, n ≥ 3, where the identity is Procesi's for n×n matrices.
 
-### 3.6 GL₂-pseudocharacters (KERNEL)
+### 3.6 GL₂-pseudocharacters (PROVED + KERNEL)
 `procesi_GL2_F2`, `procesi_GL2_F3`: Σ_{σ∈S₃} sgn(σ) T_σ(g₁,g₂,g₃) = 0 for T = trace on every
-triple of GL₂(𝔽₂) (6³) and GL₂(𝔽₃) (48³ = 110 592 triples; ≈ 3 min in the kernel), the
+triple of GL₂(𝔽₂) (6³) and GL₂(𝔽₃) (48³ = 110 592 triples), the
 defining relation of a 2-dimensional pseudocharacter.  Python checks the same (`procesi_identity_holds`).
-The identity is PROVED over every commutative semiring in `M2.procesi` (§3.5); the two kernel
-checks are its independent finite cross-checks (they evaluate the signed form on the enumerated groups).
+The identity is PROVED over every commutative semiring in `M2.procesi` (§3.5).
+`procesi_GL2_F3` now derives its unchanged Boolean statement `Mat2.procesiHolds 3 = true` from
+that theorem and `isCSR_fin 3`: a kernel check on 3⁶ scalar tuples converts the subtraction-free
+identity to the signed form, and `List.all_eq_true` lifts it to the enumerated group without
+evaluating matrix triples.  `procesi_GL2_F2` remains an independent kernel cross-check of the
+signed form; the exhaustive Python checks over both groups also remain.  The audit still names
+`procesi_GL2_F3`; its structural proof stays within propext / Quot.sound.
+Matched serialized clean builds on one CI runner measured `Pseudocharacter` at 10.42 GiB before
+and 0.53 GiB after (67.11 s → 0.74 s); the largest process of the candidate build is now
+`BrandtCertificates` at 3.99 GiB.  [Protocol, exact measurements and audit comparison](benchmarks/procesi-memory-2026-10-06.md).
 
 ### 3.7 An arithmetic excursion instance: the mod-3 parameter of 37a1 (KERNEL + COMPUTED)
 - `brandt_eigenvector_37a1`: the exported v = (−1, 1, 0) on the supersingular locus at p = 37
@@ -590,8 +598,10 @@ conjugators, words) for ℓ = 5, 7, 11, 13, 17, 19, 23, 29, 31 and the full pair
 the critical path is ℓ = 31: data 56 s, instances 195 s).  Measured alone on that run's machine: a certified
 pair at ℓ = 29 or ℓ = 31 ≈ 20–23 s, an instance module ≤ 209 s under 2.6 GB, a data module `DataModLℓ` (words
 packed as naturals) ≤ 51 s under 1.6 GB, against 120 s under 3.1 GB for the former single 1.7 MB data file
-through ℓ = 29; the field facts and `S_generates` take under a second.  The heaviest process of the whole build
-is `Pseudocharacter` (10.6 GB), which does not touch the certificates.  CORRECTION: an earlier version of this
+through ℓ = 29; the field facts and `S_generates` take under a second.  The heaviest process of that build
+was `Pseudocharacter` (10.6 GB), which does not touch the certificates; the subsequent structural
+Procesi proof removes this hotspot (§3.6 and its matched clean-build measurements).
+CORRECTION: an earlier version of this
 paragraph attributed that 10.6 GB peak to the single data file, and a 4.1 GB peak (that of
 `BrandtCertificates`) to the ℓ = 29 data module; both were the build's maximum over all processes.  Kernel bookkeeping that made
 this feasible (`Generation.lean`, `ImageModL.lean`): the kernel caches the normal form of every closed
