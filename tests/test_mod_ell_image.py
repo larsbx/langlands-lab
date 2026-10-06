@@ -194,7 +194,7 @@ def _parse_cert(ell):
     return S, pairs, curves
 
 
-@pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3), (11, 2), (13, 2), (17, 3), (19, 2), (23, 5), (29, 2)])
+@pytest.mark.parametrize("ell,zeta", [(5, 2), (7, 3), (11, 2), (13, 2), (17, 3), (19, 2), (23, 5), (29, 2), (31, 3)])
 def test_word_certificates_are_valid(ell, zeta):
     """Mirror of proof/langlands/LanglandsOracles/ImageModL.lean: S = {E12(1), E21(1), diag(1, zeta)} generates GL_2(F_ell);
     for every certified pair, the conjugators send gRep onto every element of class A, the words in {gRep, h}
