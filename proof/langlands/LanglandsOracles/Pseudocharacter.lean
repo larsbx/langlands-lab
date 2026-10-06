@@ -2,7 +2,7 @@ import LanglandsOracles.CommSemiring
 
 /-!
 # GL_2-pseudocharacters: the Frobenius–Procesi identity, proved over every commutative semiring
-and kernel-checked on GL_2(𝔽_2), GL_2(𝔽_3).
+and independently kernel-checked on GL_2(𝔽_2).
 
 For a 2-dimensional representation the trace T satisfies, for all g_1, g_2, g_3,
    T(g_1)T(g_2)T(g_3) − T(g_1g_2)T(g_3) − T(g_1g_3)T(g_2) − T(g_2g_3)T(g_1) + T(g_1g_2g_3) + T(g_1g_3g_2) = 0
@@ -11,8 +11,9 @@ For a 2-dimensional representation the trace T satisfies, for all g_1, g_2, g_3,
 
 `M2.procesi` proves it (in the subtraction-free form even terms = odd terms) for 2×2 matrices over
 any commutative semiring R: both sides distribute to the same multiset of 24 monomials in the twelve
-entries.  Independently, `procesi_GL2_F2` and `procesi_GL2_F3` verify the signed form by kernel
-evaluation for every triple in GL_2(𝔽_2) (6³) and GL_2(𝔽_3) (48³ triples).
+entries.  Independently, `procesi_GL2_F2` verifies the signed form by kernel evaluation for every
+triple in GL_2(𝔽_2) (6³).  `procesi_GL2_F3` derives the same finite Boolean statement from
+`M2.procesi` and `isCSR_fin 3`, with only a small scalar check converting to the signed form.
 -/
 namespace Oracles
 
@@ -110,6 +111,20 @@ theorem gl2_F2_order : (Mat2.gl 2).length = 6 := by decide +kernel
 theorem gl2_F3_order : (Mat2.gl 3).length = 48 := by decide +kernel
 
 theorem procesi_GL2_F2 : Mat2.procesiHolds 2 = true := by decide +kernel
-theorem procesi_GL2_F3 : Mat2.procesiHolds 3 = true := by decide +kernel
+theorem procesi_GL2_F3 : Mat2.procesiHolds 3 = true := by
+  -- Convert the subtraction-free identity to the signed form: 3⁶ scalar tuples,
+  -- rather than 48³ matrix triples.  The matrix identity itself is algebraic.
+  have signed : ∀ a b c d e f : Fin 3,
+      a + e + f = b + c + d → a - b - c - d + e + f = 0 := by decide +kernel
+  unfold Mat2.procesiHolds
+  apply List.all_eq_true.mpr
+  intro x _
+  apply List.all_eq_true.mpr
+  intro y _
+  apply List.all_eq_true.mpr
+  intro z _
+  have hz : Mat2.procesi x y z = 0 :=
+    signed _ _ _ _ _ _ (M2.procesi (isCSR_fin 3) x y z)
+  exact beq_iff_eq.mpr (congrArg Fin.val hz)
 
 end Oracles

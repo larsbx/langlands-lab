@@ -419,12 +419,17 @@ IMPORTED (not formalised): the remaining step for non-abelian Ĝ, pseudocharacte
 parameter (Taylor for GL₂, Lafforgue's Ĝ-pseudocharacters and geometric invariant theory in general),
 and the excursion relations for GL_n, n ≥ 3, where the identity is Procesi's for n×n matrices.
 
-### 3.6 GL₂-pseudocharacters (KERNEL)
+### 3.6 GL₂-pseudocharacters (PROVED + KERNEL)
 `procesi_GL2_F2`, `procesi_GL2_F3`: Σ_{σ∈S₃} sgn(σ) T_σ(g₁,g₂,g₃) = 0 for T = trace on every
-triple of GL₂(𝔽₂) (6³) and GL₂(𝔽₃) (48³ = 110 592 triples; ≈ 3 min in the kernel), the
+triple of GL₂(𝔽₂) (6³) and GL₂(𝔽₃) (48³ = 110 592 triples), the
 defining relation of a 2-dimensional pseudocharacter.  Python checks the same (`procesi_identity_holds`).
-The identity is PROVED over every commutative semiring in `M2.procesi` (§3.5); the two kernel
-checks are its independent finite cross-checks (they evaluate the signed form on the enumerated groups).
+The identity is PROVED over every commutative semiring in `M2.procesi` (§3.5).
+`procesi_GL2_F3` now derives its unchanged Boolean statement `Mat2.procesiHolds 3 = true` from
+that theorem and `isCSR_fin 3`: a kernel check on 3⁶ scalar tuples converts the subtraction-free
+identity to the signed form, and `List.all_eq_true` lifts it to the enumerated group without
+evaluating matrix triples.  `procesi_GL2_F2` remains an independent kernel cross-check of the
+signed form; the exhaustive Python checks over both groups also remain.  The audit still names
+`procesi_GL2_F3`; its structural proof stays within propext / Quot.sound.
 
 ### 3.7 An arithmetic excursion instance: the mod-3 parameter of 37a1 (KERNEL + COMPUTED)
 - `brandt_eigenvector_37a1`: the exported v = (−1, 1, 0) on the supersingular locus at p = 37
