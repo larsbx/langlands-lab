@@ -1,10 +1,136 @@
 # langlands-lab
 
-Exact, finite-field instrumentation of three entry points into the Langlands
-correspondence, sequenced **2 → 1 → 3**.  Everything is computed with exact
-arithmetic (Python ints, immutable tuples, sympy over ℤ); theorems enter only in
-the *interpretation* of a match, and each test docstring says which side is
-computed and which theorem the match instantiates.
+A laboratory for the Langlands program in which every claim is either computed exactly or
+checked by a proof assistant, and the repository says which.
+
+## The Langlands program in one paragraph
+
+The Langlands program predicts a dictionary between two worlds that look unrelated. On one side
+are **automorphic objects**: modular forms, and more generally functions on symmetric spaces,
+together with the Hecke operators that act on them. On the other side are **Galois
+representations**: the ways the symmetries of the algebraic numbers act on finite-dimensional
+vector spaces, for example on the torsion points of an elliptic curve. The dictionary should
+match the eigenvalues of Hecke operators with the traces of Frobenius elements, so that
+counting points on a curve modulo p and computing a modular form produce the same numbers.
+Parts of this are theorems: class field theory (the case GL₁), modularity of elliptic curves
+over ℚ, and, over function fields such as 𝔽_q(t), Drinfeld's theorem for GL₂, L. Lafforgue's
+for GL_n and V. Lafforgue's construction of Langlands parameters for every reductive group.
+Most of the program is still conjecture.
+
+## What this lab does
+
+The proofs of the known cases are long chains of deep theory, and it is hard to see the
+dictionary itself at work. This lab makes it visible and checkable, one small instance at a
+time.
+
+- **Everything is exact.** Python computes both sides of each correspondence with integers,
+  finite fields and exact polynomials, never floating point. When the two sides agree, the
+  test that checks it names the theorem the agreement instantiates. A match is evidence only
+  for that theorem.
+- **Lean checks what it can.** A Lean 4 project (core Lean only: no Mathlib, no
+  `native_decide`, no `sorry`) recomputes parts of the arithmetic independently and proves
+  structural theorems. An axiom audit runs on every build: nothing may depend on more than
+  `propext` and `Quot.sound`.
+- **Assumptions are written down.** Every result in the [dossier](docs/dossier.md) is
+  labelled COMPUTED, PROVED or IMPORTED. A deep theorem the lab relies on, such as
+  modularity or the Eichler–Shimura relation, is stated as imported, never presented as checked.
+
+## Three entry points
+
+The lab enters the dictionary at three places, worked in the order 2 → 1 → 3: from the most
+computational to the closest to current research.
+
+**Branch 2: trace formulas and Jacquet–Langlands.** Supersingular elliptic curves modulo a
+prime p form a finite set, and the ℓ-isogenies between them form a graph. Its adjacency
+matrices, the Brandt matrices, are Hecke operators on a finite space. The lab computes them,
+checks Eichler's trace formula (traces of Hecke operators equal sums of class numbers), and
+checks that their eigenvalues are the point counts of elliptic curves, as Jacquet–Langlands and
+Eichler–Shimura predict. Modular symbols give a second, independent automorphic computation of
+the same numbers. This is the simplest place where the "automorphic = arithmetic" equality can
+be watched as integers.
+
+**Branch 1: geometric class field theory for GL₁.** On a curve over a finite field, here the
+elliptic curve 37a1 reduced modulo 5 and 7, characters of the class group should correspond to
+rank-one local systems, the simplest objects of geometric Langlands. The lab builds both from
+the curve's Jacobian, checks Weil reciprocity and the vanishing of the twisted L-functions the
+theory predicts, treats a ramified case through a generalized Jacobian, and studies the Poincaré
+biextension, whose commutator is the Weil pairing.
+
+**Branch 3: function fields and V. Lafforgue's construction.** Over 𝔽_q(t) the program is a
+theorem for GL₂, and the lab follows it concretely. It covers the Carlitz module (class field
+theory for 𝔽_p[t]), the Bruhat–Tits tree, and Drinfeld modular forms matched with elliptic
+curves over 𝔽₂(t). It proves the Satake isomorphism for PGL₂, which identifies the local Hecke
+algebra with representations of the dual group. Its last act formalizes V. Lafforgue's
+excursion operators, the route from automorphic data to a Galois parameter.
+
+## How this advances the Langlands program
+
+The lab proves no new cases of the Langlands conjectures, and every theorem in it is already
+known. What it adds is a different kind of access to them: instances one can run, inspect and
+trust, plus a growing formal account of the steps that connect the two sides.
+
+- **The dictionary as numbers.** Each correspondence is executed on explicit examples, and
+  both sides are computed independently. When a prediction holds, the lab shows exactly which
+  integers agree. When a naive version fails, the lab records that too: for example, an
+  L-function vanishes in ℤ[ζ_N] but not term by term.
+- **A machine-checked path from automorphic data to Galois parameters.** V. Lafforgue's
+  construction runs in three steps: excursion data, then a pseudocharacter, then a
+  representation. The lab proves in Lean that excursion data satisfying his relations give a
+  character in the case GL₁, and a 2-dimensional pseudocharacter for GL₂ over every
+  commutative semiring. It also proves that a 2-dimensional pseudocharacter is the trace of an
+  explicit representation built from it alone. That last step, Rouquier's construction, holds
+  for every group and every commutative ring with 2 invertible, whenever some element has
+  distinct eigenvalues and the pseudocharacter is absolutely irreducible. Composed for GL₂(ℤ/n),
+  these give a proved chain from excursion data to a representation in that case.
+- **Galois images certified from point counts.** For the lab's 15 elliptic curves of prime
+  conductor at most 101 (Cremona's 11a1 to 101a1), the Lean kernel certifies that the mod-ℓ
+  Galois image is the whole of GL₂(𝔽_ℓ) for every prime ℓ from 7 to 31, and for ℓ = 5 on 14 of
+  them. The only
+  input is point counts modulo primes; Eichler–Shimura is the one imported step. Generation of
+  GL₂(𝔽_ℓ), matrix inverses and conjugacy classes are proved, not enumerated, so the kernel
+  checks only small certificates.
+- **Formalization infrastructure.** Building this under a strict axiom audit required tools
+  core Lean lacks, among them a ring normalizer whose soundness is itself a checked theorem.
+  These are reusable for further formal work on the program.
+
+The [dossier](docs/dossier.md) records every result with its status, the exact scope of each
+certificate, and, in its last section, the open items and next steps. Among them: the reducible
+case of pseudocharacter ⇒ representation, uniqueness up to conjugacy in general, and proving the
+inputs to Satake for the abstract tree rather than computing them. The
+[roadmap](docs/roadmap.md) orders those next steps toward proofs of conjectural statements for
+specific objects, and says what each stage would prove and what it would still assume.
+
+## How Python and Lean divide the work
+
+Python under `kernel/langlands/` is the canonical executable: it computes, and its tests decide
+acceptance. Lean under `proof/langlands/` holds claim state. It recomputes the arithmetic side
+independently: reduced forms and class numbers, Hurwitz numbers, Eichler–Selberg at level 1,
+τ(n) from Δ, Eichler's Brandt trace formula, Φ_N, Z(E, T) and the Carlitz module. It also
+certifies, with `decide` or `decide +kernel`, identities on data exported from Python by
+`tools/export_lean_data.py` into `proof/langlands/LanglandsOracles/Data.lean`, plus one module
+per ℓ, `DataModLℓ.lean`. Among these are Brandt row sums, commutation and Aut-weighted symmetry,
+12·tr B(n) against Eichler's formula, the branch-1 L-series vanishing, and the level-N
+Eichler–Selberg formula against modular-symbol traces. `pytest` runs the Lean build as a gate
+that fails, never skips, when Lean is missing.
+
+## Run
+
+```
+pip install -e '.[test]'
+curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
+pytest                      # all branches + Lean gate, 658 tests (~40 s with a warm lake cache; first Lean build ~7 min, 4 cores)
+pytest tests/test_branch2_trace_formula.py
+pytest tests/test_branch1_gl1.py
+pytest tests/test_branch3_carlitz.py
+```
+
+Contributors: `AGENTS.md` and `CONTRIBUTING.md` list the gates to run before a pull request and
+the standing rules (exact arithmetic only, no Mathlib, and the exported data is never edited by
+hand).
+
+## Detailed inventory
+
+What each branch computes, and which theorem a match instantiates:
 
 | branch | object | what is computed | what the match instantiates |
 |---|---|---|---|
@@ -18,19 +144,6 @@ computed and which theorem the match instantiates.
 | 3 | excursion algebra (Lean) | Lafforgue's relations (E1)–(E3) as a structure; `ofHom` proves every ρ: Γ → Ĝ gives excursion data; Hecke = excursion at (Frob, 1); Procesi identity proved over every commutative semiring (independent kernel cross-check on GL₂(𝔽₂), structural signed-form proof on GL₂(𝔽₃)); mod-3 parameter of 37a1 at Frob_p vs Brandt/point-count a_p; images certified in the kernel: ρ̄₂ (all 15 curves: S₃ or C₂), ρ̄₃ (37a1), ρ̄₅ (14 curves) and ρ̄₇, ρ̄₁₁, ρ̄₁₃, ρ̄₁₇, ρ̄₁₉, ρ̄₂₃, ρ̄₂₉, ρ̄₃₁ (all 15) full, by word certificates against a fixed generating set; pseudocharacter ⇒ representation found by kernel search on GL₂(𝔽₃), unique up to conjugacy, and constructed from T alone for every group in the split, absolutely irreducible case (Rouquier, `pseudochar_rep`); mod-5, mod-7 images of all 15 curves forced from point counts | the shape "Galois side = commutative algebra of operators on automorphic functions"; the converse proved for GL₁, and for GL₂ when some element has distinct eigenvalues in the coefficients and the pseudocharacter is absolutely irreducible |
 | 3 | Satake for PGL₂ (Lean) | 𝒮(A_n) = horocycle profile of the sphere, closed form, twisted W-invariance, Hecke relation ↦ χ₁ = X + qX⁻¹, 𝒮(A_n) = χ_n − χ_{n−2}, q-Clebsch–Gordan, ball = χ_n, surjectivity onto the invariants — all PROVED for every q; the inputs computed on the lattice tree; T(𝔭ⁿ) on Drinfeld eigenforms vs point counts over 𝔽_{qⁿ} | Satake isomorphism H(G, K) ≅ ℤ[q][X^{±1}]^W with Ĝ = SL₂; unramified local L-factor 1/(1 − aY + qY²) |
 | 3 | Bruhat–Tits tree of PGL₂(𝔽_q((1/t))) | GL₂(𝔽_q[t]) reduction (Serre's half-line computed), Γ₀(𝔫)\𝒯 via ℙ¹(A/𝔫), cuspidal harmonic cochains, Hecke operators T_𝔭; elliptic curves over 𝔽₂(t) with a_𝔭 by point counts and L(E,T) by Euler product | Gekeler's genus, Drinfeld's Ramanujan bound, Drinfeld's dictionary for GL₂: the level-t³ and level-t⁴ eigenforms over 𝔽₂(t) are y² + txy = x³ + x and y² + txy + t²y = x³ + x + t³ + t² + t |
-
-**Lean 4 in the oracle loop** (`proof/langlands/`): core Lean, no Mathlib, no `native_decide`,
-no `sorry`.  Lean independently recomputes the arithmetic side (reduced forms and
-class numbers, Hurwitz numbers, Eichler–Selberg at level 1, τ(n) from Δ, Eichler's
-Brandt trace formula, Φ_N, Z(E, T), the Carlitz module) and the kernel certifies by
-`decide` the identities on data exported from Python (`tools/export_lean_data.py`
-→ `proof/langlands/LanglandsOracles/Data.lean` and, one module per ℓ, `DataModLℓ.lean`): Brandt row sums, commutation, Aut-weighted
-symmetry, 12·tr B(n) = Eichler's formula for n ∈ {1, ℓ, ℓ², ℓℓ'}, and the
-branch-1 L-series vanishing in ℤ[ζ_N] versus Z(E, T), and the level-N Eichler–Selberg
-formula against modular-symbol traces.  `pytest` runs `lake build`
-as a gate that fails, never skips, when Lean is missing.
-
-See `docs/dossier.md` for the numbers and the PROVED / IMPORTED ledger, and its last section for open items and next steps.
 
 ## Layout
 
@@ -70,18 +183,7 @@ proof/langlands/        lake project LanglandsOracles: oracles + kernel-checked 
 docs/dossier.md         results ledger
 ```
 
-## Run
-
-```
-pip install -e '.[test]'
-curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y   # Lean gate
-pytest                      # all branches + Lean gate, 658 tests (~40 s with a warm lake cache; first Lean build ~7 min, 4 cores)
-pytest tests/test_branch2_trace_formula.py
-pytest tests/test_branch1_gl1.py
-pytest tests/test_branch3_carlitz.py
-```
-
-## Boundaries
+## What is checked and what is assumed
 
 - B(2), B(3) come from the hard-coded Φ₂, Φ₃; B(ℓ) for odd ℓ comes from Vélu and
   agrees with Φ₃ at ℓ = 3 for every p tested (an independent check of Φ₃).  JL is
