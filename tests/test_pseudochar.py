@@ -4,7 +4,8 @@ import pytest
 from langlands.galois_rep import frobenius_matrix
 from langlands.newforms import newforms_of_level
 from langlands.pseudochar import (are_conjugate, det, find_all_representations, find_representation, gl2,
-                                  is_homomorphism, is_pseudocharacter, mat_mul, trace)
+                                  is_homomorphism, is_pseudocharacter, mat_mul, rouquier_data,
+                                  rouquier_representation, trace)
 
 P = 3
 G = gl2(P)
@@ -58,3 +59,50 @@ def test_representation_is_unique_up_to_conjugacy(T):
     sols = find_all_representations(T, G, MUL, ONE, (G0, G1), P)
     assert len(sols) == 24
     assert all(are_conjugate(sols[0], rho, G, P) for rho in sols)
+
+
+@pytest.mark.parametrize("T", [TRACE, TWIST, CONTRA], ids=["trace", "twist", "contragredient"])
+def test_rouquier_construction_is_a_representation_with_trace_T(T):
+    """COMPUTED: the representation built from T alone (no search) is a homomorphism GL_2(F_3) -> GL_2(F_3)
+    with trace T, conjugate to the one the search finds.  Instantiates `pseudochar_rep`
+    (PseudocharRep.lean, PROVED for every group)."""
+    g, lam, mu, x0, y0 = rouquier_data(T, G, MUL, P)
+    rho = rouquier_representation(T, MUL, g, lam, mu, x0, y0, P)
+    table = {x: rho(x) for x in G}
+    assert table[ONE] == ONE
+    assert is_homomorphism(table, G, MUL, P)
+    assert all(trace(table[x], P) == T(x) for x in G)
+    assert are_conjugate(table, find_representation(T, G, MUL, ONE, (G0, G1), P), G, P)
+
+
+@pytest.mark.parametrize("k", [0, 1, 2, 3])
+def test_rouquier_construction_over_F5(k):
+    """COMPUTED: on GL_2(F_5), for the pseudocharacters T_k(g) = det(g)^k tr(g) (traces of g -> det(g)^k g),
+    the constructed rho is a homomorphism with trace T_k on all 480^2 pairs.  Instantiates `pseudochar_rep`."""
+    p = 5
+    G5 = gl2(p)
+    mul = lambda x, y: mat_mul(x, y, p)
+    T = lambda x: (pow(det(x, p), k, p) * trace(x, p)) % p
+    g, lam, mu, x0, y0 = rouquier_data(T, G5, mul, p)
+    rho = rouquier_representation(T, mul, g, lam, mu, x0, y0, p)
+    table = {x: rho(x) for x in G5}
+    assert table[(1, 0, 0, 1)] == (1, 0, 0, 1)
+    assert is_homomorphism(table, G5, mul, p)
+    assert all(trace(table[x], p) == T(x) for x in G5)
+
+
+def test_rouquier_construction_needs_procesi():
+    """COMPUTED: on GL_2(F_5), T = tr + (det - 1) is central with T(1) = 2 (checked on all pairs) and fails
+    Procesi; every other hypothesis of `pseudochar_rep` can be met (split g, lam != mu, B(x0, y0) != 0), and the
+    constructed rho is not a homomorphism.  The Procesi identity is the hypothesis that does the work."""
+    p = 5
+    G5 = gl2(p)
+    mul = lambda x, y: mat_mul(x, y, p)
+    T = lambda g: (trace(g, p) + det(g, p) - 1) % p
+    assert T((1, 0, 0, 1)) == 2 and all(T(mul(x, y)) == T(mul(y, x)) for x in G5 for y in G5)
+    procesi = lambda x, y, z: (T(x) * T(y) * T(z) + T(mul(mul(x, y), z)) + T(mul(mul(x, z), y))
+                               - T(mul(x, y)) * T(z) - T(mul(x, z)) * T(y) - T(mul(y, z)) * T(x)) % p
+    assert any(procesi(x, y, z) for x in G5[:20] for y in G5[:20] for z in G5[:20])
+    g, lam, mu, x0, y0 = rouquier_data(T, G5, mul, p)
+    rho = rouquier_representation(T, mul, g, lam, mu, x0, y0, p)
+    assert any(rho(mul(x, y)) != mat_mul(rho(x), rho(y), p) for x in G5[:40] for y in G5[:40])
