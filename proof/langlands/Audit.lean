@@ -22,6 +22,9 @@ open Oracles
 #print axioms gl2_ring_pseudocharacter
 #print axioms gl2_Zmod_pseudocharacter
 #print axioms gl2_Fp_pseudocharacter
+#print axioms Oracles.RingNorm.denote_norm
+#print axioms Oracles.PseudocharRep.pseudochar_rep
+#print axioms Oracles.PseudocharRep.excursion_rep_Zmod
 #print axioms Mat2.generated_by_ord8_unip
 #print axioms mod3_image_37a1_full
 #print axioms Mat2.generated_by_ord3_ord2

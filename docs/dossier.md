@@ -522,7 +522,42 @@ multiplicativity on all 48² pairs and trace on all 48 elements (`certified`).
   a conjugator is found on the two generators and verified on all 48 elements.  Python
   (`find_all_representations`, `are_conjugate`) mirrors this.  This is the other half of Taylor's
   statement for the instance.
-IMPORTED: Taylor's theorem itself (the search is the finite instance, not the proof).
+IMPORTED: Taylor's theorem itself (the search is the finite instance, not the proof); its split,
+absolutely irreducible case is PROVED for every group in §3.9b.
+
+### 3.9b Pseudocharacter ⇒ representation for every group, by Rouquier's construction (PROVED; `PseudocharRep.lean`, `RingNorm.lean`, `pseudochar.py`)
+`pseudochar_rep` (PROVED, propext / Quot.sound): let Γ be any group, R any commutative ring with 2
+invertible, and T : Γ → R a 2-dimensional pseudocharacter (T(1) = 1 + 1, T(xy) = T(yx), Procesi).  If some
+g ∈ Γ has λ + μ = T(g) and 2λμ = T(g)² − T(g²) with λ − μ a unit, and the pairing B(x₀, y₀) below is a unit
+for some x₀, y₀, then
+   ρ(x) = [[a(x), B(x, y₀)], [B(x₀, x)·B(x₀, y₀)⁻¹, T(x) − a(x)]]
+satisfies ρ(1) = 1, ρ(xy) = ρ(x)ρ(y) and tr ρ = T.  Every entry is a polynomial in values of T:
+a(x) = κT(gx) − κμT(x) (`aF_eq`, κ = (λ − μ)⁻¹) and B(x, y) = tr(e x f y) with e = κ(g − μ), f = −κ(g − λ).
+The proof works in the formal group ring (finite formal sums, `FS`, `tr`, `fmul`) and reduces everything
+to one identity, the rank-one property tr(e z e w) = tr(e z)·tr(e w) for all formal sums z, w (`qe`), and
+its twin for f.  For group elements it is a linear combination of four Procesi instances — P(gx, g, y),
+P(g, g, x), P(g, g, xy), P(g, x, y) — and the quadratic μ² − T(g)μ + λμ = 0 (`rank1`); it extends to formal
+sums by bilinearity.  With linearity, cyclicity (`tr_rot`) and e + f = 1 under tr (`ef_front`) it gives
+ee = e, ef = fe = 0 under tr, the rank-one pairing B(x, y₀)B(x₀, y) = B(x, y)B(x₀, y₀) (`B_rank_one`), and
+each of the four entries of ρ(xy) = ρ(x)ρ(y) (`entry_a` … `entry_d`) in a few lines.
+`excursion_rep_Zmod` composes it with `gl2_Zmod_pseudocharacter`: for any excursion datum D for
+GL₂(ℤ/n) with values in ℤ/n, the pseudocharacter χ = Θ(f_tr)(·, 1) is the trace of the representation
+built from χ alone, under the same hypotheses on χ — the step "pseudocharacter ⇒ parameter" of
+V. Lafforgue's construction for GL₂, proved rather than imported in this case.
+Polynomial identities are closed by `ring_eq`, a reflective normalizer for commutative rings
+(`RingNorm.lean`): expressions are normalized to sorted sums of monomials with integer coefficients,
+`denote_norm` (PROVED, propext / Quot.sound) preserves the value, and `decide +kernel` compares normal
+forms; `lin_comb`/`lc_add` check "a − b is the stated combination of hypotheses".  It exists because `grind`
+and core's own normalizer depend on `Classical.choice`, which the audit rejects; a false identity cannot
+produce equal normal forms (spot-checked).
+Python (`rouquier_representation`, `rouquier_data`): the same construction from T alone; tests check it
+is a homomorphism with trace T on all of GL₂(𝔽₃) for tr, det·tr and the contragredient (conjugate to the
+search result of §3.9) and on all 480² pairs of GL₂(𝔽₅) for det(g)^k·tr(g), k = 0, …, 3; for tr + det − 1 on
+GL₂(𝔽₅), central with T(1) = 2 but not Procesi, every other hypothesis is met and ρ is not a homomorphism.
+Not established here: the reducible case (B ≡ 0), the case with no element of distinct eigenvalues in R
+(over a finite field one passes to 𝔽_{p²}; not formalized), characteristic 2, and uniqueness up to
+conjugacy in general (only the finite instance of §3.9 is checked); for ℓ-adic coefficients, continuity
+of ρ is not addressed.
 
 ### 3.10 The image of ρ̄_ℓ forced from point counts alone (COMPUTED; `mod_ell_image.py`)
 For a good p, ρ̄_ℓ(Frob_p) has characteristic polynomial x² − a_p x + p mod ℓ, so the image is a
@@ -732,4 +767,6 @@ only at 𝔭.
   - Satake for GL₂ (central character) and PGL_n / root-datum duality beyond SL₂.
   - Drinfeld modular forms ↔ Carlitz module (the Carlitz side stops at GL₁ CFT).
   - Rank-2 ℓ-adic local systems on ℙ¹ constructed directly, not only through elliptic curves.
-  - Excursion: the remaining step pseudocharacter ⇒ parameter beyond finite instances.
+  - Excursion: pseudocharacter ⇒ parameter is PROVED in the split, absolutely irreducible case for every
+    group (§3.9b); open: the reducible case, extension of scalars when no element splits over the
+    coefficients, uniqueness up to conjugacy in general, and continuity for ℓ-adic coefficients.
