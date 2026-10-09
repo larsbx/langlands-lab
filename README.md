@@ -96,7 +96,9 @@ trust, plus a growing formal account of the steps that connect the two sides.
 The [dossier](docs/dossier.md) records every result with its status, the exact scope of each
 certificate, and, in its last section, the open items and next steps. Among them: the reducible
 case of pseudocharacter ⇒ representation, uniqueness up to conjugacy in general, and proving the
-inputs to Satake for the abstract tree rather than computing them.
+inputs to Satake for the abstract tree rather than computing them. The
+[roadmap](docs/roadmap.md) orders those next steps toward proofs of conjectural statements for
+specific objects, and says what each stage would prove and what it would still assume.
 
 ## How Python and Lean divide the work
 
