@@ -739,6 +739,9 @@ only at 𝔭.
 
 ## Open items and next steps (recorded, not started)
 
+The [roadmap](roadmap.md) orders these items into stages toward proofs of conjectural statements for
+specific objects.
+
 ### The H10/ℚ biextension thread (Dossier II §8)
 | item | status |
 |---|---|
