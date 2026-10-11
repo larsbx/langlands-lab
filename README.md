@@ -80,8 +80,9 @@ trust, plus a growing formal account of the steps that connect the two sides.
   character in the case GL₁, and a 2-dimensional pseudocharacter for GL₂ over every
   commutative semiring. It also proves that a 2-dimensional pseudocharacter is the trace of an
   explicit representation built from it alone. That last step, Rouquier's construction, holds
-  for every group and every commutative ring with 2 invertible, whenever some element has
-  distinct eigenvalues and the pseudocharacter is absolutely irreducible. Composed for GL₂(ℤ/n),
+  for every group and every commutative ring with 2 invertible, whenever some g has characteristic roots λ, μ in the coefficient ring with
+  λ − μ a unit, and there are x₀, y₀ for which the off-diagonal pairing B(x₀, y₀) is a unit.
+  These are the explicit split and unit-pairing hypotheses of `pseudochar_rep`. Composed for GL₂(ℤ/n),
   these give a proved chain from excursion data to a representation in that case.
 - **Galois images certified from point counts.** For the lab's 15 elliptic curves of prime
   conductor at most 101 (Cremona's 11a1 to 101a1), the Lean kernel certifies that the mod-ℓ
