@@ -1,7 +1,8 @@
 # langlands-lab
 
-A laboratory for the Langlands program in which every claim is either computed exactly or
-checked by a proof assistant, and the repository says which.
+A laboratory for the Langlands program that distinguishes exact computations (COMPUTED),
+proof-assistant theorems (PROVED), and mathematical results assumed from the literature
+(IMPORTED). The dossier records the scope and dependencies of each result.
 
 ## The Langlands program in one paragraph
 
@@ -87,8 +88,10 @@ trust, plus a growing formal account of the steps that connect the two sides.
   Galois image is the whole of GL₂(𝔽_ℓ) for every prime ℓ from 7 to 31, and for ℓ = 5 on 14 of
   them. The only
   input is point counts modulo primes; Eichler–Shimura is the one imported step. Generation of
-  GL₂(𝔽_ℓ), matrix inverses and conjugacy classes are proved, not enumerated, so the kernel
-  checks only small certificates.
+  GL₂(𝔽_ℓ) and the matrix-inverse identities are proved structurally. The kernel constructs
+  complete O(ℓ²)-sized class lists (`classMats`, with completeness proved by `mem_classMats`)
+  and checks explicit `PairCert` conjugators and generator words for every listed element.
+  This avoids scanning all ℓ⁴ matrices in these Lean checks; it still enumerates the classes.
 - **Formalization infrastructure.** Building this under a strict axiom audit required tools
   core Lean lacks, among them a ring normalizer whose soundness is itself a checked theorem.
   These are reusable for further formal work on the program.
